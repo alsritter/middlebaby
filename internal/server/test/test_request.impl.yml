@@ -1,0 +1,8 @@
+- request:
+    method: GET
+    endpoint: /test
+  response:
+    status: 200
+    body: "Yml Handled"
+    delay: "1s:5s"
+
