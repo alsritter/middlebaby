@@ -7,5 +7,6 @@ type Mock struct {
 var GlobalConfigVar GlobalConfig
 
 type GlobalConfig struct {
-	HttpFiles []string `json:"httpFiles"` // mock 的 http 请求数据所在文件名
+	HttpFiles []string `yaml:"httpFiles"` // mock 的 http 请求数据所在文件名
+	name      string   `yaml:"name"`      // mock
 }

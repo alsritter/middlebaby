@@ -42,7 +42,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	// 指定配置文件
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.middlebaby.yaml)")
-	rootCmd.Flags().StringVar(&logLevel, "log-level", "INFO", "Log level")
+	rootCmd.Flags().StringVar(&logLevel, "log-level", "DEBUG", "Log level")
 	rootCmd.PersistentFlags().StringVarP(&flagApp, "app", "", "", "启动的app路径")
 
 	// 设置日志级别
@@ -64,9 +64,16 @@ func initConfig() {
 
 		// 在 home 目录查询 .middlebaby.yaml 文件
 		// viper.AddConfigPath(home)
-		viper.AddConfigPath("./")
+		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".middlebaby")
+	}
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Debugf("读取配置文件失败")
+		return
+	} else {
+		log.Debugf("使用的配置文件: %s", viper.ConfigFileUsed())
 	}
 
 	if err := viper.Unmarshal(&config.GlobalConfigVar); err != nil {

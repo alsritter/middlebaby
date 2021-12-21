@@ -6,7 +6,7 @@
 *.dylib
 
 # ide
-.vscode
+# .vscode
 .idea
 
 # Test binary, build with `go test -c`
