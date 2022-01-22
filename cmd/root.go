@@ -16,8 +16,15 @@ limitations under the License.
 package cmd
 
 import (
-	"alsritter.icu/middlebaby/internal/log"
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
+	"alsritter.icu/middlebaby/internal/log"
+	"alsritter.icu/middlebaby/internal/proxy"
+
+	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
@@ -31,21 +38,25 @@ var (
 	flagApp  string
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "middlebaby",
-	Short: "仿照 middlewomen 编写的 Mock 工具",
-	Long:  `仿照 middlewomen 编写的 Mock 工具`,
-}
+var (
+	rootCmd = &cobra.Command{
+		Use:   "middlebaby",
+		Short: "a Mock server tool.",
+		Long:  `a Mock server tool.`,
+	}
+
+	imposters = make(map[string][]proxy.Imposter)
+)
 
 func init() {
-	// 设置传递的函数，以便在每个命令的调用执行方法。
+	// Set up the function passed so that the method is executed on each command invocation.
 	cobra.OnInitialize(initConfig)
-	// 指定配置文件
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.middlebaby.yaml)")
+	// Specifying a configuration file
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $WORKSPACE/.middlebaby.yaml)")
 	rootCmd.Flags().StringVar(&logLevel, "log-level", "DEBUG", "Log level")
-	rootCmd.PersistentFlags().StringVarP(&flagApp, "app", "", "", "启动的app路径")
+	rootCmd.PersistentFlags().StringVarP(&flagApp, "app", "", "", "Startup app path")
 
-	// 设置日志级别
+	// set log level.
 	log.SetLevel(logLevel)
 }
 
@@ -55,30 +66,72 @@ func Execute() {
 
 func initConfig() {
 	if cfgFile != "" {
-		// 使用 --config 指定的配置文件路径
+		// use --config specifies the path to the configuration file.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// 找到 home 目录
-		// home, err := os.UserHomeDir()
-		// cobra.CheckErr(err)
-
-		// 在 home 目录查询 .middlebaby.yaml 文件
-		// viper.AddConfigPath(home)
-		viper.AddConfigPath(".")
+		viper.AddConfigPath("./tests")
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".middlebaby")
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Debugf("读取配置文件失败")
-		return
+		log.Fatal("Failed to read the configuration file.")
 	} else {
-		log.Debugf("使用的配置文件: %s", viper.ConfigFileUsed())
+		log.Debugf("Configuration file to use: %s", viper.ConfigFileUsed())
 	}
 
 	if err := viper.Unmarshal(&config.GlobalConfigVar); err != nil {
-		log.Errorf("配置文件序列化成结构体失败: %s", err.Error())
+		log.Fatalf("failed to serialize configuration file to structure: %s", err.Error())
 	} else {
-		log.Debugf("读取配置文件数据: %+v", config.GlobalConfigVar)
+		log.Debugf("Read configuration file data: %+v", config.GlobalConfigVar)
 	}
+
+	for _, filePath := range config.GlobalConfigVar.HttpFiles {
+		loadImposter(filePath)
+	}
+
+	if config.GlobalConfigVar.Watcher {
+		runWatcher(true, config.GlobalConfigVar.HttpFiles...)
+	}
+}
+
+func runWatcher(canWatch bool, pathToWatch ...string) *watcher.Watcher {
+	if !canWatch {
+		return nil
+	}
+
+	w, err := config.InitializeWatcher(pathToWatch...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config.AttachWatcher(w, func(evn watcher.Event) {
+		loadImposter(evn.Path)
+	})
+	return w
+}
+
+func loadImposter(filePath string) {
+	if !filepath.IsAbs(filePath) {
+		if fp, err := filepath.Abs(filePath); err != nil {
+			log.Errorf("to absolute representation path err: %s", err)
+			return
+		} else {
+			filePath = fp
+		}
+	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Errorf("%w: error trying to read config file: %s", err, filePath)
+	}
+	defer file.Close()
+	bytes, _ := ioutil.ReadAll(file)
+
+	var imposter []proxy.Imposter
+	if err := json.Unmarshal(bytes, &imposter); err != nil {
+		log.Errorf("%w: error while unmarshal configFile file %s", err, filePath)
+	}
+
+	imposters[filePath] = imposter
 }

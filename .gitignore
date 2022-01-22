@@ -20,4 +20,5 @@ imposters
 
 !internal/server/http/test/testdata/imposters/
 
-# middlebaby
+middlebaby
+.vscode

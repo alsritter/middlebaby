@@ -23,9 +23,10 @@ func init() {
 }
 
 var (
-	debugLevel = log.New(os.Stderr, "\033[37m[debug]\033[0m ", log.LstdFlags|log.Lshortfile)
+	debugLevel = log.New(os.Stderr, "\033[47m[debug]\033[0m ", log.LstdFlags|log.Lshortfile)
 	errorLog   = log.New(os.Stdout, "\033[31m[error]\033[0m ", log.LstdFlags|log.Lshortfile)
 	infoLog    = log.New(os.Stdout, "\033[34m[info ]\033[0m ", log.LstdFlags|log.Lshortfile)
+	fatalLog   = log.New(os.Stdout, "\033[1;37;41m[fatal]\033[0m ", log.LstdFlags|log.Lshortfile)
 	loggers    = []*log.Logger{errorLog, infoLog, debugLevel}
 	levelMap   map[string]int32
 	mu         sync.Mutex
@@ -41,6 +42,9 @@ var (
 
 	Info  = infoLog.Println
 	Infof = infoLog.Printf
+
+	Fatal  = fatalLog.Fatal  // call to os.Exit(1).
+	Fatalf = fatalLog.Fatalf // call to os.Exit(1).
 )
 
 func SetLevel(levelStr string) {
@@ -52,7 +56,7 @@ func SetLevel(levelStr string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// 这里是重置输出级别
+	// Reset output level.
 	for _, logger := range loggers {
 		logger.SetOutput(os.Stdout)
 	}
