@@ -16,15 +16,8 @@ limitations under the License.
 package cmd
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
 	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/proxy"
 
-	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
@@ -45,8 +38,7 @@ var (
 		Long:  `a Mock server tool.`,
 	}
 
-	Imposters       = make(map[string][]proxy.Imposter)
-	FilechangeEvent = make(chan struct{}, 1)
+	GlobalConfigVar config.Config
 )
 
 func init() {
@@ -54,7 +46,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	// Specifying a configuration file
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $WORKSPACE/.middlebaby.yaml)")
-	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", "DEBUG", "Log level")
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", "INFO", "Log level")
 	rootCmd.PersistentFlags().StringVarP(&flagApp, "app", "", "", "Startup app path")
 }
 
@@ -81,61 +73,9 @@ func initConfig() {
 		log.Debugf("Configuration file to use: %s", viper.ConfigFileUsed())
 	}
 
-	if err := viper.Unmarshal(&config.GlobalConfigVar); err != nil {
+	if err := viper.Unmarshal(&GlobalConfigVar); err != nil {
 		log.Fatalf("failed to serialize configuration file to structure: %s", err.Error())
 	} else {
-		log.Debugf("Read configuration file data: %+v", config.GlobalConfigVar)
+		log.Debugf("Read configuration file data: %+v", GlobalConfigVar)
 	}
-
-	for _, filePath := range config.GlobalConfigVar.HttpFiles {
-		loadImposter(filePath)
-	}
-
-	if config.GlobalConfigVar.Watcher {
-		runWatcher(true, config.GlobalConfigVar.HttpFiles...)
-	}
-}
-
-// watch file change.
-func runWatcher(canWatch bool, pathToWatch ...string) *watcher.Watcher {
-	if !canWatch {
-		return nil
-	}
-
-	w, err := config.InitializeWatcher(pathToWatch...)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	config.AttachWatcher(w, func(evn watcher.Event) {
-		loadImposter(evn.Path)
-		FilechangeEvent <- struct{}{}
-	})
-	return w
-}
-
-// loading http file to imposters
-func loadImposter(filePath string) {
-	if !filepath.IsAbs(filePath) {
-		if fp, err := filepath.Abs(filePath); err != nil {
-			log.Errorf("to absolute representation path err: %s", err)
-			return
-		} else {
-			filePath = fp
-		}
-	}
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Errorf("%w: error trying to read config file: %s", err, filePath)
-	}
-	defer file.Close()
-	bytes, _ := ioutil.ReadAll(file)
-
-	var imposter []proxy.Imposter
-	if err := json.Unmarshal(bytes, &imposter); err != nil {
-		log.Errorf("%w: error while unmarshal configFile file %s", err, filePath)
-	}
-
-	Imposters[filePath] = imposter
 }

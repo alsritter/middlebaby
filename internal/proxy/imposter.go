@@ -38,7 +38,6 @@ func (d *ResponseDelay) GetDelay() time.Duration {
 
 // Imposter define an imposter structure
 type Imposter struct {
-	BasePath string
 	Request  Request  `json:"request"`
 	Response Response `json:"response"`
 }

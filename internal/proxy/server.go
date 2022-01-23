@@ -27,8 +27,8 @@ type Server struct {
 }
 
 // NewServer initialize the mock server
-func NewServer(r *mux.Router, httpServer *http.Server, imposters []Imposter) Server {
-	return Server{
+func NewServer(r *mux.Router, httpServer *http.Server, imposters []Imposter) *Server {
+	return &Server{
 		router:     r,
 		httpServer: httpServer,
 		imposters:  imposters,
