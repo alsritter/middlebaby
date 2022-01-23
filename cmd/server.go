@@ -16,17 +16,24 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"alsritter.icu/middlebaby/internal/config"
 	"alsritter.icu/middlebaby/internal/log"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
+
+func init() {
+	rootCmd.AddCommand(serverCmd)
+}
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
@@ -94,16 +101,46 @@ var serverCmd = &cobra.Command{
 
 func runMockServe(group *errgroup.Group, done chan bool) {
 	group.Go(func() error {
+		// handler
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			time.Sleep(1 * time.Second)
+			fmt.Fprintln(w, "hello")
+		})
 
-		switch {
-		case <-done:
+		// server
+		srv := http.Server{
+			Addr:    fmt.Sprintf("127.0.0.1:%d", config.GlobalConfigVar.Port),
+			Handler: handler,
 		}
 
-		close(done)
+		// make sure idle connections returned
+		processed := make(chan struct{})
+		go func() {
+			switch {
+			case <-done:
+				close(done)
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			if err := srv.Shutdown(ctx); nil != err {
+				log.Errorf("server shutdown failed, err: %v\n", err)
+			}
+
+			log.Info("server gracefully shutdown")
+
+			close(processed)
+		}()
+
+		// serve
+		err := srv.ListenAndServe()
+		if http.ErrServerClosed != err {
+			log.Fatalf("server not gracefully shutdown, err :%v\n", err)
+		}
+
+		// waiting for goroutine above processed
+		<-processed
+
 		return nil
 	})
-}
-
-func init() {
-	rootCmd.AddCommand(serverCmd)
 }

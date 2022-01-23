@@ -8,7 +8,7 @@ import (
 // Request represent the structure of real request
 type Request struct {
 	Method     string             `json:"method"`
-	Endpoint   string             `json:"endpoint"`
+	Url        string             `json:"url"`
 	SchemaFile *string            `json:"schemaFile"`
 	Params     *map[string]string `json:"params"`
 	Headers    *map[string]string `json:"headers"`
