@@ -45,7 +45,8 @@ var (
 		Long:  `a Mock server tool.`,
 	}
 
-	imposters = make(map[string][]proxy.Imposter)
+	Imposters       = make(map[string][]proxy.Imposter)
+	FilechangeEvent = make(chan struct{}, 1)
 )
 
 func init() {
@@ -53,11 +54,8 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	// Specifying a configuration file
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $WORKSPACE/.middlebaby.yaml)")
-	rootCmd.Flags().StringVar(&logLevel, "log-level", "DEBUG", "Log level")
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", "DEBUG", "Log level")
 	rootCmd.PersistentFlags().StringVarP(&flagApp, "app", "", "", "Startup app path")
-
-	// set log level.
-	log.SetLevel(logLevel)
 }
 
 func Execute() {
@@ -65,6 +63,9 @@ func Execute() {
 }
 
 func initConfig() {
+	// set log level.
+	log.SetLevel(logLevel)
+
 	if cfgFile != "" {
 		// use --config specifies the path to the configuration file.
 		viper.SetConfigFile(cfgFile)
@@ -95,6 +96,7 @@ func initConfig() {
 	}
 }
 
+// watch file change.
 func runWatcher(canWatch bool, pathToWatch ...string) *watcher.Watcher {
 	if !canWatch {
 		return nil
@@ -107,10 +109,12 @@ func runWatcher(canWatch bool, pathToWatch ...string) *watcher.Watcher {
 
 	config.AttachWatcher(w, func(evn watcher.Event) {
 		loadImposter(evn.Path)
+		FilechangeEvent <- struct{}{}
 	})
 	return w
 }
 
+// loading http file to imposters
 func loadImposter(filePath string) {
 	if !filepath.IsAbs(filePath) {
 		if fp, err := filepath.Abs(filePath); err != nil {
@@ -133,5 +137,5 @@ func loadImposter(filePath string) {
 		log.Errorf("%w: error while unmarshal configFile file %s", err, filePath)
 	}
 
-	imposters[filePath] = imposter
+	Imposters[filePath] = imposter
 }

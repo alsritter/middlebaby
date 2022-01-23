@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,6 +26,9 @@ import (
 
 	"alsritter.icu/middlebaby/internal/config"
 	"alsritter.icu/middlebaby/internal/log"
+	"alsritter.icu/middlebaby/internal/proxy"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
@@ -59,11 +61,11 @@ var serverCmd = &cobra.Command{
 			go func() {
 				switch s := <-sigs; s {
 				case os.Interrupt:
-					log.Info("Received: Interrupt signal.")
+					log.Debug("Received: Interrupt signal.")
 				case os.Kill:
-					log.Info("Received: Kill signal.")
+					log.Debug("Received: Kill signal.")
 				default:
-					log.Infof("Received other signal: %+v", s)
+					log.Debugf("Received other signal: %+v", s)
 				}
 
 				done <- true
@@ -88,12 +90,11 @@ var serverCmd = &cobra.Command{
 				}
 			}
 
-			if err := group.Wait(); err != nil {
-				fmt.Println("Get errors: ", err)
-			} else {
-				fmt.Println("Get all num successfully!")
-			}
+			done <- true
 
+			if err := group.Wait(); err != nil {
+				log.Error("Get errors: ", err)
+			}
 			os.Exit(0)
 		}
 	},
@@ -101,17 +102,20 @@ var serverCmd = &cobra.Command{
 
 func runMockServe(group *errgroup.Group, done chan bool) {
 	group.Go(func() error {
-		// handler
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			time.Sleep(1 * time.Second)
-			fmt.Fprintln(w, "hello")
-		})
+		port := config.GlobalConfigVar.Port
+		s := newServer(port)
 
-		// server
-		srv := http.Server{
-			Addr:    fmt.Sprintf("127.0.0.1:%d", config.GlobalConfigVar.Port),
-			Handler: handler,
-		}
+		go func() {
+			for {
+				<-FilechangeEvent
+				if err := s.Shutdown(); nil != err {
+					log.Fatalf("server shutdown failed, err: %v\n", err)
+				}
+
+				s = newServer(port)
+				s.Run()
+			}
+		}()
 
 		// make sure idle connections returned
 		processed := make(chan struct{})
@@ -121,26 +125,37 @@ func runMockServe(group *errgroup.Group, done chan bool) {
 				close(done)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
-			if err := srv.Shutdown(ctx); nil != err {
-				log.Errorf("server shutdown failed, err: %v\n", err)
+			if err := s.Shutdown(); nil != err {
+				log.Fatalf("server shutdown failed, err: %v\n", err)
 			}
-
-			log.Info("server gracefully shutdown")
-
+			close(FilechangeEvent)
 			close(processed)
 		}()
 
 		// serve
-		err := srv.ListenAndServe()
-		if http.ErrServerClosed != err {
-			log.Fatalf("server not gracefully shutdown, err :%v\n", err)
-		}
-
+		s.Run()
 		// waiting for goroutine above processed
 		<-processed
 
 		return nil
 	})
+}
+
+func mapToSlice(m map[string][]proxy.Imposter) []proxy.Imposter {
+	s := make([]proxy.Imposter, 0, len(m))
+	for _, v := range m {
+		s = append(s, v...)
+	}
+	return s
+}
+
+func newServer(port int) proxy.Server {
+	router := mux.NewRouter()
+	httpServer := &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		WriteTimeout: time.Second * 3,
+		Handler:      handlers.CORS(proxy.PrepareAccessControl(config.GlobalConfigVar.CORS)...)(router),
+	}
+
+	return proxy.NewServer(router, httpServer, mapToSlice(Imposters))
 }

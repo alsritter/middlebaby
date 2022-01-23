@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"alsritter.icu/middlebaby/internal/log"
 
@@ -21,13 +22,16 @@ var (
 type Server struct {
 	router     *mux.Router
 	httpServer *http.Server
+	// proxy      *Proxy
+	imposters []Imposter
 }
 
 // NewServer initialize the mock server
-func NewServer(p string, r *mux.Router, httpServer *http.Server) Server {
+func NewServer(r *mux.Router, httpServer *http.Server, imposters []Imposter) Server {
 	return Server{
 		router:     r,
 		httpServer: httpServer,
+		imposters:  imposters,
 	}
 }
 
@@ -73,6 +77,8 @@ func (s *Server) Run() {
 }
 
 func (s *Server) run() error {
+	s.addImposterHandler()
+	s.printRouter()
 	return s.httpServer.ListenAndServe()
 }
 
@@ -84,4 +90,41 @@ func (s *Server) Shutdown() error {
 	}
 
 	return nil
+}
+
+// Register proxy request to Router
+func (s *Server) addImposterHandler() {
+	for _, imposter := range s.imposters {
+		url, err := url.Parse(imposter.Request.Url)
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+
+		r := s.router.HandleFunc(url.Path, ImposterHandler(imposter)).
+			Methods(imposter.Request.Method)
+
+		if imposter.Request.Headers != nil {
+			for k, v := range *imposter.Request.Headers {
+				r.HeadersRegexp(k, v)
+			}
+		}
+
+		log.Info(imposter.Request.Params)
+
+		if imposter.Request.Params != nil {
+			for k, v := range *imposter.Request.Params {
+				r.Queries(k, v)
+			}
+		}
+	}
+}
+
+func (s *Server) printRouter() {
+	s.router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		tpl, err1 := route.GetPathTemplate()
+		met, err2 := route.GetMethods()
+		log.Debugf("path: %s, err: %v,  Method: %v, err2: %v", tpl, err1, met, err2)
+		return nil
+	})
 }
