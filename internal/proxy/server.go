@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"alsritter.icu/middlebaby/internal/log"
+	phttp "alsritter.icu/middlebaby/internal/proxy/http"
 
 	"alsritter.icu/middlebaby/internal/config"
 	"github.com/gorilla/handlers"
@@ -18,16 +19,28 @@ var (
 	defaultCORSExposedHeaders = []string{"Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma"}
 )
 
+// proxy request
+type Proxy interface {
+	IsHit(r *http.Request) bool
+	ServeHTTP(rw http.ResponseWriter, r *http.Request)
+}
+
+// direct request
+type Direct interface {
+	IsHit(r *http.Request) bool
+	ServeHTTP(rw http.ResponseWriter, r *http.Request)
+}
+
 // Server definition of mock server
 type Server struct {
 	router     *mux.Router
 	httpServer *http.Server
 	// proxy      *Proxy
-	imposters []Imposter
+	imposters []phttp.Imposter
 }
 
 // NewServer initialize the mock server
-func NewServer(r *mux.Router, httpServer *http.Server, imposters []Imposter) *Server {
+func NewServer(r *mux.Router, httpServer *http.Server, imposters []phttp.Imposter) *Server {
 	return &Server{
 		router:     r,
 		httpServer: httpServer,
@@ -101,7 +114,7 @@ func (s *Server) addImposterHandler() {
 			continue
 		}
 
-		r := s.router.HandleFunc(url.Path, ImposterHandler(imposter)).
+		r := s.router.HandleFunc(url.Path, phttp.ImposterHandler(imposter)).
 			Methods(imposter.Request.Method)
 
 		if imposter.Request.Headers != nil {

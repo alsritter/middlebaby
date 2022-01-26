@@ -1,8 +1,8 @@
-package proxy
+package http
 
 import (
 	"bytes"
-	"net/http"
+	http "net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -13,7 +13,7 @@ func TestImposterHandler(t *testing.T) {
 		"data": {
 				"type": "gophers",
 				"attributes": {
-						"name": "Zebediah",
+						"name": "John",
 						"color": "Purple",
 						"age": 55
 					}

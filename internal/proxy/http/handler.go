@@ -1,7 +1,7 @@
-package proxy
+package http
 
 import (
-	"net/http"
+	http "net/http"
 	"net/http/httputil"
 	"time"
 
