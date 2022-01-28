@@ -3,8 +3,8 @@ module alsritter.icu/middlebaby
 go 1.16
 
 require (
-	github.com/gorilla/handlers v1.5.1 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/handlers v1.5.1
+	github.com/gorilla/mux v1.8.0
 	github.com/radovskyb/watcher v1.0.7
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.0
