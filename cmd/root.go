@@ -75,7 +75,5 @@ func initConfig() {
 
 	if err := viper.Unmarshal(&GlobalConfigVar); err != nil {
 		log.Fatalf("failed to serialize configuration file to structure: %s", err.Error())
-	} else {
-		log.Debugf("Read configuration file data: %+v", GlobalConfigVar)
 	}
 }

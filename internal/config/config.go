@@ -6,11 +6,12 @@ type Mock struct {
 
 // Config representation of config file yaml
 type Config struct {
-	HttpFiles []string   `yaml:"httpFiles"` // http mock file.
-	Name      string     `yaml:"name"`      // Name of the HTTP request data for the mock
-	Port      int        `yaml:"port"`      // proxy port
-	CORS      ConfigCORS `yaml:"cors"`
-	Watcher   bool       `yaml:"watcher"`
+	HttpFiles    []string   `yaml:"httpFiles"` // http mock file.
+	Name         string     `yaml:"name"`      // Name of the HTTP request data for the mock
+	Port         int        `yaml:"port"`      // proxy port
+	CORS         ConfigCORS `yaml:"cors"`
+	Watcher      bool       `yaml:"watcher"`
+	EnableDirect bool       `yaml:"enableDirect"`
 }
 
 // ConfigCORS representation of section CORS of the yaml

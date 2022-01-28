@@ -16,7 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"alsritter.icu/middlebaby/internal/core"
+	"alsritter.icu/middlebaby/internal/startup"
 	"github.com/spf13/cobra"
 )
 
@@ -30,6 +30,6 @@ var serverCmd = &cobra.Command{
 	Short: "run Mock serve",
 	Long:  `run Mock serve`,
 	Run: func(cmd *cobra.Command, args []string) {
-		core.Startup(flagApp, &GlobalConfigVar)
+		startup.Startup(flagApp, &GlobalConfigVar)
 	},
 }
