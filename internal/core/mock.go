@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"alsritter.icu/middlebaby/internal/common"
 	"alsritter.icu/middlebaby/internal/config"
 	"alsritter.icu/middlebaby/internal/log"
 	"alsritter.icu/middlebaby/internal/proxy"
@@ -28,7 +29,7 @@ func NewMockServeBuilder(config *config.Config, group *errgroup.Group, done chan
 		config:    config,
 		group:     group,
 		done:      done,
-		imposters: make(map[string][]proxy.Imposter),
+		imposters: make(map[string][]common.HttpImposter),
 	}
 
 	return &MockServeBuilder{mock: mock}
@@ -89,7 +90,7 @@ func (s *MockServeBuilder) Build() *MockServe {
 
 type MockServe struct {
 	config    *config.Config
-	imposters map[string][]proxy.Imposter
+	imposters map[string][]common.HttpImposter
 	server    *proxy.Server
 	w         *watcher.Watcher
 	group     *errgroup.Group
@@ -121,7 +122,7 @@ func (s *MockServe) Run() {
 }
 
 // loading single http file to imposter
-func loadImposter(filePath string, imposters map[string][]proxy.Imposter) {
+func loadImposter(filePath string, imposters map[string][]common.HttpImposter) {
 	if !filepath.IsAbs(filePath) {
 		if fp, err := filepath.Abs(filePath); err != nil {
 			log.Errorf("to absolute representation path err: %s", err)
@@ -138,7 +139,7 @@ func loadImposter(filePath string, imposters map[string][]proxy.Imposter) {
 	defer file.Close()
 	bytes, _ := ioutil.ReadAll(file)
 
-	var imposter []proxy.Imposter
+	var imposter []common.HttpImposter
 	if err := json.Unmarshal(bytes, &imposter); err != nil {
 		log.Errorf("%w: error while unmarshal configFile file %s", err, filePath)
 	}
@@ -146,8 +147,8 @@ func loadImposter(filePath string, imposters map[string][]proxy.Imposter) {
 	imposters[filePath] = imposter
 }
 
-func mapToSlice(m map[string][]proxy.Imposter) []proxy.Imposter {
-	s := make([]proxy.Imposter, 0, len(m))
+func mapToSlice(m map[string][]common.HttpImposter) []common.HttpImposter {
+	s := make([]common.HttpImposter, 0, len(m))
 	for _, v := range m {
 		s = append(s, v...)
 	}

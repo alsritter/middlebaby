@@ -1,10 +1,12 @@
-package proxy
+package http
 
 import (
 	"bytes"
-	"net/http"
+	http "net/http"
 	"net/http/httptest"
 	"testing"
+
+	"alsritter.icu/middlebaby/internal/common"
 )
 
 func TestImposterHandler(t *testing.T) {
@@ -13,7 +15,7 @@ func TestImposterHandler(t *testing.T) {
 		"data": {
 				"type": "gophers",
 				"attributes": {
-						"name": "Zebediah",
+						"name": "John",
 						"color": "Purple",
 						"age": 55
 					}
@@ -23,20 +25,20 @@ func TestImposterHandler(t *testing.T) {
 	var headers = make(map[string]string)
 	headers["Content-Type"] = "application/json"
 
-	validRequest := Request{
+	validRequest := common.Request{
 		Method:  "POST",
-		Headers: &headers,
+		Headers: headers,
 	}
 
 	body := `{"test":true}`
 
 	tests := []struct {
 		name         string
-		imposter     Imposter
+		imposter     common.HttpImposter
 		expectedBody string
 		statusCode   int
 	}{
-		{"valid imposter with body", Imposter{Request: validRequest, Response: Response{Status: http.StatusOK, Headers: &headers, Body: body}}, body, http.StatusOK},
+		{"valid imposter with body", common.HttpImposter{Request: validRequest, Response: common.Response{Status: http.StatusOK, Headers: headers, Body: body}}, body, http.StatusOK},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
