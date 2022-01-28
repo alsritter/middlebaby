@@ -1,6 +1,7 @@
 package http
 
 import (
+	"io"
 	"net"
 	http "net/http"
 	"net/http/httputil"
@@ -19,6 +20,7 @@ func (h *httpDirectHandler) IsHit(r *http.Request) bool {
 
 func (h *httpDirectHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodConnect {
+		handleTunneling(rw, r)
 		return
 	}
 
@@ -39,4 +41,34 @@ func (h *httpDirectHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	p.Director = func(request *http.Request) {}
 	p.ServeHTTP(rw, r)
+}
+
+// reference: https://gist.github.com/wwek/41790cbef2e33b6065eaea688ea54760
+func handleTunneling(w http.ResponseWriter, r *http.Request) {
+	// Setting timeout prevents server resources from being occupied due to a large number of timeouts
+	dest_conn, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	// type conversion
+	hijacker, ok := w.(http.Hijacker)
+	if !ok {
+		http.Error(w, "Hijacking not supported", http.StatusInternalServerError)
+		return
+	}
+	client_conn, _, err := hijacker.Hijack()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+	}
+	go transfer(dest_conn, client_conn)
+	go transfer(client_conn, dest_conn)
+}
+
+// forward connected data
+func transfer(destination io.WriteCloser, source io.ReadCloser) {
+	defer destination.Close()
+	defer source.Close()
+	io.Copy(destination, source)
 }

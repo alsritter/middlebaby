@@ -2,6 +2,7 @@ package startup
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	_ "embed"
 
 	"alsritter.icu/middlebaby/internal/common"
 	"alsritter.icu/middlebaby/internal/config"
@@ -20,6 +23,12 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
+
+//go:embed key/cert.pem
+var cert []byte
+
+//go:embed key/key.pem
+var key []byte
 
 type MockServe struct {
 	env       plugin.Env
@@ -33,10 +42,6 @@ func NewMockServe(env plugin.Env) *MockServe {
 		env:       env,
 		imposters: make(map[string][]common.HttpImposter),
 		server:    &http.Server{},
-	}
-
-	if err := http2.ConfigureServer(mock.server, &http2.Server{}); err != nil {
-		log.Fatal("proxy http2 error: ", err)
 	}
 
 	mock.loadImposter()
@@ -84,6 +89,17 @@ func (m *MockServe) Run() error {
 	// call ServeHTTP function handle request.
 	m.server.Handler = h2c.NewHandler(m.setupProxy(), &http2.Server{})
 
+	cer, err := tls.X509KeyPair(cert, key)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	m.server.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cer}}
+
+	if err := http2.ConfigureServer(m.server, &http2.Server{}); err != nil {
+		log.Fatal("proxy http2 error: ", err)
+	}
+
 	if err := m.server.Serve(l); err != nil {
 		if err.Error() != "http: Server closed" {
 			log.Error("failed to start the proxy server: ", err)
@@ -107,6 +123,7 @@ func (m *MockServe) Shutdown() error {
 func (m *MockServe) setupProxy() http.Handler {
 	h := proxy.NewMockList(m.env.GetConfig().EnableDirect)
 	h.AddProxy(proxy_http.NewHttpImposterHandler(mapToSlice(m.imposters), m.env.GetConfig().CORS))
+	h.AddProxy(proxy_http.NewHttpDirectHandler())
 	return h
 }
 

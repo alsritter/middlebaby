@@ -44,7 +44,7 @@ func (t *TargetProcess) Run() error {
 
 	// TODO: add filter support
 	command.Stdout = os.Stdout
-	command.Stderr = os.Stdout
+	command.Stderr = os.Stderr
 
 	if err := command.Run(); err != nil {
 		if _, isExist := err.(*exec.ExitError); !isExist {

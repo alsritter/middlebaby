@@ -42,6 +42,7 @@ func (m *mockList) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	for _, h := range m.reverseProxyList {
 		if h.IsHit(r) {
 			h.ServeHTTP(rw, r)
+			return
 		}
 	}
 
@@ -53,6 +54,9 @@ func (m *mockList) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	for _, h := range m.directList {
 		if h.IsHit(r) {
 			h.ServeHTTP(rw, r)
+			return
 		}
 	}
+
+	log.Trace("Mock missed, proxy requests", r.Host, r.Method, r.URL.Path)
 }
