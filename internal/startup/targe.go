@@ -42,6 +42,10 @@ func (t *TargetProcess) Run() error {
 	parentEnv = append(parentEnv, fmt.Sprintf("https_proxy=http://127.0.0.1:%d", port))
 	command.Env = parentEnv
 
+	// TODO: add filter support
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stdout
+
 	if err := command.Run(); err != nil {
 		if _, isExist := err.(*exec.ExitError); !isExist {
 			log.Fatal("Failed to start the program to be tested, err:", err)

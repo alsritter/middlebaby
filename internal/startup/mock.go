@@ -106,7 +106,7 @@ func (m *MockServe) Shutdown() error {
 
 func (m *MockServe) setupProxy() http.Handler {
 	h := proxy.NewMockList(m.env.GetConfig().EnableDirect)
-	h.AddProxy(proxy_http.NewHttpRequestHandler(mapToSlice(m.imposters), m.env.GetConfig().CORS))
+	h.AddProxy(proxy_http.NewHttpImposterHandler(mapToSlice(m.imposters), m.env.GetConfig().CORS))
 	return h
 }
 

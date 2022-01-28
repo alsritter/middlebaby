@@ -2,6 +2,8 @@ package proxy
 
 import (
 	"net/http"
+
+	"alsritter.icu/middlebaby/internal/log"
 )
 
 type Proxy interface {
@@ -35,6 +37,8 @@ func (p *mockList) AddDirect(direct Direct) {
 
 // find request and forward requests to the proxy for processing.
 func (m *mockList) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	log.Trace("target request:", r.Host, r.Method, r.URL.Path)
+
 	for _, h := range m.reverseProxyList {
 		if h.IsHit(r) {
 			h.ServeHTTP(rw, r)

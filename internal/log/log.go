@@ -26,7 +26,7 @@ func init() {
 
 var (
 	traceLog = log.New(os.Stderr, "\033[45m[trace]\033[0m ", log.LstdFlags|log.Lshortfile)
-	debugLog = log.New(os.Stderr, "\033[46m[debug]\033[0m ", log.LstdFlags|log.Lshortfile)
+	debugLog = log.New(os.Stderr, "\033[46m[debug]\033[0m ", log.LstdFlags)
 	errorLog = log.New(os.Stdout, "\033[31m[error]\033[0m ", log.LstdFlags|log.Lshortfile)
 	infoLog  = log.New(os.Stdout, "\033[34m[info ]\033[0m ", log.LstdFlags|log.Lshortfile)
 	fatalLog = log.New(os.Stdout, "\033[1;37;41m[fatal]\033[0m ", log.LstdFlags|log.Lshortfile)
