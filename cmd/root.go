@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	config "alsritter.icu/middlebaby/internal/config"
+	config "alsritter.icu/middlebaby/internal/file/config"
 )
 
 var (

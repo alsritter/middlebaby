@@ -19,11 +19,13 @@ func (h *httpDirectHandler) IsHit(r *http.Request) bool {
 }
 
 func (h *httpDirectHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	// forwarding the HTTPS
 	if r.Method == http.MethodConnect {
 		handleTunneling(rw, r)
 		return
 	}
 
+	// forwarding the HTTP
 	p := httputil.ReverseProxy{}
 	// prevent the proxy from coming back into this method again.
 	p.Transport = &http.Transport{

@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"alsritter.icu/middlebaby/internal/common"
+	"alsritter.icu/middlebaby/internal/file/common"
 )
 
 func TestImposterHandler(t *testing.T) {
@@ -25,7 +25,7 @@ func TestImposterHandler(t *testing.T) {
 	var headers = make(map[string]string)
 	headers["Content-Type"] = "application/json"
 
-	validRequest := common.Request{
+	validRequest := common.HttpRequest{
 		Method:  "POST",
 		Headers: headers,
 	}
@@ -38,7 +38,7 @@ func TestImposterHandler(t *testing.T) {
 		expectedBody string
 		statusCode   int
 	}{
-		{"valid imposter with body", common.HttpImposter{Request: validRequest, Response: common.Response{Status: http.StatusOK, Headers: headers, Body: body}}, body, http.StatusOK},
+		{"valid imposter with body", common.HttpImposter{Request: validRequest, Response: common.HttpResponse{Status: http.StatusOK, Headers: headers, Body: body}}, body, http.StatusOK},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -3,7 +3,7 @@ package proxy
 import (
 	"sync"
 
-	"alsritter.icu/middlebaby/internal/common"
+	"alsritter.icu/middlebaby/internal/file/common"
 )
 
 type MockCenter interface {

@@ -4,9 +4,10 @@ import (
 	http "net/http"
 	"net/url"
 
-	"alsritter.icu/middlebaby/internal/common"
-	"alsritter.icu/middlebaby/internal/config"
+	"alsritter.icu/middlebaby/internal/file/common"
+	"alsritter.icu/middlebaby/internal/file/config"
 	"alsritter.icu/middlebaby/internal/log"
+	"alsritter.icu/middlebaby/internal/utils"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -20,7 +21,7 @@ type httpImposterHandler struct {
 
 func NewHttpImposterHandler(imposters []common.HttpImposter, CORS config.ConfigCORS) *httpImposterHandler {
 	router := mux.NewRouter()
-	handlers.CORS(common.PrepareAccessControl(CORS)...)(router)
+	handlers.CORS(utils.PrepareAccessControl(CORS)...)(router)
 
 	h := &httpImposterHandler{router: router, imposters: imposters}
 	h.addImposterHandler()

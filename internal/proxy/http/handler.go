@@ -5,7 +5,7 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"alsritter.icu/middlebaby/internal/common"
+	"alsritter.icu/middlebaby/internal/file/common"
 	"alsritter.icu/middlebaby/internal/log"
 )
 

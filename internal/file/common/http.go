@@ -7,8 +7,8 @@ import (
 
 // Imposter define an imposter structure
 type HttpImposter struct {
-	Request  Request  `json:"request"`
-	Response Response `json:"response"`
+	Request  HttpRequest  `json:"request"`
+	Response HttpResponse `json:"response"`
 }
 
 // Delay returns delay for response that user can specify in imposter config
@@ -16,16 +16,16 @@ func (i *HttpImposter) Delay() time.Duration {
 	return i.Response.Delay.GetDelay()
 }
 
-// Request represent the structure of real request
-type Request struct {
+// HttpRequest represent the structure of real request
+type HttpRequest struct {
 	Method  string            `json:"method"`
 	Url     string            `json:"url"`
 	Headers map[string]string `json:"headers"`
 	Params  map[string]string `json:"params"`
 }
 
-// Response represent the structure of real response
-type Response struct {
+// HttpResponse represent the structure of real response
+type HttpResponse struct {
 	Status  int               `json:"status"`
 	Headers map[string]string `json:"headers"`
 	Body    string            `json:"body"`

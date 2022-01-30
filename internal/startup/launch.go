@@ -5,7 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"alsritter.icu/middlebaby/internal/config"
+	"alsritter.icu/middlebaby/internal/file/config"
 	"alsritter.icu/middlebaby/internal/log"
 	"golang.org/x/sync/errgroup"
 )

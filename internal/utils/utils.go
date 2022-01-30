@@ -1,7 +1,7 @@
-package common
+package utils
 
 import (
-	"alsritter.icu/middlebaby/internal/config"
+	"alsritter.icu/middlebaby/internal/file/config"
 	"github.com/gorilla/handlers"
 )
 
