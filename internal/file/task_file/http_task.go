@@ -3,13 +3,14 @@ package task_file
 import "net/url"
 
 type HttpTask struct {
-	*HttpServiceInfo
+	*HttpTaskInfo
 	Cases []*HttpTaskCase `json:"cases"`
 	*InterfaceOperator
 }
 
-type HttpServiceInfo struct {
+type HttpTaskInfo struct {
 	ServiceName        string `json:"serviceName"`
+	ServiceMethod      string `json:"serviceMethod"` // example: GET POST PUT....
 	ServiceDescription string `json:"ServiceDescription"`
 	ServiceURL         string `json:"serviceURL"`
 }

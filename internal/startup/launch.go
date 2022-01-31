@@ -32,7 +32,8 @@ func template(appPath string, config *config.Config) {
 		close(done)
 	}()
 
-	env := NewRunEnv(config, appPath)
+	// TODO: add flag
+	env := NewRunEnv(config, appPath, "http://127.0.0.9876", true)
 
 	trg := NewTargetProcess(env)
 	srv := NewMockServe(env)

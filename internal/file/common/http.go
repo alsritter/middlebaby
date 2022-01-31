@@ -7,6 +7,7 @@ import (
 
 // Imposter define an imposter structure
 type HttpImposter struct {
+	Id       string       `json:"-"`
 	Request  HttpRequest  `json:"request"`
 	Response HttpResponse `json:"response"`
 }

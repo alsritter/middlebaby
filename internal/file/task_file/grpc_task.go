@@ -3,12 +3,12 @@ package task_file
 import "net/url"
 
 type GRpcTask struct {
-	*HttpServiceInfo
+	*GRpcTaskInfo
 	Cases []*HttpTaskCase `json:"cases"`
 	*InterfaceOperator
 }
 
-type GRpcServiceInfo struct {
+type GRpcTaskInfo struct {
 	ServiceName        string `json:"serviceName"`
 	ServiceDescription string `json:"ServiceDescription"`
 	ServiceProtoFile   string `json:"serviceProtoFile"`

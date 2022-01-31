@@ -1,6 +1,8 @@
 package task_file
 
-import "alsritter.icu/middlebaby/internal/file/common"
+import (
+	"alsritter.icu/middlebaby/internal/file/common"
+)
 
 type SetUp struct {
 	Mysql []string

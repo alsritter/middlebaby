@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 
 	"alsritter.icu/middlebaby/internal/file/common"
-	"alsritter.icu/middlebaby/internal/file/config"
 	"alsritter.icu/middlebaby/internal/log"
 	"alsritter.icu/middlebaby/internal/proxy"
 	proxy_http "alsritter.icu/middlebaby/internal/proxy/http"
@@ -54,12 +53,12 @@ func (m *MockServe) watcher() {
 		return
 	}
 
-	w, err := config.InitializeWatcher(m.env.GetConfig().HttpFiles...)
+	w, err := common.InitializeWatcher(m.env.GetConfig().HttpFiles...)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	config.AttachWatcher(w, func(evn watcher.Event) {
+	common.AttachWatcher(w, func(evn watcher.Event) {
 		loadImposter(evn.Path, m.imposters)
 
 		if err := m.Shutdown(); err != nil {

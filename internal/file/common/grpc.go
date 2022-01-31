@@ -3,6 +3,7 @@ package common
 // TODO: fill in the details.
 
 type GRpcImposter struct {
+	Id       string       `json:"-"`
 	Request  GRpcRequest  `json:"request"`
 	Response GRpcResponse `json:"response"`
 }
