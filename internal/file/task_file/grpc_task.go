@@ -9,6 +9,7 @@ type GRpcTask struct {
 }
 
 type GRpcTaskInfo struct {
+	DirName            string `json:"-"`
 	ServiceName        string `json:"serviceName"`
 	ServiceDescription string `json:"ServiceDescription"`
 	ServiceProtoFile   string `json:"serviceProtoFile"`

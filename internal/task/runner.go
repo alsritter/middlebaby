@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/proxy"
-	"alsritter.icu/middlebaby/internal/startup/plugin"
 	"go.elastic.co/apm"
 	"google.golang.org/grpc/metadata"
 )
@@ -33,13 +31,6 @@ type Runner interface {
 	Clone() Runner
 	// The current Runner uniquely id.
 	RunID() string
-}
-
-type TaskRunner interface {
-	// Run execution test case.
-	Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner Runner) error
-	// Add a new case runner.
-	Add(TaskRunner) error
 }
 
 type RedisRunner interface {

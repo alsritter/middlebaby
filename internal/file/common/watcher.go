@@ -15,6 +15,7 @@ func InitializeWatcher(pathToWatch ...string) (*watcher.Watcher, error) {
 	w.SetMaxEvents(1)
 	w.FilterOps(watcher.Rename, watcher.Move, watcher.Create, watcher.Write)
 
+	// add file or directory.
 	for _, file := range pathToWatch {
 		if err := w.AddRecursive(file); err != nil {
 			return nil, fmt.Errorf("%w: error trying to watch change on %s directory", err, pathToWatch)

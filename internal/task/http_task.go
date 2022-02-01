@@ -7,19 +7,19 @@ import (
 	"alsritter.icu/middlebaby/internal/startup/plugin"
 )
 
-// an interface under test is tested.
-type TargetTask struct {
-	// name of the interface to be tested.
-	TargetInterfaceName string
-	// all test cases for the current interface
-	TaskCaseList []*TaskCase
-}
+// // an interface under test is tested.
+// type TargetTask struct {
+// 	// name of the interface to be tested.
+// 	TargetInterfaceName string
+// 	// all test cases for the current interface
+// 	TaskCaseList []*TaskCase
+// }
 
-type TaskCase struct {
-	CaseName string
-}
+// type TaskCase struct {
+// 	CaseName string
+// }
 
-type HttpTaskCase struct {
+type httpTaskCase struct {
 	testCase          task_file.HttpTaskCase
 	httpServiceInfo   task_file.HttpTaskInfo
 	runner            Runner
@@ -28,7 +28,27 @@ type HttpTaskCase struct {
 	interfaceOperator task_file.InterfaceOperator
 }
 
-func (r *HttpTaskCase) runSetUp() error {
+// return a httpTaskCase.
+func NewHttpTaskCase(
+	testCase task_file.HttpTaskCase,
+	serverInfo task_file.HttpTaskInfo,
+	runner Runner,
+	mockCenter proxy.MockCenter,
+	env plugin.Env,
+	interfaceOperator task_file.InterfaceOperator,
+) *httpTaskCase {
+
+	return &httpTaskCase{
+		testCase:          testCase,
+		httpServiceInfo:   serverInfo,
+		runner:            runner,
+		mockCenter:        mockCenter,
+		env:               env,
+		interfaceOperator: interfaceOperator,
+	}
+}
+
+func (r *httpTaskCase) runSetUp() error {
 	// run a case level setup first.
 	if err := RunSetUp(r.testCase.SetUp, r.mockCenter, r.runner); err != nil {
 		log.Error("run a case level setup error: ", err)
@@ -43,7 +63,7 @@ func (r *HttpTaskCase) runSetUp() error {
 	return nil
 }
 
-func (r *HttpTaskCase) runTearDown() error {
+func (r *httpTaskCase) runTearDown() error {
 	// run a case level teardown first.
 	if err := RunTearDown(r.testCase.TearDown, r.mockCenter, r.runner); err != nil {
 		log.Error("run a case level teardown error: ", err)
@@ -59,7 +79,7 @@ func (r *HttpTaskCase) runTearDown() error {
 	return nil
 }
 
-func (r *HttpTaskCase) Run() (err error) {
+func (r *httpTaskCase) Run() (err error) {
 	defer func() {
 		if r.env.GetMustRunTearDown() || err == nil {
 			if tearDownErr := r.runTearDown(); tearDownErr != nil {
