@@ -23,8 +23,6 @@ func (g *GRpcTaskRunner) Run(caseName string, env plugin.Env, mockCenter proxy.M
 	return nil
 }
 
-func (g *GRpcTaskRunner) SetTestCaseDirName(dirName string) {
-	for _, httpTask := range g.list {
-		httpTask.DirName = dirName
-	}
+func (g *GRpcTaskRunner) GetTaskCaseTree() []*TaskCaseTree {
+	return nil
 }

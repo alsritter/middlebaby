@@ -5,6 +5,9 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
+
+	"alsritter.icu/middlebaby/internal/event"
 )
 
 // log levels
@@ -28,11 +31,11 @@ func init() {
 
 var (
 	traceLog = log.New(os.Stderr, "\033[45m[trace]\033[0m ", log.LstdFlags|log.Lshortfile)
-	debugLog = log.New(os.Stdout, "\033[46m[debug]\033[0m ", log.LstdFlags)
+	debugLog = log.New(os.Stdout, "\033[36m[debug]\033[0m ", log.LstdFlags)
 	warnLog  = log.New(os.Stdout, "\033[43m[warn]\033[0m ", log.LstdFlags)
-	errorLog = log.New(os.Stderr, "\033[31m[error]\033[0m ", log.LstdFlags|log.Lshortfile)
+	errorLog = log.New(os.Stderr, "\033[41m[error]\033[0m ", log.LstdFlags|log.Lshortfile)
 	infoLog  = log.New(os.Stdout, "\033[34m[info ]\033[0m ", log.LstdFlags|log.Lshortfile)
-	fatalLog = log.New(os.Stdout, "\033[1;37;41m[fatal]\033[0m ", log.LstdFlags|log.Lshortfile)
+	fatalLog = log.New(os.Stderr, "\033[1;37;41m[fatal]\033[0m ", log.LstdFlags|log.Lshortfile)
 	loggers  = []*log.Logger{traceLog, errorLog, infoLog, debugLog, warnLog}
 	levelMap map[string]int
 	mu       sync.Mutex
@@ -57,8 +60,8 @@ var (
 	Warn  = warnLog.Print
 	Warnf = warnLog.Printf
 
-	Fatal  = fatalLog.Fatal  // call to os.Exit(1).
-	Fatalf = fatalLog.Fatalf // call to os.Exit(1).
+	Fatal  = printFatal()  // call to os.Exit(1).
+	Fatalf = printFatalf() // call to os.Exit(1).
 )
 
 func SetLevel(levelStr string) {
@@ -99,4 +102,28 @@ func SetLevel(levelStr string) {
 
 func GetCurrentLevel() int {
 	return currentLevel
+}
+
+// TODO: need close all child process.
+func printFatal() func(v ...interface{}) {
+	return func(v ...interface{}) {
+		fatalLog.Println(v...)
+		kill()
+	}
+}
+
+func printFatalf() func(format string, v ...interface{}) {
+	return func(format string, v ...interface{}) {
+		fatalLog.Printf(format, v...)
+		kill()
+	}
+}
+
+func kill() {
+	defer func() {
+		time.Sleep(1 * time.Second)
+		os.Exit(1)
+	}()
+
+	event.Bus.Publish(event.CLOSE)
 }

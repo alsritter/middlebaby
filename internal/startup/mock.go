@@ -21,17 +21,17 @@ import (
 )
 
 type MockServe struct {
-	env       plugin.Env
-	server    *http.Server
-	imposters map[string][]common.HttpImposter
+	env        plugin.Env
+	server     *http.Server
+	mockCenter proxy.MockCenter
 }
 
 // return a MockServe Builder.
-func NewMockServe(env plugin.Env) *MockServe {
+func NewMockServe(env plugin.Env, mockCenter proxy.MockCenter) *MockServe {
 	mock := &MockServe{
-		env:       env,
-		imposters: make(map[string][]common.HttpImposter),
-		server:    &http.Server{},
+		env:        env,
+		mockCenter: mockCenter,
+		server:     &http.Server{},
 	}
 
 	mock.loadImposter()
@@ -42,9 +42,8 @@ func NewMockServe(env plugin.Env) *MockServe {
 
 func (m *MockServe) loadImposter() {
 	for _, filePath := range m.env.GetConfig().HttpFiles {
-		loadImposter(filePath, m.imposters)
+		loadImposter(filePath, m.mockCenter)
 	}
-
 }
 
 //Initialize and start the file watcher if the watcher option is true
@@ -59,8 +58,7 @@ func (m *MockServe) watcher() {
 	}
 
 	common.AttachWatcher(w, func(evn watcher.Event) {
-		loadImposter(evn.Path, m.imposters)
-
+		loadImposter(evn.Path, m.mockCenter)
 		if err := m.Shutdown(); err != nil {
 			log.Fatal(err)
 		}
@@ -109,13 +107,15 @@ func (m *MockServe) Shutdown() error {
 
 func (m *MockServe) setupProxy() http.Handler {
 	h := proxy.NewMockList(m.env.GetConfig().EnableDirect)
-	h.AddProxy(proxy_http.NewHttpImposterHandler(mapToSlice(m.imposters), m.env.GetConfig().CORS))
+	h.AddProxy(proxy_http.NewHttpImposterHandler(m.mockCenter, m.env.GetConfig().CORS))
 	h.AddDirect(proxy_http.NewHttpDirectHandler())
 	return h
 }
 
 // loading single http file to imposter
-func loadImposter(filePath string, imposters map[string][]common.HttpImposter) {
+func loadImposter(filePath string, mockCenter proxy.MockCenter) {
+	mockCenter.UnLoadAllGlobalHttp()
+
 	if !filepath.IsAbs(filePath) {
 		if fp, err := filepath.Abs(filePath); err != nil {
 			log.Errorf("to absolute representation path err: %s", err)
@@ -137,13 +137,5 @@ func loadImposter(filePath string, imposters map[string][]common.HttpImposter) {
 		log.Errorf("%w: error while unmarshal configFile file %s", err, filePath)
 	}
 
-	imposters[filePath] = imposter
-}
-
-func mapToSlice(m map[string][]common.HttpImposter) []common.HttpImposter {
-	s := make([]common.HttpImposter, 0, len(m))
-	for _, v := range m {
-		s = append(s, v...)
-	}
-	return s
+	mockCenter.AddGlobalHttp(imposter...)
 }

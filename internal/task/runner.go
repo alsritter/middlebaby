@@ -99,7 +99,7 @@ func (c *runner) Http(reqUrl, method string, query url.Values, header map[string
 	}
 
 	out, _ := httputil.DumpRequest(request, true)
-	log.Debug(out)
+	log.Debug(string(out))
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, 0, "", fmt.Errorf("request execution failed, error %w by %s", err, reqUrl)

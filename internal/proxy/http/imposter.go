@@ -4,9 +4,9 @@ import (
 	http "net/http"
 	"net/url"
 
-	"alsritter.icu/middlebaby/internal/file/common"
 	"alsritter.icu/middlebaby/internal/file/config"
 	"alsritter.icu/middlebaby/internal/log"
+	"alsritter.icu/middlebaby/internal/proxy"
 	"alsritter.icu/middlebaby/internal/utils"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -15,15 +15,15 @@ import (
 var routeMatch = &mux.RouteMatch{}
 
 type httpImposterHandler struct {
-	router    *mux.Router
-	imposters []common.HttpImposter
+	router     *mux.Router
+	mockCenter proxy.MockCenter
 }
 
-func NewHttpImposterHandler(imposters []common.HttpImposter, CORS config.ConfigCORS) *httpImposterHandler {
+func NewHttpImposterHandler(mockCenter proxy.MockCenter, CORS config.ConfigCORS) *httpImposterHandler {
 	router := mux.NewRouter()
 	handlers.CORS(utils.PrepareAccessControl(CORS)...)(router)
 
-	h := &httpImposterHandler{router: router, imposters: imposters}
+	h := &httpImposterHandler{router: router, mockCenter: mockCenter}
 	h.addImposterHandler()
 	h.printRouter()
 
@@ -41,7 +41,7 @@ func (h *httpImposterHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 // Register proxy request to Router.
 // It will match: "path", "host", "method", "params".
 func (h *httpImposterHandler) addImposterHandler() {
-	for _, imposter := range h.imposters {
+	for _, imposter := range h.mockCenter.GetAllHttp() {
 		url, err := url.Parse(imposter.Request.Url)
 		if err != nil {
 			log.Error(err)

@@ -24,18 +24,21 @@ const (
 	TestCaseTypeGRpc TestCaseType = "grpc"
 )
 
+// represents a TaskName and all cases under it.
+type TaskCaseTree struct {
+	InterfaceName string   // Task Name(Interface Name)
+	CaseList      []string // Case Names
+}
+
+// grpc or http runner interface.
 type ITaskRunner interface {
 	// Run execution test case.
 	Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner Runner) error
-	// set the owning directory of all current cases
-	SetTestCaseDirName(dirName string)
+	// Get All Task and the Task's Cases
+	GetTaskCaseTree() []*TaskCaseTree
 }
 
 type TaskService struct {
-	// the default test case suffix name. example: ".case.json"
-	fileSuffix string
-	// path in the configuration file.
-	cfgFilePaths []string
 	// all test case files. (file absolute path)
 	taskFiles []string
 	// all test case directory. (absolute path)
@@ -51,19 +54,20 @@ type TaskService struct {
 }
 
 // return a TaskService
-func NewTaskService(fileSuffix string, cfgFilePaths []string, env plugin.Env) (*TaskService, error) {
-	cs := new(TaskService)
-	cs.fileSuffix = fileSuffix
-	cs.cfgFilePaths = cfgFilePaths
-	cs.env = env
-	cs.taskRunners = make(map[TestCaseType]ITaskRunner)
-	return cs, cs.init()
+func NewTaskService(env plugin.Env, mockCenter proxy.MockCenter, runner Runner) (*TaskService, error) {
+	ts := new(TaskService)
+	ts.env = env
+	ts.taskRunners = make(map[TestCaseType]ITaskRunner)
+	ts.mockCenter = mockCenter
+	ts.runner = runner
+
+	return ts, ts.init()
 }
 
 // loading task files and watcher these files modification.
 func (t *TaskService) init() error {
 	// find the absolute file path in cfgFilePaths.
-	for _, filePath := range t.cfgFilePaths {
+	for _, filePath := range t.env.GetConfig().CaseFiles {
 		matches, err := filepath.Glob(filePath)
 		if err != nil {
 			return fmt.Errorf("find file %s error: %w", filePath, err)
@@ -80,12 +84,12 @@ func (t *TaskService) init() error {
 	}
 
 	// no test case and no file suffix set
-	if len(t.taskFiles) == 0 && t.fileSuffix == "" {
+	if len(t.taskFiles) == 0 && t.env.GetConfig().TaskFileSuffix == "" {
 		return fmt.Errorf("no test case files were found")
 	}
 
 	// because maybe the cfgFilePaths is the directory path, so we need to find the directory path.
-	if t.fileSuffix != "" {
+	if t.env.GetConfig().TaskFileSuffix != "" {
 		// If a directory exists, find all directory files.
 		for _, filePath := range t.taskFiles {
 			dirPath := filepath.Dir(filePath)
@@ -101,9 +105,12 @@ func (t *TaskService) init() error {
 		return err
 	}
 
-	if err := t.watchFiles(); err != nil {
-		return err
+	if t.env.GetConfig().Watcher {
+		if err := t.watchFiles(); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -133,6 +140,9 @@ func (t *TaskService) addTestCaseDir(dir string) {
 
 // read all case files
 func (t *TaskService) readTaskCaseFiles() error {
+	var httpTaskList []*task_file.HttpTask
+	var grpcTaskList []*task_file.GRpcTask
+
 	for _, file := range t.taskFiles {
 		fb, err := ioutil.ReadFile(file)
 		if errors.Is(err, os.ErrNotExist) {
@@ -149,68 +159,76 @@ func (t *TaskService) readTaskCaseFiles() error {
 			continue
 		}
 
-		testCaseRunner, err := t.unmarshal(testCaseType, fb)
-		if err != nil {
-			return fmt.Errorf("serialization file: %s error: %w", file, err)
-		}
+		if testCaseType == TestCaseTypeHTTP {
+			if tk, err := t.unmarshalHttp(fb); err != nil {
+				log.Errorf("serialization file: %s error: %w \n", file, err)
+				continue
+			} else {
+				httpTaskList = append(httpTaskList, tk)
+			}
+		} else if testCaseType == TestCaseTypeGRpc {
+			if tk, err := t.unmarshalGrpc(fb); err != nil {
+				log.Errorf("serialization file: %s error: %w \n", file, err)
+				continue
+			} else {
+				grpcTaskList = append(grpcTaskList, tk)
+			}
 
-		testCaseRunner.SetTestCaseDirName(filepath.Base(filepath.Dir(file)))
-		if _, ok := t.taskRunners[testCaseType]; !ok {
-			t.taskRunners[testCaseType] = testCaseRunner
+		} else {
+			log.Error("unknown service type: ", testCaseType)
+			continue
 		}
 	}
+
+	t.taskRunners[TestCaseTypeGRpc] = newGRpcTaskRunner(grpcTaskList)
+	t.taskRunners[TestCaseTypeHTTP] = newHttpTaskRunner(httpTaskList)
+	log.Trace("loading all task file.")
 	return nil
 }
 
-// unmarshal task file.
-func (t *TaskService) unmarshal(testCaseType TestCaseType, testCaseFileByte []byte) (ITaskRunner, error) {
-	switch testCaseType {
-	case TestCaseTypeHTTP:
-		var list []*task_file.HttpTask
-		if err := json5.Unmarshal(testCaseFileByte, &list); err != nil {
-			return nil, fmt.Errorf("serialization HTTP task file error: %w", err)
-		}
-		return newHttpTaskRunner(list), nil
-
-	case TestCaseTypeGRpc:
-		var list []*task_file.GRpcTask
-		if err := json5.Unmarshal(testCaseFileByte, &list); err != nil {
-			return nil, fmt.Errorf("serialization GRPC task file error: %w", err)
-		}
-		return newGRpcTaskRunner(list), nil
+// unmarshal http task file.
+func (t *TaskService) unmarshalHttp(testCaseFileByte []byte) (*task_file.HttpTask, error) {
+	var httpTask task_file.HttpTask
+	if err := json5.Unmarshal(testCaseFileByte, &httpTask); err != nil {
+		return nil, fmt.Errorf("serialization HTTP task file error: %w", err)
 	}
 
-	return nil, fmt.Errorf("unknown service type: %s ", testCaseType)
+	log.Tracef("%#v \n", httpTask)
+
+	return &httpTask, nil
+}
+
+// unmarshal grpc task file.
+func (t *TaskService) unmarshalGrpc(testCaseFileByte []byte) (*task_file.GRpcTask, error) {
+	var grpcTask task_file.GRpcTask
+	if err := json5.Unmarshal(testCaseFileByte, &grpcTask); err != nil {
+		return nil, fmt.Errorf("serialization GRPC task file error: %w", err)
+	}
+	return &grpcTask, nil
 }
 
 // get task file type.
 func (t *TaskService) getTestCaseType(fileByte []byte) (TestCaseType, error) {
-	type ServiceTypeList struct {
+	type ServiceType struct {
 		ServiceType string `json:"serviceType"`
 	}
 
 	// there can be multiple tasks in a file, so needs use slice save they.
-	serviceTypeList := make([]*ServiceTypeList, 0)
-	if err := json5.Unmarshal(fileByte, &serviceTypeList); err != nil {
+	var serviceType ServiceType
+	if err := json5.Unmarshal(fileByte, &serviceType); err != nil {
 		return "", fmt.Errorf("unmarshal task file error: %#v", err)
 	}
 
 	var uniqType = make(map[TestCaseType]bool)
 	var testCaseType TestCaseType
 
-	for _, serviceType := range serviceTypeList {
-		testCaseType = TestCaseType(strings.ToLower(serviceType.ServiceType))
-		switch testCaseType {
-		case TestCaseTypeHTTP, TestCaseTypeGRpc:
-		default:
-			testCaseType = TestCaseTypeGRpc
-		}
-		uniqType[testCaseType] = true
+	testCaseType = TestCaseType(strings.ToLower(serviceType.ServiceType))
+	switch testCaseType {
+	case TestCaseTypeHTTP, TestCaseTypeGRpc:
+	default:
+		testCaseType = TestCaseTypeGRpc
 	}
-
-	if len(uniqType) > 1 {
-		return "", fmt.Errorf("multiple service types are not supported in a single file")
-	}
+	uniqType[testCaseType] = true
 
 	// there is no service in this file
 	if testCaseType == "" {
@@ -234,7 +252,7 @@ func (t *TaskService) watchFiles() error {
 		log.Trace("listening file event is triggered: ", event)
 		// If it is a file creation event, It is added to the listener
 		if event.Op == watcher.Create {
-			if t.fileSuffix != "" && strings.HasSuffix(event.Name(), t.fileSuffix) {
+			if t.env.GetConfig().TaskFileSuffix != "" && strings.HasSuffix(event.Name(), t.env.GetConfig().TaskFileSuffix) {
 				fi, err := os.Stat(event.Name())
 				// if you created a directory.
 				if err == nil && fi.IsDir() {
@@ -264,16 +282,6 @@ func (t *TaskService) watchFiles() error {
 
 func (t *TaskService) removeAllServices() {
 	t.taskRunners = make(map[TestCaseType]ITaskRunner)
-}
-
-// SetRunner
-func (t *TaskService) SetRunner(runner Runner) {
-	t.runner = runner
-}
-
-// SetMockCenter
-func (t *TaskService) SetMockCenter(mockCenter proxy.MockCenter) {
-	t.mockCenter = mockCenter
 }
 
 // Run specified case

@@ -20,6 +20,8 @@ type MockCenter interface {
 	GetAllHttp() []common.HttpImposter
 	// unload mock all of a Case
 	UnLoadAllHttp()
+	// unload mock all global of a Case
+	UnLoadAllGlobalHttp()
 	// unload mock specified
 	UnLoadHttp(uniqID string)
 	// unload the mock with Id in httpIdList
@@ -103,6 +105,13 @@ func (m *mockCenter) GetAllHttp() (ret []common.HttpImposter) {
 // unload mock all of a Case
 func (m *mockCenter) UnLoadAllHttp() {
 	m.httpMock = make(map[string][]common.HttpImposter)
+}
+
+// unload mock all global of a Case
+func (m *mockCenter) UnLoadAllGlobalHttp() {
+	m.Lock()
+	defer m.Unlock()
+	m.httpMock[globalHttpID] = make([]common.HttpImposter, 0)
 }
 
 // unload mock specified

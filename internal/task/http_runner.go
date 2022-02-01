@@ -55,18 +55,37 @@ out:
 		}
 	}
 
+	log.Trace(testCase, serverInfo, interfaceOperator)
+
 	if testCase == nil {
 		return fmt.Errorf("no test case found")
+	}
+
+	if serverInfo == nil {
+		return fmt.Errorf("no serverInfo found")
+	}
+
+	if interfaceOperator == nil {
+		log.Warn("no interfaceOperator found")
+		interfaceOperator = &task_file.InterfaceOperator{}
 	}
 
 	runCase := NewHttpTaskCase(*testCase, *serverInfo, runner, mockCenter, env, *interfaceOperator)
 	return runCase.Run()
 }
 
-func (h *HttpTaskRunner) SetTestCaseDirName(dirName string) {
-	for _, httpTask := range h.list {
-		httpTask.DirName = dirName
+func (h *HttpTaskRunner) GetTaskCaseTree() []*TaskCaseTree {
+	var tree []*TaskCaseTree
+	for _, service := range h.list {
+		t := &TaskCaseTree{CaseList: make([]string, 0, len(service.Cases))}
+		t.InterfaceName = service.HttpTaskInfo.ServiceName
+		for _, testCase := range service.Cases {
+			t.CaseList = append(t.CaseList, testCase.Name)
+		}
+
+		tree = append(tree, t)
 	}
+	return tree
 }
 
 func (h *HttpTaskRunner) addList(list []*task_file.HttpTask) error {

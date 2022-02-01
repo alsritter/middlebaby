@@ -9,10 +9,9 @@ type HttpTask struct {
 }
 
 type HttpTaskInfo struct {
-	DirName            string `json:"-"`
 	ServiceName        string `json:"serviceName"`
 	ServiceMethod      string `json:"serviceMethod"` // example: GET POST PUT....
-	ServiceDescription string `json:"ServiceDescription"`
+	ServiceDescription string `json:"serviceDescription"`
 	ServiceURL         string `json:"serviceURL"`
 }
 

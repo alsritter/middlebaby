@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
+	"strconv"
+	"syscall"
 
+	"alsritter.icu/middlebaby/internal/event"
 	"alsritter.icu/middlebaby/internal/log"
 	"alsritter.icu/middlebaby/internal/startup/plugin"
 )
@@ -46,6 +50,13 @@ func (t *TargetProcess) Run() error {
 	// TODO: add filter support
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
+	command.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+
+	event.Bus.Subscribe(event.CLOSE, func() {
+		if err := kill(command); err != nil {
+			log.Error("kill error: ", err)
+		}
+	})
 
 	if err := command.Run(); err != nil {
 		if _, isExist := err.(*exec.ExitError); !isExist {
@@ -54,5 +65,27 @@ func (t *TargetProcess) Run() error {
 	}
 
 	os.Exit(0)
+	return nil
+}
+
+// end child process
+// reference: https://stackoverflow.com/questions/22470193/why-wont-go-kill-a-child-process-correctly
+func kill(cmd *exec.Cmd) error {
+	k := func() error {
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
+
+	switch runtime.GOOS {
+	case "darwin":
+		return k()
+	case "linux":
+		return k()
+	case "windows":
+		kill := exec.Command("TASKKILL", "/T", "/F", "/PID", strconv.Itoa(cmd.Process.Pid))
+		kill.Stderr = os.Stderr
+		kill.Stdout = os.Stdout
+		return kill.Run()
+	}
+
 	return nil
 }
