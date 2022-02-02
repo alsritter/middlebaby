@@ -74,7 +74,7 @@ watcher: true
 # whether the missed mock allows real requests
 enableDirect: true
 # Set the suffix name of your Task file
-taskFileSuffix: "case.json" # eg: test.case.json
+taskFileSuffix: "case.json" # e.g., test.case.json
 cors: 
   methods: ["GET"]
   headers: ["Content-Type"]

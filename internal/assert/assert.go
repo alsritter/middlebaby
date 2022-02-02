@@ -38,7 +38,10 @@ func (e *AssertError) Error() string {
 		bf.WriteString(" error: " + e.Err.Error())
 	}
 
-	bf.WriteString(fmt.Sprintf(" expected return value: %v actual return value: %v", e.Expected, e.Actual))
+	bf.WriteString(fmt.Sprintf(`
+		expected return value: "%v" 
+		actual return value: "%v"
+	`, e.Expected, e.Actual))
 	if e.FieldName != "" {
 		bf.WriteString(fmt.Sprintf(" wrong field: %s", e.FieldName))
 	}
@@ -57,6 +60,12 @@ type Assert struct {
 
 func NewAssert(assertType string, actual interface{}, expected interface{}) *Assert {
 	return &Assert{assertType: assertType, actual: actual, expected: expected}
+}
+
+// an entry function for an assertion
+func (a *Assert) assert() error {
+	a.before()
+	return a.so(a.assertType, a.actual, a.expected)
 }
 
 // convert the expected and actual values to JSON
@@ -166,10 +175,14 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 		if expectedRv.Bool() != actualRv.Bool() {
 			return retErrFun(nil)
 		}
+	// In the case of structures, you need to recurse to the last level of base elements and compare them.
+	// The following arrays and maps are also recursive.
 	case reflect.Struct:
 		numField := expectedRv.Type().NumField()
 		for i := 0; i < numField; i++ {
+			// get all field.
 			name := expectedRv.Type().Field(i).Name
+			// recursion
 			if err := a.so(a.appendFieldName(fieldName, name), actualRv.FieldByName(name).Interface(), expectedRv.FieldByName(name).Interface()); err != nil {
 				return err
 			}
@@ -177,6 +190,7 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 	case reflect.Map:
 		expectKeys := expectedRv.MapKeys()
 		for _, keyVal := range expectKeys {
+			// most functions and methods never return an invalid Value.
 			if !actualRv.MapIndex(keyVal).IsValid() {
 				fieldName = fmt.Sprintf("%v", keyVal.Interface())
 				return retErrFun(ErrorMapKeyInvalided)
@@ -200,9 +214,4 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 		return retErrFun(fmt.Errorf("%w %s != %s", ErrorUnKnownType, actualRv.Type().String(), expectedRv.Type().String()))
 	}
 	return nil
-}
-
-func (a *Assert) assert() error {
-	a.before()
-	return a.so(a.assertType, a.actual, a.expected)
 }

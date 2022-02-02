@@ -32,9 +32,9 @@ func init() {
 var (
 	traceLog = log.New(os.Stderr, "\033[45m[trace]\033[0m ", log.LstdFlags|log.Lshortfile)
 	debugLog = log.New(os.Stdout, "\033[36m[debug]\033[0m ", log.LstdFlags)
+	infoLog  = log.New(os.Stdout, "\033[34m[info ]\033[0m ", log.LstdFlags)
 	warnLog  = log.New(os.Stdout, "\033[43m[warn]\033[0m ", log.LstdFlags)
-	errorLog = log.New(os.Stderr, "\033[41m[error]\033[0m ", log.LstdFlags|log.Lshortfile)
-	infoLog  = log.New(os.Stdout, "\033[34m[info ]\033[0m ", log.LstdFlags|log.Lshortfile)
+	errorLog = log.New(os.Stderr, "\033[41m[error]\033[0m ", log.LstdFlags)
 	fatalLog = log.New(os.Stderr, "\033[1;37;41m[fatal]\033[0m ", log.LstdFlags|log.Lshortfile)
 	loggers  = []*log.Logger{traceLog, errorLog, infoLog, debugLog, warnLog}
 	levelMap map[string]int

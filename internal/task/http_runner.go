@@ -55,8 +55,6 @@ out:
 		}
 	}
 
-	log.Trace(testCase, serverInfo, interfaceOperator)
-
 	if testCase == nil {
 		return fmt.Errorf("no test case found")
 	}

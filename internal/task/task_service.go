@@ -182,7 +182,7 @@ func (t *TaskService) readTaskCaseFiles() error {
 
 	t.taskRunners[TestCaseTypeGRpc] = newGRpcTaskRunner(grpcTaskList)
 	t.taskRunners[TestCaseTypeHTTP] = newHttpTaskRunner(httpTaskList)
-	log.Trace("loading all task file.")
+	log.Info("loading all task file, total: ", len(grpcTaskList)+len(httpTaskList))
 	return nil
 }
 
@@ -192,9 +192,6 @@ func (t *TaskService) unmarshalHttp(testCaseFileByte []byte) (*task_file.HttpTas
 	if err := json5.Unmarshal(testCaseFileByte, &httpTask); err != nil {
 		return nil, fmt.Errorf("serialization HTTP task file error: %w", err)
 	}
-
-	log.Tracef("%#v \n", httpTask)
-
 	return &httpTask, nil
 }
 

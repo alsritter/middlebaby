@@ -127,6 +127,7 @@ func (c *runner) Clone() Runner {
 
 // The current Runner uniquely id.
 func (c *runner) RunID() string {
+	// e.g., 00000000000000000000000000000000
 	return c.traceContext.Trace.String()
 }
 
