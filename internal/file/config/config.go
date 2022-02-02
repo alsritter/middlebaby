@@ -1,9 +1,5 @@
 package config
 
-type Mock struct {
-	Port int32
-}
-
 // Config representation of config file yaml
 type Config struct {
 	HttpFiles      []string   `yaml:"httpFiles"`      // http mock file.

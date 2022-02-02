@@ -62,6 +62,8 @@ func RunMySQLAssert(m task_file.MysqlAssert, runner Runner) error {
 			return err
 		} else if len(result) <= 0 {
 			return fmt.Errorf("no result is found: %s", sqlAssert.Actual)
+
+			// this result[0] returns a map
 		} else if err := assert.So("MySQL data assert", result[0], sqlAssert.Expected); err != nil {
 			return err
 		}
