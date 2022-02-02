@@ -16,7 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"alsritter.icu/middlebaby/internal/startup"
+	"github.com/alsritter/middlebaby/internal/startup"
 	"github.com/spf13/cobra"
 )
 

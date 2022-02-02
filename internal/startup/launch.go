@@ -6,10 +6,10 @@ import (
 	"syscall"
 	"time"
 
-	"alsritter.icu/middlebaby/internal/event"
-	"alsritter.icu/middlebaby/internal/file/config"
-	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/proxy"
+	"github.com/alsritter/middlebaby/internal/event"
+	"github.com/alsritter/middlebaby/internal/file/config"
+	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/proxy"
 	"golang.org/x/sync/errgroup"
 )
 

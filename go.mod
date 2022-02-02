@@ -1,4 +1,4 @@
-module alsritter.icu/middlebaby
+module github.com/alsritter/middlebaby
 
 go 1.16
 

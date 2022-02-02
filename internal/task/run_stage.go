@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"alsritter.icu/middlebaby/internal/assert"
-	"alsritter.icu/middlebaby/internal/file/task_file"
-	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/proxy"
+	"github.com/alsritter/middlebaby/internal/assert"
+	"github.com/alsritter/middlebaby/internal/file/task_file"
+	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/proxy"
 )
 
 // setup run

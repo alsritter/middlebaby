@@ -4,10 +4,10 @@ import (
 	http "net/http"
 	"net/url"
 
-	"alsritter.icu/middlebaby/internal/file/config"
-	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/proxy"
-	"alsritter.icu/middlebaby/internal/utils"
+	"github.com/alsritter/middlebaby/internal/file/config"
+	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/proxy"
+	"github.com/alsritter/middlebaby/internal/utils"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )

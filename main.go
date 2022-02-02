@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "alsritter.icu/middlebaby/cmd"
+import "github.com/alsritter/middlebaby/cmd"
 
 func main() {
 	cmd.Execute()

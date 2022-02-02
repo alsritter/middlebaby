@@ -1,6 +1,6 @@
 package startup
 
-import "alsritter.icu/middlebaby/internal/file/config"
+import "github.com/alsritter/middlebaby/internal/file/config"
 
 type runEnv struct {
 	config           *config.Config

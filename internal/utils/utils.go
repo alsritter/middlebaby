@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"alsritter.icu/middlebaby/internal/file/config"
+	"github.com/alsritter/middlebaby/internal/file/config"
 	"github.com/gorilla/handlers"
 )
 

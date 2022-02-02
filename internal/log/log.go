@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"alsritter.icu/middlebaby/internal/event"
+	"github.com/alsritter/middlebaby/internal/event"
 )
 
 // log levels

@@ -3,7 +3,7 @@ package proxy
 import (
 	"net/http"
 
-	"alsritter.icu/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/log"
 )
 
 type Proxy interface {

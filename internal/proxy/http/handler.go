@@ -5,8 +5,8 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"alsritter.icu/middlebaby/internal/file/common"
-	"alsritter.icu/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/file/common"
+	"github.com/alsritter/middlebaby/internal/log"
 )
 
 // ImposterHandler create specific handler for the received imposter

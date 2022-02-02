@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"alsritter.icu/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/log"
 	"go.elastic.co/apm"
 	"google.golang.org/grpc/metadata"
 )

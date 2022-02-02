@@ -16,13 +16,13 @@ limitations under the License.
 package cmd
 
 import (
-	"alsritter.icu/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/log"
 
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
 
-	config "alsritter.icu/middlebaby/internal/file/config"
+	config "github.com/alsritter/middlebaby/internal/file/config"
 )
 
 var (

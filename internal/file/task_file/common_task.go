@@ -1,7 +1,7 @@
 package task_file
 
 import (
-	"alsritter.icu/middlebaby/internal/file/common"
+	"github.com/alsritter/middlebaby/internal/file/common"
 )
 
 type SetUp struct {

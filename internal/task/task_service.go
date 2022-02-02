@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"alsritter.icu/middlebaby/internal/file/common"
-	"alsritter.icu/middlebaby/internal/file/task_file"
-	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/proxy"
-	"alsritter.icu/middlebaby/internal/startup/plugin"
+	"github.com/alsritter/middlebaby/internal/file/common"
+	"github.com/alsritter/middlebaby/internal/file/task_file"
+	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/proxy"
+	"github.com/alsritter/middlebaby/internal/startup/plugin"
 	"github.com/flynn/json5"
 	"github.com/radovskyb/watcher"
 )

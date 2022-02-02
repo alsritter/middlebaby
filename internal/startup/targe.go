@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"syscall"
 
-	"alsritter.icu/middlebaby/internal/event"
-	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/startup/plugin"
+	"github.com/alsritter/middlebaby/internal/event"
+	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/startup/plugin"
 )
 
 type TargetProcess struct {

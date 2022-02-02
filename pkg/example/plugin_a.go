@@ -1,7 +1,7 @@
 package example
 
 import (
-	"alsritter.icu/middlebaby/pkg/plugin"
+	"github.com/alsritter/middlebaby/pkg/plugin"
 )
 
 type PluginA struct{}

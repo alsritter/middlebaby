@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"alsritter.icu/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/go-redis/redis"
 )
 

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"alsritter.icu/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/log"
 )
 
 // So Verify that the input value is consistent with the expected value

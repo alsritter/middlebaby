@@ -3,7 +3,7 @@ package proxy
 import (
 	"sync"
 
-	"alsritter.icu/middlebaby/internal/file/common"
+	"github.com/alsritter/middlebaby/internal/file/common"
 )
 
 // save all type mock.

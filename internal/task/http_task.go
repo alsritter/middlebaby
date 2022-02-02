@@ -1,10 +1,10 @@
 package task
 
 import (
-	"alsritter.icu/middlebaby/internal/file/task_file"
-	"alsritter.icu/middlebaby/internal/log"
-	"alsritter.icu/middlebaby/internal/proxy"
-	"alsritter.icu/middlebaby/internal/startup/plugin"
+	"github.com/alsritter/middlebaby/internal/file/task_file"
+	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/proxy"
+	"github.com/alsritter/middlebaby/internal/startup/plugin"
 )
 
 // // an interface under test is tested.

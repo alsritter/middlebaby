@@ -1,7 +1,7 @@
 package task
 
 import (
-	"alsritter.icu/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/internal/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )

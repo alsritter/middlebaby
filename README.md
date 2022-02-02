@@ -24,7 +24,7 @@ Middlebaby provides:
 Since it is built using Golang, so you can easily install it using `go get`
 
 ```sh
-go install alsritter.icu/middlebaby
+go install github.com/alsritter/middlebaby
 ```
 
 ## Using Middlebaby from the command line
