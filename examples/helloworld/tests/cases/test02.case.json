@@ -1,0 +1,78 @@
+{
+  "serviceType": "http",
+  "serviceMethod": "GET",
+  "serviceURL": "http://localhost:8011/sql",
+  "serviceDescription": "This is the second test service",
+  "serviceName": "Test SQL",
+  "setup": {
+    "mysql": [],
+    "redis": [],
+    "http": []
+  },
+  "teardown": {
+    "mysql": [],
+    "redis": []
+  },
+  "cases": [
+    {
+      "name": "successfully",
+      "setup": {
+        "mysql": [
+          "INSERT INTO `users` (`id`, `name`) values (1, 'Alice')"
+        ],
+        "redis": [],
+        "http": []
+      },
+      "request": {
+        "header": {},
+        "data": {}
+      },
+      "assert": {
+        "response": {},
+        "mysql": [
+          {
+            "actual": "SELECT * FROM `users` WHERE id = 1",
+            "expected": "{\"id\": 1, \"name\":\"John\"}"
+          }
+        ],
+        "redis": []
+      },
+      "teardown": {
+        "mysql": [
+          "DELETE FROM `users` WHERE id = 1"
+        ],
+        "redis": []
+      }
+    },
+    {
+      "name": "fail",
+      "setup": {
+        "mysql": [
+          "INSERT INTO `users` (`id`, `name`) values (1, 'Alice')"
+        ],
+        "redis": [],
+        "http": []
+      },
+      "request": {
+        "header": {},
+        "data": {}
+      },
+      "assert": {
+        "response": {},
+        "mysql": [
+          {
+            "actual": "SELECT * FROM `users` WHERE id = 1",
+            "expected": "{\"id\": 1, \"name\":\"Alice\"}"
+          }
+        ],
+        "redis": []
+      },
+      "teardown": {
+        "mysql": [
+          "DELETE FROM `users` WHERE id = 1"
+        ],
+        "redis": []
+      }
+    }
+  ]
+}

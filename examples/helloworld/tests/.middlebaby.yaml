@@ -1,0 +1,28 @@
+port: 7689 # proxy port
+httpFiles:
+  - ./tests/http.mock.json
+watcher: true
+enableDirect: true
+taskFileSuffix: "case.json" # test.case.json
+cors:
+  methods: ["GET"]
+  headers: ["Content-Type"]
+  exposed_headers: ["Cache-Control"]
+  origins: ["*"]
+  allow_credentials: true
+storage:
+  mysql:
+    port: "3306"
+    host: "127.0.0.1"
+    database: "test_mb"
+    username: "root"
+    password: "123456"
+    local: "Asia/Shanghai"
+    charset: "utf8mb4"
+  redis:
+    port: "6379"
+    host: "127.0.0.1"
+    auth: "123456"
+    db: 0
+caseFiles:
+  - "./tests/cases/*.case.json"

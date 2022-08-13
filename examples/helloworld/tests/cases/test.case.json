@@ -1,0 +1,45 @@
+{
+  "serviceType": "http",
+  "serviceMethod": "GET",
+  "serviceURL": "http://localhost:8011/example",
+  "serviceDescription": "This is the first test service",
+  "serviceName": "Test access to the Mock's external service",
+  "setup": {
+    "mysql": [],
+    "redis": [],
+    "http": []
+  },
+  "teardown": {
+    "mysql": [],
+    "redis": []
+  },
+  "cases": [
+    {
+      "name": "first case",
+      "setup": {
+        "mysql": [],
+        "redis": [],
+        "http": []
+      },
+      "request": {
+        "header": {},
+        "data": {}
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "John",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "mysql": [],
+        "redis": []
+      },
+      "teardown": {
+        "mysql": [],
+        "redis": []
+      }
+    }
+  ]
+}

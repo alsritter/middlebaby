@@ -1,0 +1,44 @@
+{
+  "serviceType": "http",
+  "serviceMethod": "GET",
+  "serviceURL": "http://localhost:8011/add",
+  "serviceDescription": "This is the fourth test service",
+  "serviceName": "Test parameter",
+  "setup": {
+    "mysql": [],
+    "redis": [],
+    "http": []
+  },
+  "teardown": {
+    "mysql": [],
+    "redis": []
+  },
+  "cases": [
+    {
+      "name": "successfully sum",
+      "setup": {
+        "mysql": [],
+        "redis": [],
+        "http": []
+      },
+      "request": {
+        "header": {},
+        "query": {
+          "a": ["1"],
+          "b": ["3"]
+        }
+      },
+      "assert": {
+        "response": {
+          "data" : "sum: 4"
+        },
+        "mysql": [],
+        "redis": []
+      },
+      "teardown": {
+        "mysql": [],
+        "redis": []
+      }
+    }
+  ]
+}

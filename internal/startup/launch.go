@@ -17,7 +17,7 @@ func Startup(appPath string, config *config.Config) {
 	template(appPath, config)
 }
 
-func template(appPath string, config *config.Config) {
+func template(appPath string, cfg *config.Config) {
 	group := new(errgroup.Group)
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
@@ -37,7 +37,7 @@ func template(appPath string, config *config.Config) {
 	}()
 
 	// TODO: add flag
-	env := NewRunEnv(config, appPath, "http://127.0.0.1:9876", true)
+	env := NewRunEnv(cfg, appPath, "http://127.0.0.1:9876", true)
 	mockCenter := proxy.NewMockCenter()
 	trg := NewTargetProcess(env)
 	srv := NewMockServe(env, mockCenter)

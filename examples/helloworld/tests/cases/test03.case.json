@@ -1,0 +1,46 @@
+{
+  "serviceType": "http",
+  "serviceMethod": "GET",
+  "serviceURL": "http://localhost:8011/redis",
+  "serviceDescription": "This is the third test service",
+  "serviceName": "Test Redis",
+  "setup": {
+    "mysql": [],
+    "redis": [],
+    "http": []
+  },
+  "teardown": {
+    "mysql": [],
+    "redis": [
+      "DEL Name"
+    ]
+  },
+  "cases": [
+    {
+      "name": "successfully find redis",
+      "setup": {
+        "mysql": [],
+        "redis": [],
+        "http": []
+      },
+      "request": {
+        "header": {},
+        "data": {}
+      },
+      "assert": {
+        "response": {},
+        "mysql": [],
+        "redis": [
+          {
+            "actual": "GET Name",
+            "expected": "John"
+          }
+        ]
+      },
+      "teardown": {
+        "mysql": [],
+        "redis": []
+      }
+    }
+  ]
+}
