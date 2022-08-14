@@ -14,3 +14,15 @@ type Provider interface {
 type Manager struct {
 	MockCenter
 }
+
+func New() Provider {
+	return &Manager{}
+}
+
+func (m *Manager) Start() error {
+
+}
+
+func (m *Manager) MockResponse(ctx context.Context, request *http.Request) (*interact.GRpcResponse, error) {
+
+}

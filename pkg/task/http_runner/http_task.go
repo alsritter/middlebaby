@@ -4,8 +4,9 @@ import (
 	"github.com/alsritter/middlebaby/internal/file/task_file"
 	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
-	"github.com/alsritter/middlebaby/pkg/proxy"
+	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/task"
+	"github.com/alsritter/middlebaby/pkg/util"
 )
 
 // // an interface under test is tested.
@@ -24,7 +25,7 @@ type httpTaskCase struct {
 	testCase          task_file.HttpTaskCase
 	httpServiceInfo   task_file.HttpTaskInfo
 	runner            task.Runner
-	mockCenter        proxy.MockCenter
+	mockCenter        apimanager.MockCenter
 	env               plugin.Env
 	interfaceOperator task_file.InterfaceOperator
 }
@@ -34,7 +35,7 @@ func NewHttpTaskCase(
 	testCase task_file.HttpTaskCase,
 	serverInfo task_file.HttpTaskInfo,
 	runner task.Runner,
-	mockCenter proxy.MockCenter,
+	mockCenter apimanager.MockCenter,
 	env plugin.Env,
 	interfaceOperator task_file.InterfaceOperator,
 ) *httpTaskCase {
@@ -51,13 +52,13 @@ func NewHttpTaskCase(
 
 func (r *httpTaskCase) runSetUp() error {
 	// run a case level setup first.
-	if err := task.RunSetUp(r.testCase.SetUp, r.mockCenter, r.runner); err != nil {
+	if err := util.RunSetUp(r.testCase.SetUp, r.mockCenter, r.runner); err != nil {
 		log.Error("run a case level setup error: ", err)
 		return err
 	}
 
 	// then run the interface level setup.
-	if err := task.RunSetUp(r.interfaceOperator.SetUp, r.mockCenter, r.runner); err != nil {
+	if err := util.RunSetUp(r.interfaceOperator.SetUp, r.mockCenter, r.runner); err != nil {
 		log.Error("run the interface level setup error: ", err)
 		return err
 	}
@@ -66,13 +67,13 @@ func (r *httpTaskCase) runSetUp() error {
 
 func (r *httpTaskCase) runTearDown() error {
 	// run a case level teardown first.
-	if err := task.RunTearDown(r.testCase.TearDown, r.mockCenter, r.runner); err != nil {
+	if err := util.RunTearDown(r.testCase.TearDown, r.mockCenter, r.runner); err != nil {
 		log.Error("run a case level teardown error: ", err)
 		return err
 	}
 
 	// then run the interface level teardown.
-	if err := task.RunTearDown(r.interfaceOperator.TearDown, r.mockCenter, r.runner); err != nil {
+	if err := util.RunTearDown(r.interfaceOperator.TearDown, r.mockCenter, r.runner); err != nil {
 		log.Error("run a interface level teardown error: ", err)
 		return err
 	}
@@ -107,7 +108,7 @@ func (r *httpTaskCase) Run() (err error) {
 	}
 
 	// assert
-	if err := RunHttpAssert(r.testCase.Assert, responseHeader, statusCode, responseBody, r.runner); err != nil {
+	if err := util.RunHttpAssert(r.testCase.Assert, responseHeader, statusCode, responseBody, r.runner); err != nil {
 		return err
 	}
 

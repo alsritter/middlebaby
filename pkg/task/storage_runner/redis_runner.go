@@ -1,4 +1,4 @@
-package task
+package storage_runner
 
 import (
 	"fmt"
@@ -6,14 +6,15 @@ import (
 	"strings"
 
 	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/pkg/task"
 	"github.com/go-redis/redis"
 )
 
-var _ (RedisRunner) = (*redisInstance)(nil)
-var _ (RedisRunner) = (*defaultRedisInstance)(nil)
+var _ (task.RedisRunner) = (*redisInstance)(nil)
+var _ (task.RedisRunner) = (*defaultRedisInstance)(nil)
 
 // return a redis runner.
-func NewRedisRunner(redisClient *redis.Client) RedisRunner {
+func NewRedisRunner(redisClient *redis.Client) task.RedisRunner {
 	if redisClient == nil {
 		return &defaultRedisInstance{}
 	}

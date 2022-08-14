@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/alsritter/middlebaby/internal/file/common"
-	"github.com/alsritter/middlebaby/internal/file/task_file"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
-	"github.com/alsritter/middlebaby/pkg/proxy"
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/task/task_file"
 	"github.com/flynn/json5"
 	"github.com/radovskyb/watcher"
 )
@@ -33,7 +33,7 @@ func newRunner(env plugin.Env) task.Runner {
 	if err != nil {
 		log.Error("Failed to connect to the Redis:", err.Error())
 	}
-	runner, err := task.NewRunner(task.NewMysqlRunner(db), task.NewRedisRunner(redisPool))
+	runner, err := NewRunner(storage.NewMysqlRunner(db), task.NewRedisRunner(redisPool))
 	if err != nil {
 		log.Fatal("Failed to initialize the running environment:", err)
 	}
@@ -49,7 +49,7 @@ type TaskCaseTree struct {
 // grpc or http runner interface.
 type ITaskRunner interface {
 	// Run execution test case.
-	Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner Runner) error
+	Run(caseName string, env plugin.Env, mockCenter apimanager.MockCenter, runner Runner) error
 	// Get All Task and the Task's Cases
 	GetTaskCaseTree() []*TaskCaseTree
 }
@@ -62,7 +62,7 @@ type TaskService struct {
 	// provides an interface for use case execution.
 	runner Runner
 	// mock center
-	mockCenter proxy.MockCenter
+	mockCenter apimanager.MockCenter
 	// configuration information required by the service.
 	env plugin.Env
 	// save all task runner
@@ -70,7 +70,7 @@ type TaskService struct {
 }
 
 // return a TaskService
-func NewTaskService(env plugin.Env, mockCenter proxy.MockCenter, runner Runner) (*TaskService, error) {
+func NewTaskService(env plugin.Env, mockCenter apimanager.MockCenter, runner Runner) (*TaskService, error) {
 	ts := new(TaskService)
 	ts.env = env
 	ts.taskRunners = make(map[TestCaseType]ITaskRunner)
