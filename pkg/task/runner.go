@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"go.elastic.co/apm"
 	"google.golang.org/grpc/metadata"
 )
 
-var _ (Runner) = (*runner)(nil)
+var _ (Runner) = (*defaultRunnerInstance)(nil)
 
 // runner group
 type Runner interface {
@@ -41,35 +41,37 @@ type MysqlRunner interface {
 	Run(sql string) (result []map[string]interface{}, err error)
 }
 
-type runner struct {
+type defaultRunnerInstance struct {
 	mysqlRunner  MysqlRunner
 	redisRunner  RedisRunner
 	traceContext apm.TraceContext // generate a trace id.
+	log          logger.Logger
 }
 
 // return a runner.
-func NewRunner(mysqlRunner MysqlRunner, redisRunner RedisRunner) (Runner, error) {
-	return &runner{
+func NewRunner(mysqlRunner MysqlRunner, redisRunner RedisRunner, log logger.Logger) (Runner, error) {
+	return &defaultRunnerInstance{
 		mysqlRunner: mysqlRunner,
 		redisRunner: redisRunner,
+		log:         log,
 	}, nil
 }
 
-func (c *runner) MySQL(sql string) (result []map[string]interface{}, err error) {
+func (c *defaultRunnerInstance) MySQL(sql string) (result []map[string]interface{}, err error) {
 	return c.mysqlRunner.Run(sql)
 }
 
-func (c *runner) Redis(cmd string) (res interface{}, err error) {
+func (c *defaultRunnerInstance) Redis(cmd string) (res interface{}, err error) {
 	return c.redisRunner.Run(cmd)
 }
 
 // TODO: do something....
-func (c *runner) GRpc(serviceProtoFile, serviceMethod, appServeAddr string, protoPaths []string, reqHeader map[string]string, reqBody interface{}) (md metadata.MD, body interface{}, err error) {
+func (c *defaultRunnerInstance) GRpc(serviceProtoFile, serviceMethod, appServeAddr string, protoPaths []string, reqHeader map[string]string, reqBody interface{}) (md metadata.MD, body interface{}, err error) {
 	return
 }
 
 // Http request.
-func (c *runner) Http(reqUrl, method string, query url.Values, header map[string]string, body interface{}) (http.Header, int, string, error) {
+func (c *defaultRunnerInstance) Http(reqUrl, method string, query url.Values, header map[string]string, body interface{}) (http.Header, int, string, error) {
 	parseUrl, err := url.Parse(reqUrl)
 	if err != nil {
 		return nil, 0, "", fmt.Errorf("error formatting request address: %s error: %w", reqUrl, err)
@@ -99,7 +101,7 @@ func (c *runner) Http(reqUrl, method string, query url.Values, header map[string
 	}
 
 	out, _ := httputil.DumpRequest(request, true)
-	log.Debug(string(out))
+	c.log.Debug(nil, string(out))
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, 0, "", fmt.Errorf("request execution failed, error %w by %s", err, reqUrl)
@@ -118,7 +120,7 @@ func (c *runner) Http(reqUrl, method string, query url.Values, header map[string
 }
 
 // generate a new trace id.
-func (c *runner) Clone() Runner {
+func (c *defaultRunnerInstance) Clone() Runner {
 	traceContext := apm.DefaultTracer.StartTransaction("middlebaby", "test").TraceContext()
 	cn := *c
 	cn.traceContext = traceContext
@@ -126,13 +128,13 @@ func (c *runner) Clone() Runner {
 }
 
 // The current Runner uniquely id.
-func (c *runner) RunID() string {
+func (c *defaultRunnerInstance) RunID() string {
 	// e.g., 00000000000000000000000000000000
 	return c.traceContext.Trace.String()
 }
 
 // request data to json string.
-func (c *runner) toStrBody(reqBody interface{}) (string, error) {
+func (c *defaultRunnerInstance) toStrBody(reqBody interface{}) (string, error) {
 	var reqBodyStr string
 	reqBodyStr, ok := reqBody.(string)
 	if !ok {

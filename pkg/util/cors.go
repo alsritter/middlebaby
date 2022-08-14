@@ -1,4 +1,4 @@
-package utils
+package util
 
 import (
 	"github.com/alsritter/middlebaby/internal/file/config"

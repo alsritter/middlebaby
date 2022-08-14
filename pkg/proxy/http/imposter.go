@@ -6,8 +6,8 @@ import (
 
 	"github.com/alsritter/middlebaby/internal/file/config"
 	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/internal/proxy"
-	"github.com/alsritter/middlebaby/internal/utils"
+	"github.com/alsritter/middlebaby/pkg/proxy"
+	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -21,7 +21,7 @@ type httpImposterHandler struct {
 
 func NewHttpImposterHandler(mockCenter proxy.MockCenter, CORS config.ConfigCORS) *httpImposterHandler {
 	router := mux.NewRouter()
-	handlers.CORS(utils.PrepareAccessControl(CORS)...)(router)
+	handlers.CORS(util.PrepareAccessControl(CORS)...)(router)
 
 	h := &httpImposterHandler{router: router, mockCenter: mockCenter}
 	h.addImposterHandler()

@@ -16,13 +16,13 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/alsritter/middlebaby/internal/log"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/spf13/viper"
-
 	config "github.com/alsritter/middlebaby/internal/file/config"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -31,11 +31,30 @@ var (
 	flagApp  string
 )
 
+const (
+	asciiImage = `
+	------------------------------------
+              _     __    ____     __          __         
+   ____ ___  (_)___/ /___/ / /__  / /_  ____ _/ /_  __  __
+  / __ '__ \/ / __  / __  / / _ \/ __ \/ __ '/ __ \/ / / /
+ / / / / / / / /_/ / /_/ / /  __/ /_/ / /_/ / /_/ / /_/ / 
+/_/ /_/ /_/_/\__,_/\__,_/_/\___/_.___/\__,_/_.___/\__, /  
+                                                 /____/   
+	------------------------------------
+	Powered by: alsritter
+	`
+)
+
 var (
 	rootCmd = &cobra.Command{
-		Use:   "middlebaby",
-		Short: "a Mock server tool.",
-		Long:  `a Mock server tool.`,
+		Use:     "middlebaby",
+		Short:   "middlebaby",
+		Long:    `a Mock server tool.`,
+		Version: "",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(asciiImage)
+			_ = cmd.Help()
+		},
 	}
 
 	GlobalConfigVar config.Config
@@ -55,9 +74,14 @@ func Execute() {
 }
 
 func initConfig() {
-	// set log level.
-	log.SetLevel(logLevel)
+	logCfg := logger.NewConfig()
+	logCfg.Level = logLevel
+	log, err := logger.New(logCfg, "init config")
+	if err != nil {
+		panic(err)
+	}
 
+	// set log level.
 	if cfgFile != "" {
 		// use --config specifies the path to the configuration file.
 		viper.SetConfigFile(cfgFile)
@@ -68,12 +92,12 @@ func initConfig() {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("Failed to read the configuration file.")
+		log.Fatal(nil, "Failed to read the configuration file.")
 	} else {
-		log.Debugf("Configuration file to use: %s", viper.ConfigFileUsed())
+		log.Debug(nil, "Configuration file to use: %s", viper.ConfigFileUsed())
 	}
 
 	if err := viper.Unmarshal(&GlobalConfigVar); err != nil {
-		log.Fatalf("failed to serialize configuration file to structure: %s", err.Error())
+		log.Fatal(nil, "failed to serialize configuration file to structure: %s", err.Error())
 	}
 }

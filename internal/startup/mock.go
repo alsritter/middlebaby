@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 
 	"github.com/alsritter/middlebaby/internal/file/common"
-	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/internal/proxy"
-	proxy_http "github.com/alsritter/middlebaby/internal/proxy/http"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
+	"github.com/alsritter/middlebaby/pkg/proxy"
+	proxy_http "github.com/alsritter/middlebaby/pkg/proxy/http"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/radovskyb/watcher"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -24,14 +24,16 @@ type MockServe struct {
 	env        plugin.Env
 	server     *http.Server
 	mockCenter proxy.MockCenter
+	log        logger.Logger
 }
 
 // return a MockServe Builder.
-func NewMockServe(env plugin.Env, mockCenter proxy.MockCenter) *MockServe {
+func NewMockServe(env plugin.Env, mockCenter proxy.MockCenter, log logger.Logger) *MockServe {
 	mock := &MockServe{
 		env:        env,
 		mockCenter: mockCenter,
 		server:     &http.Server{},
+		log:        log,
 	}
 
 	mock.loadImposter()
@@ -42,7 +44,7 @@ func NewMockServe(env plugin.Env, mockCenter proxy.MockCenter) *MockServe {
 
 func (m *MockServe) loadImposter() {
 	for _, filePath := range m.env.GetConfig().HttpFiles {
-		loadImposter(filePath, m.mockCenter)
+		m.loadSingleImposter(filePath, m.mockCenter)
 	}
 }
 
@@ -54,13 +56,13 @@ func (m *MockServe) watcher() {
 
 	w, err := common.InitializeWatcher(m.env.GetConfig().HttpFiles...)
 	if err != nil {
-		log.Fatal(err)
+		m.log.Fatal(nil, "error:", err)
 	}
 
 	common.AttachWatcher(w, func(evn watcher.Event) {
-		loadImposter(evn.Path, m.mockCenter)
-		if err := m.Shutdown(); err != nil {
-			log.Fatal(err)
+		m.loadSingleImposter(evn.Path, m.mockCenter)
+		if err := m.Close(); err != nil {
+			m.log.Fatal(nil, "error:", err)
 		}
 
 		m.Run()
@@ -70,36 +72,34 @@ func (m *MockServe) watcher() {
 func (m *MockServe) Run() error {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", m.env.GetConfig().Port))
 	if err != nil {
-		log.Errorf("failed to listen the port: %d, err: %v", m.env.GetConfig().Port, err)
-		return err
+		return fmt.Errorf("failed to listen the port: %d, err: %v", m.env.GetConfig().Port, err)
 	}
 
 	// call ServeHTTP function handle request.
 	// support HTTP2.0 with h2c package.
 	m.server.Handler = h2c.NewHandler(m.setupProxy(), &http2.Server{})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := http2.ConfigureServer(m.server, &http2.Server{}); err != nil {
-		log.Fatal("proxy http2 error: ", err)
+		return fmt.Errorf("proxy http2 error: ", err)
 	}
 
 	if err := m.server.Serve(l); err != nil {
 		if err.Error() != "http: Server closed" {
-			log.Error("failed to start the proxy server: ", err)
-			return err
+			return fmt.Errorf("failed to start the proxy server: ", err)
 		}
 	}
 
 	return nil
 }
 
-// shutdown shutdown the current http server
-func (m *MockServe) Shutdown() error {
-	log.Info("stopping server...")
+// Close shutdown the current http server
+func (m *MockServe) Close() error {
+	m.log.Info(nil, "stopping server...")
 	if err := m.server.Shutdown(context.TODO()); err != nil {
-		log.Fatalf("server Shutdown failed:%+v", err)
+		return fmt.Errorf("server Shutdown failed:%+v", err)
 	}
 
 	return nil
@@ -113,12 +113,12 @@ func (m *MockServe) setupProxy() http.Handler {
 }
 
 // loading single http file to imposter
-func loadImposter(filePath string, mockCenter proxy.MockCenter) {
+func (m *MockServe) loadSingleImposter(filePath string, mockCenter proxy.MockCenter) {
 	mockCenter.UnLoadAllGlobalHttp()
 
 	if !filepath.IsAbs(filePath) {
 		if fp, err := filepath.Abs(filePath); err != nil {
-			log.Errorf("to absolute representation path err: %s", err)
+			m.log.Error(nil, "to absolute representation path err: %s", err)
 			return
 		} else {
 			filePath = fp
@@ -127,14 +127,14 @@ func loadImposter(filePath string, mockCenter proxy.MockCenter) {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		log.Errorf("%w: error trying to read config file: %s", err, filePath)
+		m.log.Error(nil, "%w: error trying to read config file: %s", err, filePath)
 	}
 	defer file.Close()
 	bytes, _ := ioutil.ReadAll(file)
 
 	var imposter []common.HttpImposter
 	if err := json.Unmarshal(bytes, &imposter); err != nil {
-		log.Errorf("%w: error while unmarshal configFile file %s", err, filePath)
+		m.log.Error(nil, "%w: error while unmarshal configFile file %s", err, filePath)
 	}
 
 	mockCenter.AddGlobalHttp(imposter...)

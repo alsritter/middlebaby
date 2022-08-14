@@ -1,17 +1,18 @@
-package task
+package util
 
 import (
 	"fmt"
 	"net/http"
 
-	"github.com/alsritter/middlebaby/internal/assert"
 	"github.com/alsritter/middlebaby/internal/file/task_file"
 	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/internal/proxy"
+	"github.com/alsritter/middlebaby/pkg/proxy"
+	"github.com/alsritter/middlebaby/pkg/task"
+	"github.com/alsritter/middlebaby/pkg/util/assert"
 )
 
 // setup run
-func RunSetUp(s task_file.SetUp, mockCenter proxy.MockCenter, runner Runner) error {
+func RunSetUp(s task_file.SetUp, mockCenter proxy.MockCenter, runner task.Runner) error {
 	for _, sql := range s.Mysql {
 		if _, err := runner.MySQL(sql); err != nil {
 			return fmt.Errorf("execution SetUp.Mysql error: %w", err)
@@ -56,7 +57,7 @@ func RunSetUp(s task_file.SetUp, mockCenter proxy.MockCenter, runner Runner) err
 }
 
 // run mysql assert.
-func RunMySQLAssert(m task_file.MysqlAssert, runner Runner) error {
+func RunMySQLAssert(m task_file.MysqlAssert, runner task.Runner) error {
 	for _, sqlAssert := range m {
 		if result, err := runner.MySQL(sqlAssert.Actual); err != nil {
 			return err
@@ -72,7 +73,7 @@ func RunMySQLAssert(m task_file.MysqlAssert, runner Runner) error {
 }
 
 // run redis assert.
-func RunRedisAssert(r task_file.RedisAssert, runner Runner) error {
+func RunRedisAssert(r task_file.RedisAssert, runner task.Runner) error {
 	for _, redisAssert := range r {
 		if result, err := runner.Redis(redisAssert.Actual); err != nil {
 			return err
@@ -84,7 +85,7 @@ func RunRedisAssert(r task_file.RedisAssert, runner Runner) error {
 }
 
 // run http assert.
-func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCode int, responseBody string, runner Runner) error {
+func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCode int, responseBody string, runner task.Runner) error {
 	log.Debugf("response message: %v %v %v %v \n", responseHeader, responseBody, statusCode, a.Response.Data)
 	if a.Response.StatusCode != 0 {
 		if err := assert.So("response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
@@ -117,7 +118,7 @@ func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCod
 }
 
 // run tearDown.
-func RunTearDown(t task_file.TearDown, mockCenter proxy.MockCenter, runner Runner) error {
+func RunTearDown(t task_file.TearDown, mockCenter proxy.MockCenter, runner task.Runner) error {
 	// when the task is complete, empty the mock for the current case.
 	mockCenter.UnLoadHttp(runner.RunID())
 	mockCenter.UnLoadGRpc(runner.RunID())

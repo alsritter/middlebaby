@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/alsritter/middlebaby/internal/proto"
+	"github.com/alsritter/middlebaby/pkg/util/proto"
 )
 
 type Serve interface {

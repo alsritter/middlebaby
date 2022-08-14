@@ -10,9 +10,8 @@ import (
 
 	"github.com/alsritter/middlebaby/internal/file/common"
 	"github.com/alsritter/middlebaby/internal/file/task_file"
-	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/internal/proxy"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
+	"github.com/alsritter/middlebaby/pkg/proxy"
 	"github.com/flynn/json5"
 	"github.com/radovskyb/watcher"
 )
@@ -23,6 +22,23 @@ const (
 	TestCaseTypeHTTP TestCaseType = "http"
 	TestCaseTypeGRpc TestCaseType = "grpc"
 )
+
+func newRunner(env plugin.Env) task.Runner {
+	db, err := getMysqlCon(env)
+	if err != nil {
+		log.Error("Failed to connect to the MySQL database:", err.Error())
+	}
+
+	redisPool, err := getRedisCon(env)
+	if err != nil {
+		log.Error("Failed to connect to the Redis:", err.Error())
+	}
+	runner, err := task.NewRunner(task.NewMysqlRunner(db), task.NewRedisRunner(redisPool))
+	if err != nil {
+		log.Fatal("Failed to initialize the running environment:", err)
+	}
+	return runner
+}
 
 // represents a TaskName and all cases under it.
 type TaskCaseTree struct {

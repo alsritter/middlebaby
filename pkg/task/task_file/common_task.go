@@ -1,14 +1,14 @@
 package task_file
 
 import (
-	"github.com/alsritter/middlebaby/internal/file/common"
+	"github.com/alsritter/middlebaby/pkg/interact"
 )
 
 type SetUp struct {
 	Mysql []string
 	Redis []string
-	HTTP  []common.HttpImposter
-	GRpc  []common.GRpcImposter
+	HTTP  []interact.HttpImposter
+	GRpc  []interact.GRpcImposter
 }
 
 type CommonAssert struct {

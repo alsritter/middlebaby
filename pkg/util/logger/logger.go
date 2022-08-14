@@ -13,6 +13,8 @@ import (
 
 // Logger defines the basic log library implementation
 type Logger interface {
+	// Trace print a message with trace level.
+	Trace(fields map[string]interface{}, format string, args ...interface{})
 	// Debug print a message with debug level.
 	Debug(fields map[string]interface{}, format string, args ...interface{})
 	// Info print a message with info level.
@@ -23,10 +25,13 @@ type Logger interface {
 	Error(fields map[string]interface{}, format string, args ...interface{})
 	// Fatal print a message with fatal level.
 	Fatal(fields map[string]interface{}, format string, args ...interface{})
+
 	// NewLogger is used to derive a new child Logger
 	NewLogger(component string) Logger
 	// SetLogLevel is used to set log level
 	SetLogLevel(verbosity string)
+
+	GetCurrentLevel() string
 }
 
 // Config defines the config structure
@@ -99,6 +104,11 @@ func (b *BasicLogger) setup() {
 }
 
 // LogDebug print a message with debug level.
+func (b *BasicLogger) Trace(fields map[string]interface{}, format string, args ...interface{}) {
+	b.logger.Trace().Fields(fields).Msgf(format, args...)
+}
+
+// LogDebug print a message with debug level.
 func (b *BasicLogger) Debug(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Debug().Fields(fields).Msgf(format, args...)
 }
@@ -137,6 +147,10 @@ func (b *BasicLogger) SetLogLevel(verbosity string) {
 	case "fatal":
 		b.logger.Level(zerolog.FatalLevel)
 	}
+}
+
+func (b *BasicLogger) GetCurrentLevel() string {
+	return b.cfg.Level
 }
 
 // CallerHook implements zerolog.Hook interface.

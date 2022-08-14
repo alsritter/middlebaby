@@ -5,11 +5,12 @@ import (
 
 	"github.com/alsritter/middlebaby/internal/file/task_file"
 	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/internal/proxy"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
+	"github.com/alsritter/middlebaby/pkg/proxy"
+	"github.com/alsritter/middlebaby/pkg/task"
 )
 
-var _ (ITaskRunner) = (*HttpTaskRunner)(nil)
+var _ (task.ITaskRunner) = (*HttpTaskRunner)(nil)
 
 // save all HTTP task.
 // a runner contains multiple interface (task == interface)
@@ -20,7 +21,7 @@ type HttpTaskRunner struct {
 	InterfaceNameMap map[string]struct{}
 }
 
-func newHttpTaskRunner(list []*task_file.HttpTask) ITaskRunner {
+func newHttpTaskRunner(list []*task_file.HttpTask) task.ITaskRunner {
 	r := &HttpTaskRunner{
 		list:             make([]*task_file.HttpTask, 0),
 		TestCaseNameMap:  make(map[string]struct{}),
@@ -34,7 +35,7 @@ func newHttpTaskRunner(list []*task_file.HttpTask) ITaskRunner {
 }
 
 // executes the specified Case.
-func (h *HttpTaskRunner) Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner Runner) error {
+func (h *HttpTaskRunner) Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner task.Runner) error {
 	var (
 		testCase          *task_file.HttpTaskCase
 		serverInfo        *task_file.HttpTaskInfo
@@ -72,10 +73,10 @@ out:
 	return runCase.Run()
 }
 
-func (h *HttpTaskRunner) GetTaskCaseTree() []*TaskCaseTree {
-	var tree []*TaskCaseTree
+func (h *HttpTaskRunner) GetTaskCaseTree() []*task.TaskCaseTree {
+	var tree []*task.TaskCaseTree
 	for _, service := range h.list {
-		t := &TaskCaseTree{CaseList: make([]string, 0, len(service.Cases))}
+		t := &task.TaskCaseTree{CaseList: make([]string, 0, len(service.Cases))}
 		t.InterfaceName = service.HttpTaskInfo.ServiceName
 		for _, testCase := range service.Cases {
 			t.CaseList = append(t.CaseList, testCase.Name)

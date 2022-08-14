@@ -1,7 +1,7 @@
 package task
 
 import (
-	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -55,7 +55,7 @@ func (r *redisInstance) Run(cmd string) (result interface{}, err error) {
 	case "set":
 		if len(cmdList) < 3 {
 			log.Error("redis command error:", cmd)
-			return nil, errors.New("the redis command format is incorrect")
+			return nil, fmt.Errorf("the redis command format is incorrect")
 		}
 		result, err = r.redisClient.Set(cmdList[1], strings.Join(cmdList[2:], ""), -1).Result()
 	default:

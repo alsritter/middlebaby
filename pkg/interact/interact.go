@@ -1,4 +1,4 @@
-package common
+package interact
 
 import (
 	"math/rand"
@@ -46,4 +46,20 @@ func (d *ResponseDelay) GetDelay() time.Duration {
 		offset = rand.Int63n(d.Offset)
 	}
 	return time.Duration(d.Delay+offset) * time.Millisecond
+}
+
+// TODO: fill in the details.
+type GRpcImposter struct {
+	Id       string       `json:"-"`
+	Request  GRpcRequest  `json:"request"`
+	Response GRpcResponse `json:"response"`
+}
+
+type GRpcRequest struct {
+	Method  string            `json:"method"`
+	Headers map[string]string `json:"headers"`
+}
+
+type GRpcResponse struct {
+	Headers map[string]string `json:"headers"`
 }

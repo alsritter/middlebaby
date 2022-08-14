@@ -8,33 +8,34 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/alsritter/middlebaby/internal/event"
-	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
 type TargetProcess struct {
-	env plugin.Env
+	env     plugin.Env
+	command *exec.Cmd
+	log     logger.Logger
 }
 
-func NewTargetProcess(env plugin.Env) *TargetProcess {
+func NewTargetProcess(env plugin.Env, log logger.Logger) *TargetProcess {
 	return &TargetProcess{
 		env: env,
+		log: log,
 	}
 }
 
 // start the service to be tested
 func (t *TargetProcess) Run() error {
 	if t.env.GetAppPath() == "" {
-		log.Fatal("The target application cannot be empty!")
-		return nil
+		return fmt.Errorf("The target application cannot be empty!")
 	}
 
 	if _, err := os.Stat(t.env.GetAppPath()); err != nil {
-		log.Fatal("target app err: ", err)
+		return fmt.Errorf("target app err: ", err)
 	}
 
-	command := exec.Command(t.env.GetAppPath())
+	t.command = exec.Command(t.env.GetAppPath())
 
 	port := t.env.GetConfig().Port
 
@@ -45,26 +46,25 @@ func (t *TargetProcess) Run() error {
 	// https to http.
 	parentEnv = append(parentEnv, fmt.Sprintf("HTTPS_PROXY=http://127.0.0.1:%d", port))
 	parentEnv = append(parentEnv, fmt.Sprintf("https_proxy=http://127.0.0.1:%d", port))
-	command.Env = parentEnv
+	t.command.Env = parentEnv
 
 	// TODO: add filter support
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-	command.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	t.command.Stdout = os.Stdout
+	t.command.Stderr = os.Stderr
+	t.command.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 
-	event.Bus.Subscribe(event.CLOSE, func() {
-		if err := kill(command); err != nil {
-			log.Error("kill error: ", err)
-		}
-	})
-
-	if err := command.Run(); err != nil {
+	if err := t.command.Run(); err != nil {
 		if _, isExist := err.(*exec.ExitError); !isExist {
-			log.Fatal("Failed to start the program to be tested, err:", err)
+			return fmt.Errorf("Failed to start the program to be tested, err:", err)
 		}
 	}
+	return nil
+}
 
-	os.Exit(0)
+func (t *TargetProcess) Close() error {
+	if err := kill(t.command); err != nil {
+		return fmt.Errorf("kill error: ", err)
+	}
 	return nil
 }
 
