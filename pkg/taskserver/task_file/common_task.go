@@ -19,13 +19,13 @@ type CommonAssert struct {
 type MysqlAssert []CommonAssert
 type RedisAssert []CommonAssert
 
-// the use case completes the post-operation.
+// TearDown the use case completes the post-operation.
 type TearDown struct {
 	Mysql []string
 	Redis []string
 }
 
-// interface-level operations.
+// InterfaceOperator interface-level operations.
 type InterfaceOperator struct {
 	SetUp    SetUp    `json:"setup"`
 	TearDown TearDown `json:"teardown"`

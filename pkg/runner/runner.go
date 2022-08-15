@@ -1,4 +1,4 @@
-package taskserver
+package runner
 
 import (
 	"encoding/json"
@@ -15,13 +15,13 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var _ (Runner) = (*defaultRunnerInstance)(nil)
+var _ Runner = (*defaultRunnerInstance)(nil)
 
-// runner group
+// Runner runner group
 type Runner interface {
-	// exec SQL.
+	// MySQL exec SQL.
 	MySQL(sql string) ([]map[string]interface{}, error)
-	// Start the Redis command.
+	// Redis Start the Redis command.
 	Redis(cmd string) (interface{}, error)
 	// GRpc request.
 	GRpc(serviceProtoFile, serviceMethod, appServeAddr string, protoPaths []string, reqHeader map[string]string, reqBody interface{}) (md metadata.MD, body interface{}, err error)
@@ -29,7 +29,7 @@ type Runner interface {
 	Http(url, method string, query url.Values, header map[string]string, body interface{}) (http.Header, int, string, error)
 	// Clone a Runner.
 	Clone() Runner
-	// The current Runner uniquely id.
+	// RunID The current Runner uniquely id.
 	RunID() string
 }
 
@@ -48,7 +48,7 @@ type defaultRunnerInstance struct {
 	log          logger.Logger
 }
 
-// return a runner.
+// NewRunner return a runner.
 func NewRunner(mysqlRunner MysqlRunner, redisRunner RedisRunner, log logger.Logger) (Runner, error) {
 	return &defaultRunnerInstance{
 		mysqlRunner: mysqlRunner,
@@ -65,7 +65,7 @@ func (c *defaultRunnerInstance) Redis(cmd string) (res interface{}, err error) {
 	return c.redisRunner.Run(cmd)
 }
 
-// TODO: do something....
+// GRpc TODO: do something....
 func (c *defaultRunnerInstance) GRpc(serviceProtoFile, serviceMethod, appServeAddr string, protoPaths []string, reqHeader map[string]string, reqBody interface{}) (md metadata.MD, body interface{}, err error) {
 	return
 }
@@ -119,7 +119,7 @@ func (c *defaultRunnerInstance) Http(reqUrl, method string, query url.Values, he
 	return response.Header, response.StatusCode, resBody, nil
 }
 
-// generate a new trace id.
+// Clone generate a new trace id.
 func (c *defaultRunnerInstance) Clone() Runner {
 	traceContext := apm.DefaultTracer.StartTransaction("middlebaby", "test").TraceContext()
 	cn := *c
@@ -127,7 +127,7 @@ func (c *defaultRunnerInstance) Clone() Runner {
 	return &cn
 }
 
-// The current Runner uniquely id.
+// RunID The current Runner uniquely id.
 func (c *defaultRunnerInstance) RunID() string {
 	// e.g., 00000000000000000000000000000000
 	return c.traceContext.Trace.String()

@@ -3,15 +3,16 @@ package taskserver
 import (
 	"errors"
 	"fmt"
+	"github.com/alsritter/middlebaby/pkg/runner"
+	"github.com/alsritter/middlebaby/pkg/runner/grpc_runner"
+	"github.com/alsritter/middlebaby/pkg/runner/http_runner"
 	"github.com/alsritter/middlebaby/pkg/util/file"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
-	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/alsritter/middlebaby/internal/startup/plugin"
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
 	"github.com/flynn/json5"
@@ -19,9 +20,10 @@ import (
 )
 
 type Config struct {
-	CaseFiles      []string `yaml:"caseFiles"`      // taskserver paths
-	TaskFileSuffix string   `yaml:"taskFileSuffix"` // the default test case suffix name. example: ".case.json"
-	WatcherCases   bool     `yaml:"watcherCases"`
+	CaseFiles       []string `yaml:"caseFiles"`
+	TaskFileSuffix  string   `yaml:"taskFileSuffix"` // the default test case suffix name. example: ".case.json"
+	WatcherCases    bool     `yaml:"watcherCases"`
+	MustRunTearDown bool     `yaml:"mustRunTearDown"`
 }
 
 type TestCaseType = string
@@ -31,34 +33,17 @@ const (
 	TestCaseTypeGRpc TestCaseType = "grpc"
 )
 
-func newRunner(env plugin.Env) Runner {
-	db, err := getMysqlCon(env)
-	if err != nil {
-		log.Error("Failed to connect to the MySQL database:", err.Error())
-	}
-
-	redisPool, err := getRedisCon(env)
-	if err != nil {
-		log.Error("Failed to connect to the Redis:", err.Error())
-	}
-	runner, err := NewRunner(storage.NewMysqlRunner(db), task.NewRedisRunner(redisPool))
-	if err != nil {
-		log.Fatal("Failed to initialize the running environment:", err)
-	}
-	return runner
-}
-
-// represents a TaskName and all cases under it.
+// TaskCaseTree represents a TaskName and all cases under it.
 type TaskCaseTree struct {
 	InterfaceName string   // Task Name(Interface Name)
 	CaseList      []string // Case Names
 }
 
-// grpc or http runner interface.
+// ITaskRunner grpc or http runner interface.
 type ITaskRunner interface {
 	// Run execution test case.
-	Run(caseName string, env plugin.Env, mockCenter apimanager.ApiMockCenter, runner Runner) error
-	// Get All Task and the Task's Cases
+	Run(caseName string, mockCenter apimanager.ApiMockCenter, runner runner.Runner) error
+	// GetTaskCaseTree Get All Task and the Task's Cases
 	GetTaskCaseTree() []*TaskCaseTree
 }
 
@@ -68,39 +53,30 @@ type TaskService struct {
 	// all test case directory. (absolute path)
 	taskDirs []string
 	// provides an interface for use case execution.
-	runner Runner
+	runner runner.Runner
 	// mock center
-	apiManager apimanager.Provider
+	mockCenter apimanager.ApiMockCenter
 	// configuration information required by the service.
 	cfg *Config
 
-	// save all taskserver runner
+	// save all task server runner
 	taskRunners map[TestCaseType]ITaskRunner
-
-	log logger.Logger
+	log         logger.Logger
 }
 
 // New return a TaskService
-func New(cfg *Config, apiManager apimanager.Provider, runner Runner, log logger.Logger) (*TaskService, error) {
-	ts := new(TaskService)
-	ts.log = log.NewLogger("TaskService")
-	ts.cfg = cfg
-	ts.taskRunners = make(map[TestCaseType]ITaskRunner)
-	ts.apiManager = apiManager
-	ts.runner = runner
-
-	return &TaskService{
-		taskFiles:   nil,
-		taskDirs:    nil,
-		runner:      nil,
-		apiManager:  nil,
-		cfg:         nil,
-		taskRunners: nil,
-		log:         nil,
-	}, ts.init()
+func New(cfg *Config, mockCenter apimanager.ApiMockCenter, runner runner.Runner, log logger.Logger) (*TaskService, error) {
+	ts := &TaskService{
+		runner:      runner,
+		mockCenter:  mockCenter,
+		cfg:         cfg,
+		taskRunners: make(map[TestCaseType]ITaskRunner),
+		log:         log.NewLogger("TaskService"),
+	}
+	return ts, ts.init()
 }
 
-// loading taskserver files and watcher these files modification.
+// loading task server files and watcher these files modification.
 func (t *TaskService) init() error {
 	// find the absolute file path in cfgFilePaths.
 	for _, filePath := range t.cfg.CaseFiles {
@@ -148,6 +124,28 @@ func (t *TaskService) init() error {
 	}
 
 	return nil
+}
+
+// Run specified case
+func (t *TaskService) Run(caseType TestCaseType, caseName string) error {
+	caseRunner, ok := t.taskRunners[caseType]
+	if !ok {
+		return fmt.Errorf("there are no test cases of this type: %s", caseType)
+	}
+
+	if t.runner == nil {
+		return fmt.Errorf("runner cannot be empty")
+	}
+
+	if t.mockCenter == nil {
+		return fmt.Errorf("mockCenter cannot be empty")
+	}
+
+	return caseRunner.Run(caseName, t.mockCenter, t.runner)
+}
+
+func (t *TaskService) GetAllTestCase() map[TestCaseType]ITaskRunner {
+	return t.taskRunners
 }
 
 // add file path
@@ -216,13 +214,13 @@ func (t *TaskService) readTaskCaseFiles() error {
 		}
 	}
 
-	t.taskRunners[TestCaseTypeGRpc] = newGRpcTaskRunner(grpcTaskList)
-	t.taskRunners[TestCaseTypeHTTP] = newHttpTaskRunner(httpTaskList)
+	t.taskRunners[TestCaseTypeGRpc] = grpc_runner.New(grpcTaskList, t.log)
+	t.taskRunners[TestCaseTypeHTTP] = http_runner.New(httpTaskList, t.log)
 	t.log.Info(nil, "loading all task server file, total: ", len(grpcTaskList)+len(httpTaskList))
 	return nil
 }
 
-// unmarshal http taskserver file.
+// unmarshal http task server file.
 func (t *TaskService) unmarshalHttp(testCaseFileByte []byte) (*task_file.HttpTask, error) {
 	var httpTask task_file.HttpTask
 	if err := json5.Unmarshal(testCaseFileByte, &httpTask); err != nil {
@@ -231,7 +229,7 @@ func (t *TaskService) unmarshalHttp(testCaseFileByte []byte) (*task_file.HttpTas
 	return &httpTask, nil
 }
 
-// unmarshal grpc taskserver file.
+// unmarshal grpc task server file.
 func (t *TaskService) unmarshalGrpc(testCaseFileByte []byte) (*task_file.GRpcTask, error) {
 	var grpcTask task_file.GRpcTask
 	if err := json5.Unmarshal(testCaseFileByte, &grpcTask); err != nil {
@@ -240,7 +238,7 @@ func (t *TaskService) unmarshalGrpc(testCaseFileByte []byte) (*task_file.GRpcTas
 	return &grpcTask, nil
 }
 
-// get taskserver file type.
+// get task server file type.
 func (t *TaskService) getTestCaseType(fileByte []byte) (TestCaseType, error) {
 	type ServiceType struct {
 		ServiceType string `json:"serviceType"`
@@ -255,7 +253,7 @@ func (t *TaskService) getTestCaseType(fileByte []byte) (TestCaseType, error) {
 	var uniqType = make(map[TestCaseType]bool)
 	var testCaseType TestCaseType
 
-	testCaseType = TestCaseType(strings.ToLower(serviceType.ServiceType))
+	testCaseType = strings.ToLower(serviceType.ServiceType)
 	switch testCaseType {
 	case TestCaseTypeHTTP, TestCaseTypeGRpc:
 	default:
@@ -271,7 +269,7 @@ func (t *TaskService) getTestCaseType(fileByte []byte) (TestCaseType, error) {
 	return testCaseType, nil
 }
 
-// Listen for changes to the taskserver file
+// Listen for changes to the task server file
 func (t *TaskService) watchFiles() error {
 	var paths []string
 	paths = append(paths, t.taskFiles...)
@@ -302,7 +300,7 @@ func (t *TaskService) watchFiles() error {
 		// otherwise, clear all taskserver files and reload the listener.
 		t.removeAllServices()
 		if err := t.readTaskCaseFiles(); err != nil {
-			t.log.Error(nil, "Failed to re-read taskserver file error: ", err)
+			t.log.Error(nil, "Failed to re-read task server file error: ", err)
 		}
 
 		if event.Op != watcher.Remove {
@@ -315,27 +313,4 @@ func (t *TaskService) watchFiles() error {
 
 func (t *TaskService) removeAllServices() {
 	t.taskRunners = make(map[TestCaseType]ITaskRunner)
-}
-
-// Run specified case
-func (t *TaskService) Run(caseType TestCaseType, caseName string, mustRunTearDown *bool) error {
-	caseRunner, ok := t.taskRunners[caseType]
-	if !ok {
-		return fmt.Errorf("there are no test cases of this type: %s", caseType)
-	}
-
-	if t.runner == nil {
-		return fmt.Errorf("runner cannot be empty")
-	}
-
-	if t.mockCenter == nil {
-		return fmt.Errorf("mockCenter cannot be empty")
-	}
-
-	return caseRunner.Run(caseName, t.env, t.mockCenter, t.runner)
-}
-
-// GetAllTestCase
-func (t *TaskService) GetAllTestCase() map[TestCaseType]ITaskRunner {
-	return t.taskRunners
 }

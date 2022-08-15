@@ -24,14 +24,14 @@ type GRpcTaskCase struct {
 	TearDown    TearDown        `json:"teardown"`
 }
 
-// case request data.
+// GRpcCaseRequest case request data.
 type GRpcCaseRequest struct {
 	Header map[string]string
 	Query  url.Values
 	Data   interface{}
 }
 
-// assertions data.
+// GRpcAssert assertions data.
 type GRpcAssert struct {
 	Response struct {
 		Header     map[string]string

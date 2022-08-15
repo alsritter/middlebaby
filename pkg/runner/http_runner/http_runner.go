@@ -1,41 +1,42 @@
-package task
+package http_runner
 
 import (
 	"fmt"
-
-	"github.com/alsritter/middlebaby/internal/file/task_file"
-	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/internal/startup/plugin"
-	"github.com/alsritter/middlebaby/pkg/proxy"
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/runner"
 	"github.com/alsritter/middlebaby/pkg/taskserver"
+	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
-var _ (taskserver.ITaskRunner) = (*HttpTaskRunner)(nil)
+var _ taskserver.ITaskRunner = (*HttpTaskRunner)(nil)
 
-// save all HTTP taskserver.
+// HttpTaskRunner save all HTTP task server.
 // a runner contains multiple interface (taskserver == interface)
 // a interface contains multiple cases
 type HttpTaskRunner struct {
 	list             []*task_file.HttpTask // a HttpTask contains multiple Case.
 	TestCaseNameMap  map[string]struct{}
 	InterfaceNameMap map[string]struct{}
+	log              logger.Logger
 }
 
-func newHttpTaskRunner(list []*task_file.HttpTask) taskserver.ITaskRunner {
+func New(list []*task_file.HttpTask, log logger.Logger) taskserver.ITaskRunner {
 	r := &HttpTaskRunner{
 		list:             make([]*task_file.HttpTask, 0),
 		TestCaseNameMap:  make(map[string]struct{}),
 		InterfaceNameMap: make(map[string]struct{}),
+		log:              log.NewLogger("HttpTaskRunner"),
 	}
 
 	if err := r.addList(list); err != nil {
-		log.Error("add the taskserver error: %w")
+		log.Error(nil, "add the task server error: %w")
 	}
 	return r
 }
 
-// executes the specified Case.
-func (h *HttpTaskRunner) Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner taskserver.Runner) error {
+// Run executes the specified Case.
+func (h *HttpTaskRunner) Run(caseName string, mockCenter apimanager.ApiMockCenter, runner runner.Runner) error {
 	var (
 		testCase          *task_file.HttpTaskCase
 		serverInfo        *task_file.HttpTaskInfo
@@ -65,12 +66,11 @@ out:
 	}
 
 	if interfaceOperator == nil {
-		log.Warn("no interfaceOperator found")
+		h.log.Warn(nil, "no interfaceOperator found")
 		interfaceOperator = &task_file.InterfaceOperator{}
 	}
 
-	runCase := NewHttpTaskCase(*testCase, *serverInfo, runner, mockCenter, env, *interfaceOperator)
-	return runCase.Run()
+	return newHttpTaskCase(*interfaceOperator, *serverInfo, *testCase, runner, mockCenter, h.log).Run()
 }
 
 func (h *HttpTaskRunner) GetTaskCaseTree() []*taskserver.TaskCaseTree {

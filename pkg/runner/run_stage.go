@@ -1,10 +1,9 @@
-package taskserver
+package runner
 
 import (
 	"fmt"
 	"net/http"
 
-	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
@@ -85,7 +84,6 @@ func RunRedisAssert(r task_file.RedisAssert, runner Runner) error {
 
 // RunHttpAssert run http assert.
 func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCode int, responseBody string, runner Runner) error {
-	log.Debugf("response message: %v %v %v %v \n", responseHeader, responseBody, statusCode, a.Response.Data)
 	if a.Response.StatusCode != 0 {
 		if err := assert.So("response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
 			return err
@@ -118,7 +116,7 @@ func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCod
 
 // RunTearDown run tearDown.
 func RunTearDown(t task_file.TearDown, mockCenter apimanager.ApiMockCenter, runner Runner) error {
-	// when the taskserver is complete, empty the mock for the current case.
+	// when the task server is complete, empty the mock for the current case.
 	mockCenter.UnLoadHttp(runner.RunID())
 	mockCenter.UnLoadGRpc(runner.RunID())
 

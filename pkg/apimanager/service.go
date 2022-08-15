@@ -59,7 +59,7 @@ func New(log logger.Logger, cfg *Config) Provider {
 }
 
 func (m *Manager) Start() error {
-	handlers.CORS(PrepareAccessControl(m.cfg)...)(m.router)
+	handlers.CORS(PrepareAccessControl(m.cfg.ConfigCORS)...)(m.router)
 	m.addHttpImposterHandler()
 	m.printRouter()
 	return nil

@@ -2,8 +2,10 @@ package startup
 
 import (
 	"context"
+	"github.com/alsritter/middlebaby/internal/startup/plugin"
 	"github.com/alsritter/middlebaby/internal/task"
 	"github.com/alsritter/middlebaby/pkg/mockserver"
+	storage_runner2 "github.com/alsritter/middlebaby/pkg/runner/storage_runner"
 	"github.com/alsritter/middlebaby/pkg/storage"
 	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util"
@@ -77,4 +79,21 @@ func Startup(appPath string, cfg *Config) {
 
 	<-stop
 	log.Info(nil, "Goodbye")
+}
+
+func newRunner(env plugin.Env) Runner {
+	db, err := getMysqlCon(env)
+	if err != nil {
+		log.Error("Failed to connect to the MySQL database:", err.Error())
+	}
+
+	redisPool, err := getRedisCon(env)
+	if err != nil {
+		log.Error("Failed to connect to the Redis:", err.Error())
+	}
+	runner, err := NewRunner(storage_runner2.NewMysqlRunner(db), storage_runner2.NewRedisRunner(redisPool))
+	if err != nil {
+		log.Fatal("Failed to initialize the running environment:", err)
+	}
+	return runner
 }

@@ -1,4 +1,4 @@
-package task
+package grpc_runner
 
 type grpcTaskCase struct{}
 

@@ -24,14 +24,14 @@ type HttpTaskCase struct {
 	TearDown    TearDown        `json:"teardown"`
 }
 
-// case request data.
+// HttpCaseRequest case request data.
 type HttpCaseRequest struct {
 	Header map[string]string
 	Query  url.Values
 	Data   interface{}
 }
 
-// assertions data.
+// HttpAssert assertions data.
 type HttpAssert struct {
 	Response struct {
 		Header     map[string]string

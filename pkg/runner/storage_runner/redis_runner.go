@@ -2,27 +2,28 @@ package storage_runner
 
 import (
 	"fmt"
+	"github.com/alsritter/middlebaby/pkg/runner"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"regexp"
 	"strings"
 
-	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/go-redis/redis"
 )
 
-var _ (taskserver.RedisRunner) = (*redisInstance)(nil)
-var _ (taskserver.RedisRunner) = (*defaultRedisInstance)(nil)
+var _ runner.RedisRunner = (*redisInstance)(nil)
+var _ runner.RedisRunner = (*defaultRedisInstance)(nil)
 
-// return a redis runner.
-func NewRedisRunner(redisClient *redis.Client) taskserver.RedisRunner {
+type redisInstance struct {
+	log         logger.Logger
+	redisClient *redis.Client
+}
+
+// NewRedisRunner return a redis runner.
+func NewRedisRunner(redisClient *redis.Client) runner.RedisRunner {
 	if redisClient == nil {
 		return &defaultRedisInstance{}
 	}
 	return &redisInstance{redisClient: redisClient}
-}
-
-type redisInstance struct {
-	redisClient *redis.Client
 }
 
 // formatting command.
@@ -42,7 +43,7 @@ func (r *redisInstance) redisParse(cmd string) []string {
 func (r *redisInstance) Run(cmd string) (result interface{}, err error) {
 	// formatting command.
 	cmdList := r.redisParse(cmd)
-	log.Tracef("redis parse list: %v", cmdList)
+	r.log.Trace(nil, "redis parse list: %v", cmdList)
 	if len(cmdList) <= 0 {
 		return nil, nil
 	}
@@ -55,7 +56,7 @@ func (r *redisInstance) Run(cmd string) (result interface{}, err error) {
 		result, err = r.redisClient.HGetAll(cmdList[1]).Result()
 	case "set":
 		if len(cmdList) < 3 {
-			log.Error("redis command error:", cmd)
+			r.log.Error(nil, "redis command error:", cmd)
 			return nil, fmt.Errorf("the redis command format is incorrect")
 		}
 		result, err = r.redisClient.Set(cmdList[1], strings.Join(cmdList[2:], ""), -1).Result()
@@ -71,14 +72,15 @@ func (r *redisInstance) Run(cmd string) (result interface{}, err error) {
 		result, err = redis.Nil.Error(), nil
 	}
 
-	log.Tracef("RUN Redis: %s result:%v %v", cmd, result, err)
+	r.log.Trace(nil, "RUN Redis: %s result:%v %v", cmd, result, err)
 	return
 }
 
 type defaultRedisInstance struct {
+	log logger.Logger
 }
 
 func (d *defaultRedisInstance) Run(cmd string) (result interface{}, err error) {
-	log.Warn("information is not configured in the configuration file, Confirm whether the Redis statement needs to be executed ?")
+	err = fmt.Errorf("information is not configured in the configuration file, Confirm whether the Redis statement needs to be executed ")
 	return
 }
