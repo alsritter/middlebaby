@@ -23,7 +23,7 @@ genpb:
 	--go-grpc_out=require_unimplemented_servers=false:./proto proto/hello.proto
 
 
-# print child process tree and important-task.
+# print child process tree and important-taskserver.
 # reference:  
 # https://superuser.com/questions/363169/ps-how-can-i-recursively-get-all-child-process-for-a-given-pid
 # https://unix.stackexchange.com/questions/270778/how-to-write-exactly-bash-scripts-into-makefiles

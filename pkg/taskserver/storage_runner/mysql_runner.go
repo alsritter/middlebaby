@@ -3,17 +3,17 @@ package storage_runner
 import (
 	"fmt"
 
-	"github.com/alsritter/middlebaby/pkg/task"
+	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"gorm.io/gorm"
 	db_logger "gorm.io/gorm/logger"
 )
 
-var _ (task.MysqlRunner) = (*mysqlInstance)(nil)
-var _ (task.MysqlRunner) = (*defaultMysqlInstance)(nil)
+var _ taskserver.MysqlRunner = (*mysqlInstance)(nil)
+var _ taskserver.MysqlRunner = (*defaultMysqlInstance)(nil)
 
-// return a mysql runner.
-func NewMysqlRunner(db *gorm.DB, log logger.Logger) task.MysqlRunner {
+// NewMysqlRunner return a mysql runner.
+func NewMysqlRunner(db *gorm.DB, log logger.Logger) taskserver.MysqlRunner {
 	if db == nil {
 		return &defaultMysqlInstance{}
 	}
@@ -37,11 +37,11 @@ func (m *mysqlInstance) Run(sql string) (result []map[string]interface{}, err er
 	return
 }
 
-// MySQL information is not configured in the configuration file, default instances are generated, and no SQL operations are performed
+// information is not configured in the configuration file, default instances are generated, and no SQL operations are performed
 type defaultMysqlInstance struct {
 }
 
 func (d *defaultMysqlInstance) Run(sql string) (result []map[string]interface{}, err error) {
-	err = fmt.Errorf("information is not configured in the configuration file, Confirm whether the SQL statement needs to be executed ?")
+	err = fmt.Errorf("information is not configured in the configuration file, Confirm whether the SQL statement needs to be executed ")
 	return
 }

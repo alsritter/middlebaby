@@ -14,10 +14,6 @@ func NewHttpDirectHandler() *httpDirectHandler {
 	return &httpDirectHandler{}
 }
 
-func (h *httpDirectHandler) IsHit(r *http.Request) bool {
-	return r.ProtoMajor == 1
-}
-
 func (h *httpDirectHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// forwarding the HTTPS
 	if r.Method == http.MethodConnect {

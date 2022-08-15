@@ -38,19 +38,19 @@ type Provider interface {
 	GetRedisCon() (*redis.Client, error)
 }
 
-type StorageManager struct {
+type Manager struct {
 	cfg    *Config
 	logger logger.Logger
 }
 
 func New(cfg *Config, logger logger.Logger) (Provider, error) {
-	return &StorageManager{
+	return &Manager{
 		cfg:    cfg,
 		logger: logger,
 	}, nil
 }
 
-func (s *StorageManager) toMysqlConfig() *mysql.Config {
+func (s *Manager) toMysqlConfig() *mysql.Config {
 	cfg := mysql.NewConfig()
 	cfg.User = s.cfg.Mysql.Username
 	cfg.Passwd = s.cfg.Mysql.Password
@@ -63,14 +63,14 @@ func (s *StorageManager) toMysqlConfig() *mysql.Config {
 	return cfg
 }
 
-func (s *StorageManager) GetMysqlCon() (*gorm.DB, error) {
+func (s *Manager) GetMysqlCon() (*gorm.DB, error) {
 	if s.cfg.Mysql.Host == "" {
 		return nil, errors.New(" MySQL The configuration information is incomplete. Check whether you do not need to rely on MySQL")
 	}
 	return gorm.Open(mysql_driver.Open(s.toMysqlConfig().FormatDSN()), &gorm.Config{})
 }
 
-func (s *StorageManager) GetRedisCon() (*redis.Client, error) {
+func (s *Manager) GetRedisCon() (*redis.Client, error) {
 	if s.cfg.Redis.Host == "" {
 		return nil, errors.New(" Redis The configuration information is incomplete. Check whether Redis is not required")
 	}

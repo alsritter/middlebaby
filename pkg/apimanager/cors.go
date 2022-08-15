@@ -1,7 +1,6 @@
-package util
+package apimanager
 
 import (
-	"github.com/alsritter/middlebaby/internal/file/config"
 	"github.com/gorilla/handlers"
 )
 
@@ -12,7 +11,7 @@ var (
 )
 
 // PrepareAccessControl Return options to initialize the mock server with default access control
-func PrepareAccessControl(config config.ConfigCORS) (h []handlers.CORSOption) {
+func PrepareAccessControl(config ConfigCORS) (h []handlers.CORSOption) {
 	h = append(h, handlers.AllowedMethods(defaultCORSMethods))
 	h = append(h, handlers.AllowedHeaders(defaultCORSHeaders))
 	h = append(h, handlers.ExposedHeaders(defaultCORSExposedHeaders))

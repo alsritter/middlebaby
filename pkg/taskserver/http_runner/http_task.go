@@ -5,7 +5,7 @@ import (
 	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
 	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/task"
+	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util"
 )
 
@@ -24,8 +24,8 @@ import (
 type httpTaskCase struct {
 	testCase          task_file.HttpTaskCase
 	httpServiceInfo   task_file.HttpTaskInfo
-	runner            task.Runner
-	mockCenter        apimanager.MockCenter
+	runner            taskserver.Runner
+	mockCenter        apimanager.ApiMockCenter
 	env               plugin.Env
 	interfaceOperator task_file.InterfaceOperator
 }
@@ -34,8 +34,8 @@ type httpTaskCase struct {
 func NewHttpTaskCase(
 	testCase task_file.HttpTaskCase,
 	serverInfo task_file.HttpTaskInfo,
-	runner task.Runner,
-	mockCenter apimanager.MockCenter,
+	runner taskserver.Runner,
+	mockCenter apimanager.ApiMockCenter,
 	env plugin.Env,
 	interfaceOperator task_file.InterfaceOperator,
 ) *httpTaskCase {

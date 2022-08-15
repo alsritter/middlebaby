@@ -2,22 +2,22 @@ package startup
 
 import (
 	"context"
-	"errors"
-	"time"
-
-	"github.com/alsritter/middlebaby/internal/file/config"
-	"github.com/alsritter/middlebaby/internal/startup/plugin"
 	"github.com/alsritter/middlebaby/internal/task"
-	"github.com/alsritter/middlebaby/pkg/proxy"
+	"github.com/alsritter/middlebaby/pkg/mockserver"
+	"github.com/alsritter/middlebaby/pkg/storage"
+	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
-	"github.com/go-redis/redis"
-	"github.com/go-sql-driver/mysql"
-	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
-func Startup(appPath string, cfg *config.Config) {
+// Config representation of config file yaml
+type Config struct {
+	Case    *taskserver.Config
+	Mock    *mockserver.Config
+	Storage *storage.Config `yaml:"storage"` // mock server needs
+}
+
+func Startup(appPath string, cfg *Config) {
 	log, err := logger.New(logger.NewConfig(), "main")
 	if err != nil {
 		panic(err)
@@ -32,14 +32,14 @@ func Startup(appPath string, cfg *config.Config) {
 
 	mockCenter := proxy.NewMockCenter()
 	trg := NewTargetProcess(env, log)
-	srv := NewMockServe(env, mockCenter, log)
+	srv := mockserver.New(env, mockCenter, log)
 	ts, err := task.NewTaskService(env, mockCenter, newRunner(env))
 	// serve := NewCaseServe(env, mockCenter, log)
 
 	// Mock server
 	util.StartServiceAsync(ctx, log, cancel,
 		func() error {
-			return srv.Run()
+			return srv.Start()
 		},
 		func() error {
 			return srv.Close()
@@ -71,7 +71,7 @@ func Startup(appPath string, cfg *config.Config) {
 	// 	}()
 
 	// 	time.Sleep(2 * time.Second) // FIXME: remove.
-	// 	serve.Run()
+	// 	serve.Start()
 	// 	return nil
 	// })
 

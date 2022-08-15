@@ -6,40 +6,40 @@ import (
 	"github.com/alsritter/middlebaby/pkg/interact"
 )
 
-// save all type mock.
-type MockCenter interface {
-	// add something http mock
+// ApiMockCenter save all type mock.
+type ApiMockCenter interface {
+	// AddHttp add something http mock
 	AddHttp(uniqID string, mockHttp ...interact.HttpImposter) error
-	// add something global http mock
+	// AddGlobalHttp add something global http mock
 	AddGlobalHttp(mockHttp ...interact.HttpImposter)
-	// get something global http mock
+	// GetGlobalHttp get something global http mock
 	GetGlobalHttp() []interact.HttpImposter
-	// get something http mock
+	// GetHttp get something http mock
 	GetHttp(uniqID string) ([]interact.HttpImposter, bool)
-	// get all mock, including global mocks
+	// GetAllHttp get all mock, including global mocks
 	GetAllHttp() []interact.HttpImposter
-	// unload mock all of a Case
+	// UnLoadAllHttp unload mock all of a Case
 	UnLoadAllHttp()
-	// unload mock all global of a Case
+	// UnLoadAllGlobalHttp unload mock all global of a Case
 	UnLoadAllGlobalHttp()
-	// unload mock specified
+	// UnLoadHttp unload mock specified
 	UnLoadHttp(uniqID string)
-	// unload the mock with Id in httpIdList
+	// UnloadHttpByIdList unload the mock with Id in httpIdList
 	UnloadHttpByIdList(uniqID string, httpIdList []string)
 
-	// add something gRpc mock
+	// AddGRpc add something gRpc mock
 	AddGRpc(uniqID string, mockGRpc ...interact.GRpcImposter) error
-	// get something gRpc mock
+	// GetGRpc get something gRpc mock
 	GetGRpc(uniqID string) ([]interact.GRpcImposter, bool)
-	// get all gRpc mock
+	// GetAllGRpc get all gRpc mock
 	GetAllGRpc() []interact.GRpcImposter
-	// unload specified gRpc mock
+	// UnLoadGRpc unload specified gRpc mock
 	UnLoadGRpc(uniqID string)
-	// unload the mock with Id in grpcIdList
+	// UnloadGRpcByIdList unload the mock with Id in grpcIdList
 	UnloadGRpcByIdList(uniqID string, grpcIdList []string)
-	// add something global grpc mock
+	// AddGlobalGRpc add something global grpc mock
 	AddGlobalGRpc(mockGRpc ...interact.GRpcImposter)
-	// get something global grpc mock
+	// GetGlobalGRpc get something global grpc mock
 	GetGlobalGRpc() []interact.GRpcImposter
 }
 
@@ -55,14 +55,14 @@ type mockCenter struct {
 	sync.Mutex
 }
 
-func NewMockCenter() MockCenter {
+func NewMockCenter() ApiMockCenter {
 	return &mockCenter{
 		httpMock: make(map[string][]interact.HttpImposter),
 		gRpcMock: make(map[string][]interact.GRpcImposter),
 	}
 }
 
-// add something http mock
+// AddHttp add something http mock
 func (m *mockCenter) AddHttp(uniqID string, mockHttp ...interact.HttpImposter) error {
 	m.Lock()
 	defer m.Unlock()
@@ -70,21 +70,21 @@ func (m *mockCenter) AddHttp(uniqID string, mockHttp ...interact.HttpImposter) e
 	return nil
 }
 
-// add something global http mock
+// AddGlobalHttp add something global http mock
 func (m *mockCenter) AddGlobalHttp(mockHttp ...interact.HttpImposter) {
 	m.Lock()
 	defer m.Unlock()
 	m.httpMock[globalHttpID] = append(m.httpMock[globalHttpID], mockHttp...)
 }
 
-// get something global http mock
+// GetGlobalHttp get something global http mock
 func (m *mockCenter) GetGlobalHttp() []interact.HttpImposter {
 	m.Lock()
 	defer m.Unlock()
 	return m.httpMock[globalHttpID]
 }
 
-// get something http mock
+// GetHttp get something http mock
 func (m *mockCenter) GetHttp(uniqID string) ([]interact.HttpImposter, bool) {
 	m.Lock()
 	defer m.Unlock()
@@ -92,7 +92,7 @@ func (m *mockCenter) GetHttp(uniqID string) ([]interact.HttpImposter, bool) {
 	return ret, ok
 }
 
-// get all mock, including global mocks
+// GetAllHttp get all mock, including global mocks
 func (m *mockCenter) GetAllHttp() (ret []interact.HttpImposter) {
 	m.Lock()
 	defer m.Unlock()
@@ -102,26 +102,26 @@ func (m *mockCenter) GetAllHttp() (ret []interact.HttpImposter) {
 	return
 }
 
-// unload mock all of a Case
+// UnLoadAllHttp unload mock all of a Case
 func (m *mockCenter) UnLoadAllHttp() {
 	m.httpMock = make(map[string][]interact.HttpImposter)
 }
 
-// unload mock all global of a Case
+// UnLoadAllGlobalHttp unload mock all global of a Case
 func (m *mockCenter) UnLoadAllGlobalHttp() {
 	m.Lock()
 	defer m.Unlock()
 	m.httpMock[globalHttpID] = make([]interact.HttpImposter, 0)
 }
 
-// unload mock specified
+// UnLoadHttp unload mock specified
 func (m *mockCenter) UnLoadHttp(uniqID string) {
 	m.Lock()
 	defer m.Unlock()
 	delete(m.httpMock, uniqID)
 }
 
-// unload the mock with Id in httpIdList
+// UnloadHttpByIdList unload the mock with Id in httpIdList
 func (m *mockCenter) UnloadHttpByIdList(uniqID string, httpIdList []string) {
 	m.Lock()
 	defer m.Unlock()
@@ -145,7 +145,7 @@ func (m *mockCenter) UnloadHttpByIdList(uniqID string, httpIdList []string) {
 	m.httpMock[uniqID] = finalHttpMock
 }
 
-// add something gRpc mock
+// AddGRpc add something gRpc mock
 func (m *mockCenter) AddGRpc(uniqID string, mockGRpc ...interact.GRpcImposter) error {
 	m.Lock()
 	defer m.Unlock()
@@ -153,7 +153,7 @@ func (m *mockCenter) AddGRpc(uniqID string, mockGRpc ...interact.GRpcImposter) e
 	return nil
 }
 
-// get something gRpc mock
+// GetGRpc get something gRpc mock
 func (m *mockCenter) GetGRpc(uniqID string) ([]interact.GRpcImposter, bool) {
 	m.Lock()
 	defer m.Unlock()
@@ -161,7 +161,7 @@ func (m *mockCenter) GetGRpc(uniqID string) ([]interact.GRpcImposter, bool) {
 	return ret, ok
 }
 
-// get all gRpc mock
+// GetAllGRpc get all gRpc mock
 func (m *mockCenter) GetAllGRpc() (ret []interact.GRpcImposter) {
 	m.Lock()
 	defer m.Unlock()
@@ -171,14 +171,14 @@ func (m *mockCenter) GetAllGRpc() (ret []interact.GRpcImposter) {
 	return
 }
 
-// unload specified gRpc mock
+// UnLoadGRpc unload specified gRpc mock
 func (m *mockCenter) UnLoadGRpc(uniqID string) {
 	m.Lock()
 	defer m.Unlock()
 	delete(m.gRpcMock, uniqID)
 }
 
-// unload the mock with Id in grpcIdList
+// UnloadGRpcByIdList unload the mock with Id in grpcIdList
 func (m *mockCenter) UnloadGRpcByIdList(uniqID string, grpcIdList []string) {
 	m.Lock()
 	defer m.Unlock()
@@ -202,14 +202,14 @@ func (m *mockCenter) UnloadGRpcByIdList(uniqID string, grpcIdList []string) {
 	m.gRpcMock[uniqID] = finalGRpcMock
 }
 
-// add something global grpc mock
+// AddGlobalGRpc add something global grpc mock
 func (m *mockCenter) AddGlobalGRpc(mockGRpc ...interact.GRpcImposter) {
 	m.Lock()
 	defer m.Unlock()
 	m.gRpcMock[globalGRpcID] = append(m.gRpcMock[globalGRpcID], mockGRpc...)
 }
 
-// get something global grpc mock
+// GetGlobalGRpc get something global grpc mock
 func (m *mockCenter) GetGlobalGRpc() []interact.GRpcImposter {
 	m.Lock()
 	defer m.Unlock()

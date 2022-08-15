@@ -6,15 +6,15 @@ import (
 	"strings"
 
 	"github.com/alsritter/middlebaby/internal/log"
-	"github.com/alsritter/middlebaby/pkg/task"
+	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/go-redis/redis"
 )
 
-var _ (task.RedisRunner) = (*redisInstance)(nil)
-var _ (task.RedisRunner) = (*defaultRedisInstance)(nil)
+var _ (taskserver.RedisRunner) = (*redisInstance)(nil)
+var _ (taskserver.RedisRunner) = (*defaultRedisInstance)(nil)
 
 // return a redis runner.
-func NewRedisRunner(redisClient *redis.Client) task.RedisRunner {
+func NewRedisRunner(redisClient *redis.Client) taskserver.RedisRunner {
 	if redisClient == nil {
 		return &defaultRedisInstance{}
 	}

@@ -1,4 +1,4 @@
-package task
+package taskserver
 
 import (
 	"fmt"
@@ -6,12 +6,12 @@ import (
 
 	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/task/task_file"
+	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 )
 
-// setup run
-func RunSetUp(s task_file.SetUp, mockCenter apimanager.MockCenter, runner Runner) error {
+// RunSetUp setup run
+func RunSetUp(s task_file.SetUp, mockCenter apimanager.ApiMockCenter, runner Runner) error {
 	for _, sql := range s.Mysql {
 		if _, err := runner.MySQL(sql); err != nil {
 			return fmt.Errorf("execution SetUp.Mysql error: %w", err)
@@ -55,7 +55,7 @@ func RunSetUp(s task_file.SetUp, mockCenter apimanager.MockCenter, runner Runner
 	return nil
 }
 
-// run mysql assert.
+// RunMySQLAssert run mysql assert.
 func RunMySQLAssert(m task_file.MysqlAssert, runner Runner) error {
 	for _, sqlAssert := range m {
 		if result, err := runner.MySQL(sqlAssert.Actual); err != nil {
@@ -71,7 +71,7 @@ func RunMySQLAssert(m task_file.MysqlAssert, runner Runner) error {
 	return nil
 }
 
-// run redis assert.
+// RunRedisAssert run redis assert.
 func RunRedisAssert(r task_file.RedisAssert, runner Runner) error {
 	for _, redisAssert := range r {
 		if result, err := runner.Redis(redisAssert.Actual); err != nil {
@@ -83,7 +83,7 @@ func RunRedisAssert(r task_file.RedisAssert, runner Runner) error {
 	return nil
 }
 
-// run http assert.
+// RunHttpAssert run http assert.
 func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCode int, responseBody string, runner Runner) error {
 	log.Debugf("response message: %v %v %v %v \n", responseHeader, responseBody, statusCode, a.Response.Data)
 	if a.Response.StatusCode != 0 {
@@ -116,9 +116,9 @@ func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCod
 	return nil
 }
 
-// run tearDown.
-func RunTearDown(t task_file.TearDown, mockCenter apimanager.MockCenter, runner Runner) error {
-	// when the task is complete, empty the mock for the current case.
+// RunTearDown run tearDown.
+func RunTearDown(t task_file.TearDown, mockCenter apimanager.ApiMockCenter, runner Runner) error {
+	// when the taskserver is complete, empty the mock for the current case.
 	mockCenter.UnLoadHttp(runner.RunID())
 	mockCenter.UnLoadGRpc(runner.RunID())
 

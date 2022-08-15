@@ -7,13 +7,13 @@ import (
 	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/alsritter/middlebaby/internal/startup/plugin"
 	"github.com/alsritter/middlebaby/pkg/proxy"
-	"github.com/alsritter/middlebaby/pkg/task"
+	"github.com/alsritter/middlebaby/pkg/taskserver"
 )
 
-var _ (task.ITaskRunner) = (*HttpTaskRunner)(nil)
+var _ (taskserver.ITaskRunner) = (*HttpTaskRunner)(nil)
 
-// save all HTTP task.
-// a runner contains multiple interface (task == interface)
+// save all HTTP taskserver.
+// a runner contains multiple interface (taskserver == interface)
 // a interface contains multiple cases
 type HttpTaskRunner struct {
 	list             []*task_file.HttpTask // a HttpTask contains multiple Case.
@@ -21,7 +21,7 @@ type HttpTaskRunner struct {
 	InterfaceNameMap map[string]struct{}
 }
 
-func newHttpTaskRunner(list []*task_file.HttpTask) task.ITaskRunner {
+func newHttpTaskRunner(list []*task_file.HttpTask) taskserver.ITaskRunner {
 	r := &HttpTaskRunner{
 		list:             make([]*task_file.HttpTask, 0),
 		TestCaseNameMap:  make(map[string]struct{}),
@@ -29,13 +29,13 @@ func newHttpTaskRunner(list []*task_file.HttpTask) task.ITaskRunner {
 	}
 
 	if err := r.addList(list); err != nil {
-		log.Error("add the task error: %w")
+		log.Error("add the taskserver error: %w")
 	}
 	return r
 }
 
 // executes the specified Case.
-func (h *HttpTaskRunner) Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner task.Runner) error {
+func (h *HttpTaskRunner) Run(caseName string, env plugin.Env, mockCenter proxy.MockCenter, runner taskserver.Runner) error {
 	var (
 		testCase          *task_file.HttpTaskCase
 		serverInfo        *task_file.HttpTaskInfo
@@ -73,10 +73,10 @@ out:
 	return runCase.Run()
 }
 
-func (h *HttpTaskRunner) GetTaskCaseTree() []*task.TaskCaseTree {
-	var tree []*task.TaskCaseTree
+func (h *HttpTaskRunner) GetTaskCaseTree() []*taskserver.TaskCaseTree {
+	var tree []*taskserver.TaskCaseTree
 	for _, service := range h.list {
-		t := &task.TaskCaseTree{CaseList: make([]string, 0, len(service.Cases))}
+		t := &taskserver.TaskCaseTree{CaseList: make([]string, 0, len(service.Cases))}
 		t.InterfaceName = service.HttpTaskInfo.ServiceName
 		for _, testCase := range service.Cases {
 			t.CaseList = append(t.CaseList, testCase.Name)

@@ -25,7 +25,7 @@ func NewTargetProcess(env plugin.Env, log logger.Logger) *TargetProcess {
 	}
 }
 
-// start the service to be tested
+// Run start the service to be tested
 func (t *TargetProcess) Run() error {
 	if t.env.GetAppPath() == "" {
 		return fmt.Errorf("The target application cannot be empty!")
@@ -37,7 +37,7 @@ func (t *TargetProcess) Run() error {
 
 	t.command = exec.Command(t.env.GetAppPath())
 
-	port := t.env.GetConfig().Port
+	port := "8888"
 
 	parentEnv := os.Environ()
 	// set target application proxy path.

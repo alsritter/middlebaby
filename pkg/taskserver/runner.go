@@ -1,4 +1,4 @@
-package task
+package taskserver
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ var _ (Runner) = (*defaultRunnerInstance)(nil)
 type Runner interface {
 	// exec SQL.
 	MySQL(sql string) ([]map[string]interface{}, error)
-	// Run the Redis command.
+	// Start the Redis command.
 	Redis(cmd string) (interface{}, error)
 	// GRpc request.
 	GRpc(serviceProtoFile, serviceMethod, appServeAddr string, protoPaths []string, reqHeader map[string]string, reqBody interface{}) (md metadata.MD, body interface{}, err error)

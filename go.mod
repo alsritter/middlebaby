@@ -19,6 +19,7 @@ require (
 	github.com/rs/zerolog v1.27.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.12.0
+	github.com/viki-org/dnscache v0.0.0-20130720023526-c70c1f23c5d8 // indirect
 	go.elastic.co/apm v1.15.0
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
