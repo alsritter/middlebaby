@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/alsritter/middlebaby/internal/log"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
 // So Verify that the input value is consistent with the expected value
@@ -56,10 +56,12 @@ type Assert struct {
 	assertType string
 	actual     interface{}
 	expected   interface{}
+
+	log logger.Logger
 }
 
 func NewAssert(assertType string, actual interface{}, expected interface{}) *Assert {
-	return &Assert{assertType: assertType, actual: actual, expected: expected}
+	return &Assert{assertType: assertType, actual: actual, expected: expected, log: logger.DefaultLog}
 }
 
 // an entry function for an assertion
@@ -133,9 +135,9 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 	}
 
 	if IsRegExpPattern(expected) {
-		log.Debugf("Starts matching the regular expression, pattern: %s, actual: %v \n", expected.(string), actual)
+		a.log.Debug(nil, "Starts matching the regular expression, pattern: %s, actual: %v \n", expected.(string), actual)
 		if err := Match(expected.(string), actual); err != nil {
-			log.Debugf("Error matching regular expression, pattern: %s, actual: %v, err: %v \n", expected.(string), actual, err)
+			a.log.Debug(nil, "Error matching regular expression, pattern: %s, actual: %v, err: %v \n", expected.(string), actual, err)
 			return retErrFun(err)
 		}
 		return nil

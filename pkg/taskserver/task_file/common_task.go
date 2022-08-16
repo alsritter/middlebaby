@@ -4,6 +4,14 @@ import (
 	"github.com/alsritter/middlebaby/pkg/interact"
 )
 
+type TestCaseType = string
+
+// TaskCaseTree represents a TaskName and all cases under it.
+type TaskCaseTree struct {
+	InterfaceName string   // Task Name(Interface Name)
+	CaseList      []string // Case Names
+}
+
 type SetUp struct {
 	Mysql []string
 	Redis []string

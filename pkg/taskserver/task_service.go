@@ -3,15 +3,16 @@ package taskserver
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/alsritter/middlebaby/pkg/runner"
 	"github.com/alsritter/middlebaby/pkg/runner/grpc_runner"
 	"github.com/alsritter/middlebaby/pkg/runner/http_runner"
 	"github.com/alsritter/middlebaby/pkg/util/file"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
@@ -26,26 +27,14 @@ type Config struct {
 	MustRunTearDown bool     `yaml:"mustRunTearDown"`
 }
 
-type TestCaseType = string
+func (c *Config) Validate() error {
+	return nil
+}
 
 const (
-	TestCaseTypeHTTP TestCaseType = "http"
-	TestCaseTypeGRpc TestCaseType = "grpc"
+	TestCaseTypeHTTP task_file.TestCaseType = "http"
+	TestCaseTypeGRpc task_file.TestCaseType = "grpc"
 )
-
-// TaskCaseTree represents a TaskName and all cases under it.
-type TaskCaseTree struct {
-	InterfaceName string   // Task Name(Interface Name)
-	CaseList      []string // Case Names
-}
-
-// ITaskRunner grpc or http runner interface.
-type ITaskRunner interface {
-	// Run execution test case.
-	Run(caseName string, mockCenter apimanager.ApiMockCenter, runner runner.Runner) error
-	// GetTaskCaseTree Get All Task and the Task's Cases
-	GetTaskCaseTree() []*TaskCaseTree
-}
 
 type TaskService struct {
 	// all test case files. (file absolute path)
@@ -60,17 +49,17 @@ type TaskService struct {
 	cfg *Config
 
 	// save all task server runner
-	taskRunners map[TestCaseType]ITaskRunner
+	taskRunners map[task_file.TestCaseType]runner.ITaskRunner
 	log         logger.Logger
 }
 
 // New return a TaskService
-func New(cfg *Config, mockCenter apimanager.ApiMockCenter, runner runner.Runner, log logger.Logger) (*TaskService, error) {
+func New(cfg *Config, mockCenter apimanager.ApiMockCenter, r runner.Runner, log logger.Logger) (*TaskService, error) {
 	ts := &TaskService{
-		runner:      runner,
+		runner:      r,
 		mockCenter:  mockCenter,
 		cfg:         cfg,
-		taskRunners: make(map[TestCaseType]ITaskRunner),
+		taskRunners: make(map[task_file.TestCaseType]runner.ITaskRunner),
 		log:         log.NewLogger("TaskService"),
 	}
 	return ts, ts.init()
@@ -127,7 +116,7 @@ func (t *TaskService) init() error {
 }
 
 // Run specified case
-func (t *TaskService) Run(caseType TestCaseType, caseName string) error {
+func (t *TaskService) Run(caseType task_file.TestCaseType, caseName string) error {
 	caseRunner, ok := t.taskRunners[caseType]
 	if !ok {
 		return fmt.Errorf("there are no test cases of this type: %s", caseType)
@@ -144,7 +133,7 @@ func (t *TaskService) Run(caseType TestCaseType, caseName string) error {
 	return caseRunner.Run(caseName, t.mockCenter, t.runner)
 }
 
-func (t *TaskService) GetAllTestCase() map[TestCaseType]ITaskRunner {
+func (t *TaskService) GetAllTestCase() map[task_file.TestCaseType]runner.ITaskRunner {
 	return t.taskRunners
 }
 
@@ -239,7 +228,7 @@ func (t *TaskService) unmarshalGrpc(testCaseFileByte []byte) (*task_file.GRpcTas
 }
 
 // get task server file type.
-func (t *TaskService) getTestCaseType(fileByte []byte) (TestCaseType, error) {
+func (t *TaskService) getTestCaseType(fileByte []byte) (task_file.TestCaseType, error) {
 	type ServiceType struct {
 		ServiceType string `json:"serviceType"`
 	}
@@ -250,8 +239,8 @@ func (t *TaskService) getTestCaseType(fileByte []byte) (TestCaseType, error) {
 		return "", fmt.Errorf("unmarshal taskserver file error: %#v", err)
 	}
 
-	var uniqType = make(map[TestCaseType]bool)
-	var testCaseType TestCaseType
+	var uniqType = make(map[task_file.TestCaseType]bool)
+	var testCaseType task_file.TestCaseType
 
 	testCaseType = strings.ToLower(serviceType.ServiceType)
 	switch testCaseType {
@@ -312,5 +301,5 @@ func (t *TaskService) watchFiles() error {
 }
 
 func (t *TaskService) removeAllServices() {
-	t.taskRunners = make(map[TestCaseType]ITaskRunner)
+	t.taskRunners = make(map[task_file.TestCaseType]runner.ITaskRunner)
 }

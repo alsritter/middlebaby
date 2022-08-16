@@ -20,7 +20,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	config "github.com/alsritter/middlebaby/internal/file/config"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/spf13/viper"
 )
@@ -57,7 +56,8 @@ var (
 		},
 	}
 
-	GlobalConfigVar config.Config
+	// FIXME: remove here.
+	GlobalConfigVar interface{}
 )
 
 func init() {

@@ -1,4 +1,4 @@
-package startup
+package targetprocess
 
 import (
 	"fmt"
@@ -8,34 +8,41 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/alsritter/middlebaby/internal/startup/plugin"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
+type Config struct {
+	AppPath string `yaml:"appPath"`
+}
+
+func (c *Config) Validate() error {
+	return nil
+}
+
 type TargetProcess struct {
-	env     plugin.Env
+	cfg     *Config
 	command *exec.Cmd
 	log     logger.Logger
 }
 
-func NewTargetProcess(env plugin.Env, log logger.Logger) *TargetProcess {
+func New(cfg *Config, log logger.Logger) *TargetProcess {
 	return &TargetProcess{
-		env: env,
+		cfg: cfg,
 		log: log,
 	}
 }
 
 // Run start the service to be tested
 func (t *TargetProcess) Run() error {
-	if t.env.GetAppPath() == "" {
+	if t.cfg.AppPath == "" {
 		return fmt.Errorf("The target application cannot be empty!")
 	}
 
-	if _, err := os.Stat(t.env.GetAppPath()); err != nil {
+	if _, err := os.Stat(t.cfg.AppPath); err != nil {
 		return fmt.Errorf("target app err: ", err)
 	}
 
-	t.command = exec.Command(t.env.GetAppPath())
+	t.command = exec.Command(t.cfg.AppPath)
 
 	port := "8888"
 

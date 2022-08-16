@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alsritter/middlebaby/internal/log"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
 )
@@ -43,13 +42,13 @@ func DescriptorSourceFromProtoFiles(importProtoPaths []string) (Descriptor, erro
 }
 
 func resolveFileNames(importProtoPaths []string, fileNames ...string) ([]*desc.FileDescriptor, error) {
-	log.Tracef("parse the grpc mock file %+v \n", fileNames)
+	// log.Tracef("parse the grpc mock file %+v \n", fileNames)
 	fileNames, err := protoparse.ResolveFilenames(importProtoPaths, fileNames...)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Tracef("after parsing the grpc mock file %+v \n", fileNames)
+	// log.Tracef("after parsing the grpc mock file %+v \n", fileNames)
 	p := protoparse.Parser{
 		ImportPaths:           importProtoPaths,
 		InferImportPaths:      len(importProtoPaths) == 0,
@@ -63,7 +62,7 @@ func resolveFileNames(importProtoPaths []string, fileNames ...string) ([]*desc.F
 			return nil, fmt.Errorf("unable to parse files: %v", err)
 		}
 
-		log.Tracef("Parse file:%s %d %s %+v \n", filename, len(fd), fd[0].GetPackage(), fd[0].GetServices())
+		// log.Tracef("Parse file:%s %d %s %+v \n", filename, len(fd), fd[0].GetPackage(), fd[0].GetServices())
 		fds = append(fds, fd...)
 	}
 	return fds, nil

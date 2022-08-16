@@ -30,6 +30,10 @@ type ConfigCORS struct {
 	AllowCredentials bool     `yaml:"allow_credentials"`
 }
 
+func (c *Config) Validate() error {
+	return nil
+}
+
 type Provider interface {
 	ApiMockCenter
 

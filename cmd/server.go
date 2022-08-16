@@ -30,6 +30,6 @@ var serverCmd = &cobra.Command{
 	Short: "run Mock serve",
 	Long:  `run Mock serve`,
 	Run: func(cmd *cobra.Command, args []string) {
-		startup.Startup(flagApp, &GlobalConfigVar)
+		startup.Startup()
 	},
 }

@@ -2,14 +2,14 @@ package http_runner
 
 import (
 	"fmt"
+
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/runner"
-	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
-var _ taskserver.ITaskRunner = (*HttpTaskRunner)(nil)
+var _ runner.ITaskRunner = (*HttpTaskRunner)(nil)
 
 // HttpTaskRunner save all HTTP task server.
 // a runner contains multiple interface (taskserver == interface)
@@ -21,7 +21,7 @@ type HttpTaskRunner struct {
 	log              logger.Logger
 }
 
-func New(list []*task_file.HttpTask, log logger.Logger) taskserver.ITaskRunner {
+func New(list []*task_file.HttpTask, log logger.Logger) runner.ITaskRunner {
 	r := &HttpTaskRunner{
 		list:             make([]*task_file.HttpTask, 0),
 		TestCaseNameMap:  make(map[string]struct{}),
@@ -73,10 +73,10 @@ out:
 	return newHttpTaskCase(*interfaceOperator, *serverInfo, *testCase, runner, mockCenter, h.log).Run()
 }
 
-func (h *HttpTaskRunner) GetTaskCaseTree() []*taskserver.TaskCaseTree {
-	var tree []*taskserver.TaskCaseTree
+func (h *HttpTaskRunner) GetTaskCaseTree() []*task_file.TaskCaseTree {
+	var tree []*task_file.TaskCaseTree
 	for _, service := range h.list {
-		t := &taskserver.TaskCaseTree{CaseList: make([]string, 0, len(service.Cases))}
+		t := &task_file.TaskCaseTree{CaseList: make([]string, 0, len(service.Cases))}
 		t.InterfaceName = service.HttpTaskInfo.ServiceName
 		for _, testCase := range service.Cases {
 			t.CaseList = append(t.CaseList, testCase.Name)

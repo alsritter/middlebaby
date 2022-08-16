@@ -11,6 +11,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var DefaultLog Logger
+
+func init() {
+	DefaultLog, _ = New(&Config{}, "default")
+}
+
 // Logger defines the basic log library implementation
 type Logger interface {
 	// Trace print a message with trace level.

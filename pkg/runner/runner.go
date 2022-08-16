@@ -10,12 +10,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"go.elastic.co/apm"
 	"google.golang.org/grpc/metadata"
 )
 
 var _ Runner = (*defaultRunnerInstance)(nil)
+
+// ITaskRunner grpc or http runner interface.
+type ITaskRunner interface {
+	// Run execution test case.
+	Run(caseName string, mockCenter apimanager.ApiMockCenter, runner Runner) error
+	// GetTaskCaseTree Get All Task and the Task's Cases
+	GetTaskCaseTree() []*task_file.TaskCaseTree
+}
 
 // Runner runner group
 type Runner interface {

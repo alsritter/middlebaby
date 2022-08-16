@@ -33,6 +33,10 @@ type Redis struct {
 	DB   int    `yaml:"db"`
 }
 
+func (c *Config) Validate() error {
+	return nil
+}
+
 type Provider interface {
 	GetMysqlCon() (*gorm.DB, error)
 	GetRedisCon() (*redis.Client, error)

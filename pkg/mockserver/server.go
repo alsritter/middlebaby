@@ -26,6 +26,10 @@ type Config struct {
 	Watcher      bool     `yaml:"watcher"`      // whether to enable file listening
 }
 
+func (c *Config) Validate() error {
+	return nil
+}
+
 // Provider defines the mock server interface
 type Provider interface {
 	Start() error
