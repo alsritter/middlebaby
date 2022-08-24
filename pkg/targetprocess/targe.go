@@ -46,7 +46,7 @@ type TargetProcess struct {
 func New(log logger.Logger, cfg *Config) *TargetProcess {
 	return &TargetProcess{
 		cfg: cfg,
-		log: log,
+		log: log.NewLogger("target"),
 	}
 }
 

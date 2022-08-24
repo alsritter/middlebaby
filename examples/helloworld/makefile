@@ -9,13 +9,13 @@ RM = rm -rf
 endif
 
 BIN_FILE=testmb
-LEVEL=TRACE
+LEVEL=trace
 
 .PHONY: buildandrun genpb
 
 buildandrun:
 	@go build -o "${BIN_FILE}" main.go
-	middlebaby server --log-level=$(LEVEL) --app="./${BIN_FILE}"
+	middlebaby serve --config.file=".middlebaby.yaml" --log.level=$(LEVEL) --target.path="./${BIN_FILE}"
 	@${RM} testmb
 
 genpb:

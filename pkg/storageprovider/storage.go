@@ -19,6 +19,7 @@ type Config struct {
 }
 
 type Mysql struct {
+	Enabled  bool   `yaml:"enabled"`
 	Port     string `yaml:"port"`
 	Host     string `yaml:"host"`
 	Database string `yaml:"database"`
@@ -29,15 +30,17 @@ type Mysql struct {
 }
 
 type Redis struct {
-	Port string `yaml:"port"`
-	Host string `yaml:"host"`
-	Auth string `yaml:"auth"`
-	DB   int    `yaml:"db"`
+	Enabled bool   `yaml:"enabled"`
+	Port    string `yaml:"port"`
+	Host    string `yaml:"host"`
+	Auth    string `yaml:"auth"`
+	DB      int    `yaml:"db"`
 }
 
 func NewConfig() *Config {
 	return &Config{
 		Mysql: Mysql{
+			Enabled:  true,
 			Port:     "3306",
 			Host:     "127.0.0.1",
 			Database: "",
@@ -47,15 +50,20 @@ func NewConfig() *Config {
 			Charset:  "",
 		},
 		Redis: Redis{
-			Port: "6379",
-			Host: "127.0.0.1",
-			Auth: "",
-			DB:   0,
+			Enabled: true,
+			Port:    "6379",
+			Host:    "127.0.0.1",
+			Auth:    "",
+			DB:      0,
 		},
 	}
 }
 
 func (c *Config) Validate() error {
+	if !c.Mysql.Enabled {
+		return nil
+	}
+
 	cfg := mysql.NewConfig()
 	cfg.User = c.Mysql.Username
 	cfg.Passwd = c.Mysql.Password
@@ -82,15 +90,26 @@ type Provider interface {
 }
 
 type Manager struct {
-	cfg    *Config
-	logger logger.Logger
+	cfg *Config
+	log logger.Logger
 }
 
-func New(logger logger.Logger, cfg *Config) Provider {
+func New(log logger.Logger, cfg *Config) Provider {
 	return &Manager{
-		cfg:    cfg,
-		logger: logger,
+		cfg: cfg,
+		log: log.NewLogger("storage"),
 	}
+}
+
+func (s *Manager) GetMysqlCon() (*gorm.DB, error) {
+	if !s.cfg.Mysql.Enabled {
+		return nil, nil
+	}
+
+	if s.cfg.Mysql.Host == "" {
+		return nil, errors.New(" MySQL The configuration information is incomplete. Check whether you do not need to rely on MySQL")
+	}
+	return gorm.Open(mysql_driver.Open(s.toMysqlConfig().FormatDSN()), &gorm.Config{})
 }
 
 func (s *Manager) toMysqlConfig() *mysql.Config {
@@ -106,14 +125,11 @@ func (s *Manager) toMysqlConfig() *mysql.Config {
 	return cfg
 }
 
-func (s *Manager) GetMysqlCon() (*gorm.DB, error) {
-	if s.cfg.Mysql.Host == "" {
-		return nil, errors.New(" MySQL The configuration information is incomplete. Check whether you do not need to rely on MySQL")
-	}
-	return gorm.Open(mysql_driver.Open(s.toMysqlConfig().FormatDSN()), &gorm.Config{})
-}
-
 func (s *Manager) GetRedisCon() (*redis.Client, error) {
+	if !s.cfg.Redis.Enabled {
+		return nil, nil
+	}
+
 	if s.cfg.Redis.Host == "" {
 		return nil, errors.New(" Redis The configuration information is incomplete. Check whether Redis is not required")
 	}

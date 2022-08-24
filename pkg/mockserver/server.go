@@ -58,7 +58,7 @@ func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provide
 		cfg:        cfg,
 		apiManager: apiManager,
 		server:     &http.Server{},
-		log:        log.NewLogger("MockServer"),
+		log:        log.NewLogger("mock"),
 	}
 	return mock
 }

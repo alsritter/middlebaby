@@ -1,4 +1,39 @@
+log:
+  prefix: true
+  level: debug
+api:
+  methods: ["GET"]
+  headers: ["Content-Type"]
+  exposed_headers: ["Cache-Control"]
+  origins: ["*"]
+  allow_credentials: true
+  httpFiles: 
+    - ./tests/http.mock.json
+  watcher: false
 target:
-  appPath: './target'
+  appPath: "./target"
 mock:
-  mockPort: 5556
+  enableDirect: false
+  mockPort: 9090  # proxy port
+storage:
+  mysql:
+    enabled: true
+    port: "3306"
+    host: "127.0.0.1"
+    database: "test_mb"
+    username: "root"
+    password: "123456"
+    local: "Asia/Shanghai"
+    charset: "utf8mb4"
+  redis:
+    enabled: true
+    port: "6379"
+    host: "127.0.0.1"
+    auth: "123456"
+    db: 0
+taskservice:
+  caseFiles: 
+    - "./tests/cases/*.case.json"
+  taskFileSuffix: ""
+  watcherCases: false
+  mustRunTearDown: false

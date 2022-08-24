@@ -69,7 +69,7 @@ func New(log logger.Logger, cfg *Config, mockCenter apimanager.MockCaseCenter, r
 		mockCenter:  mockCenter,
 		cfg:         cfg,
 		taskRunners: make(map[task_file.TestCaseType]runner.ITaskRunner),
-		log:         log.NewLogger("TaskService"),
+		log:         log.NewLogger("task"),
 	}
 	return ts, ts.init()
 }
@@ -222,7 +222,7 @@ func (t *TaskService) readTaskCaseFiles() error {
 
 	t.taskRunners[TestCaseTypeGRpc] = grpc_runner.New(grpcTaskList, t.log)
 	t.taskRunners[TestCaseTypeHTTP] = http_runner.New(httpTaskList, t.log)
-	t.log.Info(nil, "loading all task server file, total: ", len(grpcTaskList)+len(httpTaskList))
+	t.log.Info(nil, "loading all task server file, total: %d", len(grpcTaskList)+len(httpTaskList))
 	return nil
 }
 

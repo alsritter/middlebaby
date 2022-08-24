@@ -2,8 +2,9 @@ package util
 
 import (
 	"flag"
-	"github.com/spf13/pflag"
 	"io/ioutil"
+
+	"github.com/spf13/pflag"
 )
 
 type ignoredFlag struct {

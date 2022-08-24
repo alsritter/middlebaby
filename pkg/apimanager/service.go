@@ -71,7 +71,7 @@ func New(log logger.Logger, cfg *Config) Provider {
 		MockCaseCenter: NewMockCaseCenter(),
 		router:         mux.NewRouter(),
 		httpApis:       make(map[string]*interact.HttpImposter),
-		log:            log,
+		log:            log.NewLogger("api"),
 		cfg:            cfg,
 	}
 	m.loadImposter()

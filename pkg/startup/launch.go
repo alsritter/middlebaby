@@ -10,6 +10,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/targetprocess"
 	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/hashicorp/go-multierror"
 )
 
 func Startup(ctx context.Context, cancelFunc context.CancelFunc, config *Config, log logger.Logger) error {
@@ -21,12 +22,12 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, config *Config,
 	apiManager := apimanager.New(log, config.ApiManager)
 	run, err := runner.New(log, storageprovider.New(log, config.Storage))
 	if err != nil {
-		log.Fatal(nil, "runner init failed %v", err)
+		log.Fatal(nil, multierror.Prefix(err, "runner init failed").Error())
 	}
 
 	taskService, err := taskserver.New(log, config.TaskService, apiManager, run)
 	if err != nil {
-		log.Fatal(nil, "task service init failed %v", err)
+		log.Fatal(nil, multierror.Prefix(err, "task service init failed").Error())
 	}
 	log.Info(nil, "* start to start taskService")
 	if err := taskService.Start(); err != nil {

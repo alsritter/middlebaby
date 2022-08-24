@@ -18,16 +18,19 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func CommandServe(fn func(context.Context), config util.RegistrableConfig) *cobra.Command {
+
 	command := &cobra.Command{
 		Use:   "serve",
 		Short: "start the mock server",
 		Run: func(cmd *cobra.Command, args []string) {
+
 			fn(cmd.Context())
 		},
 	}
@@ -42,8 +45,7 @@ func CommandServe(fn func(context.Context), config util.RegistrableConfig) *cobr
 	}
 
 	flagSet := command.PersistentFlags()
-	flagSet.StringVar(&configFile, "config.file", ".middlebaby.yaml", "config file")
-	//util.IgnoredFlag(flagSet, "config.file", "config file to load")
+	util.IgnoredFlag(flagSet, "config.file", "config file to load")
 	config.RegisterFlagsWithPrefix("", flagSet)
 	return command
 }

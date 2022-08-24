@@ -110,7 +110,7 @@ func (b *BasicLogger) NewLogger(component string) Logger {
 }
 
 func (b *BasicLogger) setup() {
-	b.logger = log.With().Str("component", b.component).Logger().Hook(CallerHook{})
+	b.logger = log.With().Str("comp", b.component).Logger().Hook(CallerHook{})
 	if b.cfg != nil {
 		if b.cfg.Pretty {
 			b.logger = b.logger.Output(zerolog.ConsoleWriter{
@@ -176,7 +176,9 @@ type CallerHook struct{}
 
 // Run adds additional context
 func (h CallerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-	if _, file, line, ok := runtime.Caller(4); ok {
-		e.Str("file", fmt.Sprintf("%s:%d", path.Base(file), line))
+	if level > zerolog.InfoLevel {
+		if _, file, line, ok := runtime.Caller(4); ok {
+			e.Str("file", fmt.Sprintf("%s:%d", path.Base(file), line))
+		}
 	}
 }
