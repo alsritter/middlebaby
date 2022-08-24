@@ -3,6 +3,7 @@ package taskserver
 import (
 	"errors"
 	"fmt"
+	"github.com/spf13/pflag"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -20,6 +21,11 @@ import (
 	"github.com/radovskyb/watcher"
 )
 
+const (
+	TestCaseTypeHTTP task_file.TestCaseType = "http"
+	TestCaseTypeGRpc task_file.TestCaseType = "grpc"
+)
+
 type Config struct {
 	CaseFiles       []string `yaml:"caseFiles"`
 	TaskFileSuffix  string   `yaml:"taskFileSuffix"` // the default test case suffix name. example: ".case.json"
@@ -27,14 +33,16 @@ type Config struct {
 	MustRunTearDown bool     `yaml:"mustRunTearDown"`
 }
 
+func NewConfig() *Config {
+	return &Config{}
+}
+
 func (c *Config) Validate() error {
 	return nil
 }
 
-const (
-	TestCaseTypeHTTP task_file.TestCaseType = "http"
-	TestCaseTypeGRpc task_file.TestCaseType = "grpc"
-)
+// RegisterFlagsWithPrefix is used to register flags
+func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type TaskService struct {
 	// all test case files. (file absolute path)

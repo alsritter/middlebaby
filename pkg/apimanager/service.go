@@ -7,6 +7,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spf13/pflag"
 	"net/http"
 	"net/url"
 )
@@ -17,22 +18,18 @@ type Config struct {
 	Origins          []string `yaml:"origins"`
 	ExposedHeaders   []string `yaml:"exposed_headers"`
 	AllowCredentials bool     `yaml:"allow_credentials"`
-
-	*ConfigCORS
 }
 
-// ConfigCORS representation of section CORS of the yaml
-type ConfigCORS struct {
-	Methods          []string `yaml:"methods"`
-	Headers          []string `yaml:"headers"`
-	Origins          []string `yaml:"origins"`
-	ExposedHeaders   []string `yaml:"exposed_headers"`
-	AllowCredentials bool     `yaml:"allow_credentials"`
+func NewConfig() *Config {
+	return &Config{}
 }
 
 func (c *Config) Validate() error {
 	return nil
 }
+
+// RegisterFlagsWithPrefix is used to register flags
+func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
 	ApiMockCenter
@@ -63,7 +60,7 @@ func New(log logger.Logger, cfg *Config) Provider {
 }
 
 func (m *Manager) Start() error {
-	handlers.CORS(PrepareAccessControl(m.cfg.ConfigCORS)...)(m.router)
+	handlers.CORS(PrepareAccessControl(m.cfg)...)(m.router)
 	m.addHttpImposterHandler()
 	m.printRouter()
 	return nil

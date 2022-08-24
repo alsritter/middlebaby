@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"github.com/spf13/pflag"
 	"time"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
@@ -33,9 +34,16 @@ type Redis struct {
 	DB   int    `yaml:"db"`
 }
 
+func NewConfig() *Config {
+	return &Config{}
+}
+
 func (c *Config) Validate() error {
 	return nil
 }
+
+// RegisterFlagsWithPrefix is used to register flags
+func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
 	GetMysqlCon() (*gorm.DB, error)

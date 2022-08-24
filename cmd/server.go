@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE alsritter@outlook.com
+Copyright © 2021 alsritter@outlook.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,20 +16,33 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/alsritter/middlebaby/internal/startup"
+	"context"
+	"fmt"
+	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/spf13/cobra"
+	"os"
 )
 
-func init() {
-	rootCmd.AddCommand(serverCmd)
-}
+func CommandServe(fn func(context.Context), config util.RegistrableConfig) *cobra.Command {
+	command := &cobra.Command{
+		Use:   "serve",
+		Short: "start the mock server",
+		Run: func(cmd *cobra.Command, args []string) {
+			fn(cmd.Context())
+		},
+	}
 
-// serverCmd represents the server command
-var serverCmd = &cobra.Command{
-	Use:   "server",
-	Short: "run Mock serve",
-	Long:  `run Mock serve`,
-	Run: func(cmd *cobra.Command, args []string) {
-		startup.Startup()
-	},
+	configFile := util.ParseConfigFileParameter(os.Args[1:])
+	if configFile != "" {
+		fmt.Printf("start to load config file: %s \r\n", configFile)
+		if err := util.LoadConfig(configFile, config); err != nil {
+			fmt.Printf("error loading config from %s: %v\n", configFile, err)
+			os.Exit(1)
+		}
+	}
+
+	flagSet := command.PersistentFlags()
+	util.IgnoredFlag(flagSet, "config.file", "config file to load")
+	config.RegisterFlagsWithPrefix("", flagSet)
+	return command
 }

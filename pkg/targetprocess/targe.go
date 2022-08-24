@@ -2,6 +2,7 @@ package targetprocess
 
 import (
 	"fmt"
+	"github.com/spf13/pflag"
 	"os"
 	"os/exec"
 	"runtime"
@@ -15,8 +16,17 @@ type Config struct {
 	AppPath string `yaml:"appPath"`
 }
 
+func NewConfig() *Config {
+	return &Config{}
+}
+
 func (c *Config) Validate() error {
 	return nil
+}
+
+// RegisterFlagsWithPrefix is used to register flags
+func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
+	f.StringVar(&c.AppPath, prefix+"target.path", c.AppPath, "target application address")
 }
 
 type TargetProcess struct {

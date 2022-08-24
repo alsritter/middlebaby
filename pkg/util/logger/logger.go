@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"github.com/spf13/pflag"
 	"os"
 	"path"
 	"runtime"
@@ -15,6 +16,30 @@ var DefaultLog Logger
 
 func init() {
 	DefaultLog, _ = New(&Config{}, "default")
+}
+
+// Config defines the config structure
+type Config struct {
+	Pretty bool
+	Level  string
+}
+
+// NewConfig is used to init config with default values
+func NewConfig() *Config {
+	return &Config{
+		Pretty: true,
+		Level:  "debug",
+	}
+}
+
+// RegisterFlagsWithPrefix is used to register flags
+func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
+	f.StringVar(&c.Level, prefix+"log.level", c.Level, "log level(debug, info, warn, error, fatal)")
+	f.BoolVar(&c.Pretty, prefix+"log.pretty", c.Pretty, "log in a pretty format")
+}
+
+func (c *Config) Validate() error {
+	return nil
 }
 
 // Logger defines the basic log library implementation
@@ -38,20 +63,6 @@ type Logger interface {
 	SetLogLevel(verbosity string)
 
 	GetCurrentLevel() string
-}
-
-// Config defines the config structure
-type Config struct {
-	Pretty bool
-	Level  string
-}
-
-// NewConfig is used to init config with default values
-func NewConfig() *Config {
-	return &Config{
-		Pretty: true,
-		Level:  "debug",
-	}
 }
 
 // New is used to init service
@@ -109,32 +120,32 @@ func (b *BasicLogger) setup() {
 	}
 }
 
-// LogDebug print a message with debug level.
+// Trace Log print a message with debug level.
 func (b *BasicLogger) Trace(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Trace().Fields(fields).Msgf(format, args...)
 }
 
-// LogDebug print a message with debug level.
+// Debug Log print a message with debug level.
 func (b *BasicLogger) Debug(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Debug().Fields(fields).Msgf(format, args...)
 }
 
-// LogInfo print a message with info level.
+// Info Log print a message with info level.
 func (b *BasicLogger) Info(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Info().Fields(fields).Msgf(format, args...)
 }
 
-// LogWarn print a message with warn level.
+// Warn Log print a message with warn level.
 func (b *BasicLogger) Warn(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Warn().Fields(fields).Msgf(format, args...)
 }
 
-// LogError print a message with error level.
+// Error Log print a message with error level.
 func (b *BasicLogger) Error(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Error().Fields(fields).Msgf(format, args...)
 }
 
-// LogFatal print a message with fatal level.
+// Fatal Log print a message with fatal level.
 func (b *BasicLogger) Fatal(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Fatal().Fields(fields).Msgf(format, args...)
 }

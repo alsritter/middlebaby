@@ -3,10 +3,12 @@ package mockserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/util/file"
+	"github.com/spf13/pflag"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -26,8 +28,20 @@ type Config struct {
 	Watcher      bool     `yaml:"watcher"`      // whether to enable file listening
 }
 
+func NewConfig() *Config {
+	return &Config{}
+}
+
 func (c *Config) Validate() error {
+	if c.MockPort == 0 {
+		return errors.New("[mockserver] mock server listener port cannot be empty")
+	}
 	return nil
+}
+
+// RegisterFlagsWithPrefix is used to register flags
+func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
+	f.IntVar(&c.MockPort, prefix+"mockserver.port", c.MockPort, "mock server listener port")
 }
 
 // Provider defines the mock server interface

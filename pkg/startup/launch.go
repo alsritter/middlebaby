@@ -6,7 +6,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
-func Startup() {
+func Startup(ctx context.Context) {
 	log, err := logger.New(logger.NewConfig(), "main")
 	if err != nil {
 		panic(err)
