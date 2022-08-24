@@ -7,15 +7,15 @@ import (
 )
 
 // StartServiceAsync is used to start service async
-func StartServiceAsync(ctx context.Context, logger logger.Logger, cancelFunc context.CancelFunc, serveFn func() error, stopFn func() error) {
+func StartServiceAsync(ctx context.Context, log logger.Logger, cancelFunc context.CancelFunc, serveFn func() error, stopFn func() error) {
 	if serveFn == nil {
 		return
 	}
 	go func() {
-		logger.Info(nil, "starting service")
+		log.Info(nil, "starting service")
 		go func() {
 			if err := serveFn(); err != nil {
-				logger.Error(nil, "error serving service: %s", err)
+				log.Error(nil, "error serving service: %s", err)
 			}
 			if cancelFunc != nil {
 				cancelFunc()
@@ -23,13 +23,13 @@ func StartServiceAsync(ctx context.Context, logger logger.Logger, cancelFunc con
 		}()
 
 		<-ctx.Done()
-		logger.Info(nil, "stopping service")
+		log.Info(nil, "stopping service")
 		if stopFn() != nil {
-			logger.Info(nil, "stopping service gracefully")
+			log.Info(nil, "stopping service gracefully")
 			if err := stopFn(); err != nil {
-				logger.Warn(nil, "error occurred while stopping service: %s", err)
+				log.Warn(nil, "error occurred while stopping service: %s", err)
 			}
 		}
-		logger.Info(nil, "exiting service")
+		log.Info(nil, "exiting service")
 	}()
 }

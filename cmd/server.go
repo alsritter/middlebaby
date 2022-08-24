@@ -30,7 +30,6 @@ func CommandServe(fn func(context.Context), config util.RegistrableConfig) *cobr
 		Use:   "serve",
 		Short: "start the mock server",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			fn(cmd.Context())
 		},
 	}
