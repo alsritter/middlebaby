@@ -16,6 +16,7 @@ import (
 
 type Config struct {
 	AppPath string `yaml:"appPath"`
+	Port    int    `yaml:"port"`
 }
 
 func NewConfig() *Config {
@@ -23,6 +24,10 @@ func NewConfig() *Config {
 }
 
 func (c *Config) Validate() error {
+	if c.AppPath == "" {
+		return fmt.Errorf("the target application cannot be empty")
+	}
+
 	return nil
 }
 
@@ -47,17 +52,13 @@ func New(log logger.Logger, cfg *Config) *TargetProcess {
 // Start the service to be tested
 func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc) error {
 	util.StartServiceAsync(ctx, t.log, cancelFunc, func() error {
-		if t.cfg.AppPath == "" {
-			return fmt.Errorf("The target application cannot be empty!")
-		}
-
 		if _, err := os.Stat(t.cfg.AppPath); err != nil {
-			return fmt.Errorf("target app err: ", err)
+			return fmt.Errorf("target app err: %v", err)
 		}
 
 		t.command = exec.Command(t.cfg.AppPath)
 
-		port := "8888"
+		port := 8888
 
 		parentEnv := os.Environ()
 		// set target application proxy path.
@@ -75,17 +76,16 @@ func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc
 
 		if err := t.command.Run(); err != nil {
 			if _, isExist := err.(*exec.ExitError); !isExist {
-				return fmt.Errorf("Failed to start the program to be tested, err:", err)
+				return fmt.Errorf("failed to start the program to be tested, err: %v", err)
 			}
 		}
 		return nil
 	}, func() error {
 		if err := kill(t.command); err != nil {
-			return fmt.Errorf("kill error: ", err)
+			return fmt.Errorf("kill error: %v", err)
 		}
 		return nil
 	})
-
 	return nil
 }
 

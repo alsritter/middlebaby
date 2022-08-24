@@ -21,6 +21,7 @@ func StartServiceAsync(ctx context.Context, logger logger.Logger, cancelFunc con
 				cancelFunc()
 			}
 		}()
+
 		<-ctx.Done()
 		logger.Info(nil, "stopping service")
 		if stopFn() != nil {

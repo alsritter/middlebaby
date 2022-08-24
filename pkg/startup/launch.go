@@ -22,6 +22,7 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, config *Config,
 	if err != nil {
 		log.Fatal(nil, "task service init failed %v", err)
 	}
+	log.Info(nil, "* start to start taskService")
 	if err := taskService.Start(); err != nil {
 		return err
 	}
@@ -37,54 +38,5 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, config *Config,
 	if err := target.Start(ctx, cancelFunc); err != nil {
 		return err
 	}
-
-	// TODO: add flag
-	//env := NewRunEnv(cfg, appPath, "http://127.0.0.1:9876", true)
-	//
-	//mockCenter := proxy.NewMockCenter()
-	//trg := targetprocess.New(env, log)
-	//srv := mockserver.New(env, mockCenter, log)
-	//ts, err := task.NewTaskService(env, mockCenter, newRunner(env))
-	//// serve := NewCaseServe(env, mockCenter, log)
-	//
-	//// Mock server
-	//util.StartServiceAsync(ctx, log, cancel,
-	//	func() error {
-	//		return srv.Start()
-	//	},
-	//	func() error {
-	//		return srv.Close()
-	//	})
-	//
-	//// target process
-	//util.StartServiceAsync(ctx, log, cancel,
-	//	func() error {
-	//		return trg.Run()
-	//	},
-	//	func() error {
-	//		return trg.Close()
-	//	})
-	//
-	//util.StartServiceAsync(ctx, log, cancel,
-	//	func() error {
-	//		return trg.Run()
-	//	},
-	//	func() error {
-	//		return nil
-	//	})
-	//
-	//// // TODO: Changes to the plugin. This is just a test.
-	//// group.Go(func() error {
-	//// 	defer func() {
-	//// 		if err := recover(); err != nil {
-	//// 			log.Fatal(nil, "panic error:", err)
-	//// 		}
-	//// 	}()
-	//
-	//// 	time.Sleep(2 * time.Second) // FIXME: remove.
-	//// 	serve.Start()
-	//// 	return nil
-	//// })
-
 	return nil
 }
