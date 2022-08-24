@@ -1,7 +1,9 @@
 package targetprocess
 
 import (
+	"context"
 	"fmt"
+	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/spf13/pflag"
 	"os"
 	"os/exec"
@@ -35,53 +37,55 @@ type TargetProcess struct {
 	log     logger.Logger
 }
 
-func New(cfg *Config, log logger.Logger) *TargetProcess {
+func New(log logger.Logger, cfg *Config) *TargetProcess {
 	return &TargetProcess{
 		cfg: cfg,
 		log: log,
 	}
 }
 
-// Run start the service to be tested
-func (t *TargetProcess) Run() error {
-	if t.cfg.AppPath == "" {
-		return fmt.Errorf("The target application cannot be empty!")
-	}
-
-	if _, err := os.Stat(t.cfg.AppPath); err != nil {
-		return fmt.Errorf("target app err: ", err)
-	}
-
-	t.command = exec.Command(t.cfg.AppPath)
-
-	port := "8888"
-
-	parentEnv := os.Environ()
-	// set target application proxy path.
-	parentEnv = append(parentEnv, fmt.Sprintf("HTTP_PROXY=http://127.0.0.1:%d", port))
-	parentEnv = append(parentEnv, fmt.Sprintf("http_proxy=http://127.0.0.1:%d", port))
-	// https to http.
-	parentEnv = append(parentEnv, fmt.Sprintf("HTTPS_PROXY=http://127.0.0.1:%d", port))
-	parentEnv = append(parentEnv, fmt.Sprintf("https_proxy=http://127.0.0.1:%d", port))
-	t.command.Env = parentEnv
-
-	// TODO: add filter support
-	t.command.Stdout = os.Stdout
-	t.command.Stderr = os.Stderr
-	t.command.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
-
-	if err := t.command.Run(); err != nil {
-		if _, isExist := err.(*exec.ExitError); !isExist {
-			return fmt.Errorf("Failed to start the program to be tested, err:", err)
+// Start the service to be tested
+func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc) error {
+	util.StartServiceAsync(ctx, t.log, cancelFunc, func() error {
+		if t.cfg.AppPath == "" {
+			return fmt.Errorf("The target application cannot be empty!")
 		}
-	}
-	return nil
-}
 
-func (t *TargetProcess) Close() error {
-	if err := kill(t.command); err != nil {
-		return fmt.Errorf("kill error: ", err)
-	}
+		if _, err := os.Stat(t.cfg.AppPath); err != nil {
+			return fmt.Errorf("target app err: ", err)
+		}
+
+		t.command = exec.Command(t.cfg.AppPath)
+
+		port := "8888"
+
+		parentEnv := os.Environ()
+		// set target application proxy path.
+		parentEnv = append(parentEnv, fmt.Sprintf("HTTP_PROXY=http://127.0.0.1:%d", port))
+		parentEnv = append(parentEnv, fmt.Sprintf("http_proxy=http://127.0.0.1:%d", port))
+		// https to http.
+		parentEnv = append(parentEnv, fmt.Sprintf("HTTPS_PROXY=http://127.0.0.1:%d", port))
+		parentEnv = append(parentEnv, fmt.Sprintf("https_proxy=http://127.0.0.1:%d", port))
+		t.command.Env = parentEnv
+
+		// TODO: add filter support
+		t.command.Stdout = os.Stdout
+		t.command.Stderr = os.Stderr
+		t.command.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+
+		if err := t.command.Run(); err != nil {
+			if _, isExist := err.(*exec.ExitError); !isExist {
+				return fmt.Errorf("Failed to start the program to be tested, err:", err)
+			}
+		}
+		return nil
+	}, func() error {
+		if err := kill(t.command); err != nil {
+			return fmt.Errorf("kill error: ", err)
+		}
+		return nil
+	})
+
 	return nil
 }
 

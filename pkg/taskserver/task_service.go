@@ -62,7 +62,7 @@ type TaskService struct {
 }
 
 // New return a TaskService
-func New(cfg *Config, mockCenter apimanager.ApiMockCenter, r runner.Runner, log logger.Logger) (*TaskService, error) {
+func New(log logger.Logger, cfg *Config, mockCenter apimanager.ApiMockCenter, r runner.Runner) (*TaskService, error) {
 	ts := &TaskService{
 		runner:      r,
 		mockCenter:  mockCenter,
@@ -120,6 +120,14 @@ func (t *TaskService) init() error {
 		}
 	}
 
+	return nil
+}
+
+func (t TaskService) Start() error {
+	return nil
+}
+
+func (t TaskService) Close() error {
 	return nil
 }
 

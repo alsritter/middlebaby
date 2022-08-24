@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -58,14 +59,41 @@ type defaultRunnerInstance struct {
 	log          logger.Logger
 }
 
-// NewRunner return a runner.
-func NewRunner(mysqlRunner MysqlRunner, redisRunner RedisRunner, log logger.Logger) (Runner, error) {
+// New return a runner.
+func New(log logger.Logger, storage storageprovider.Provider) (Runner, error) {
+	db, err := storage.GetMysqlCon()
+	if err != nil {
+		log.Error(nil, "Failed to connect to the MySQL database: %v", err)
+	}
+
+	redisClient, err := storage.GetRedisCon()
+	if err != nil {
+		log.Error(nil, "Failed to connect to the Redis:", err.Error())
+	}
+
 	return &defaultRunnerInstance{
-		mysqlRunner: mysqlRunner,
-		redisRunner: redisRunner,
+		mysqlRunner: NewMysqlRunner(db, log),
+		redisRunner: NewRedisRunner(redisClient),
 		log:         log,
 	}, nil
 }
+
+//func newRunner(env plugin.Env) Runner {
+//	db, err := getMysqlCon(env)
+//	if err != nil {
+//		log.Error("Failed to connect to the MySQL database:", err.Error())
+//	}
+//
+//	redisPool, err := getRedisCon(env)
+//	if err != nil {
+//		log.Error("Failed to connect to the Redis:", err.Error())
+//	}
+//	runner, err := New(storage_runner2.NewMysqlRunner(db), storage_runner2.NewRedisRunner(redisPool))
+//	if err != nil {
+//		log.Fatal("Failed to initialize the running environment:", err)
+//	}
+//	return runner
+//}
 
 func (c *defaultRunnerInstance) MySQL(sql string) (result []map[string]interface{}, err error) {
 	return c.mysqlRunner.Run(sql)

@@ -42,7 +42,8 @@ func CommandServe(fn func(context.Context), config util.RegistrableConfig) *cobr
 	}
 
 	flagSet := command.PersistentFlags()
-	util.IgnoredFlag(flagSet, "config.file", "config file to load")
+	flagSet.StringVar(&configFile, "config.file", ".middlebaby.yaml", "config file")
+	//util.IgnoredFlag(flagSet, "config.file", "config file to load")
 	config.RegisterFlagsWithPrefix("", flagSet)
 	return command
 }

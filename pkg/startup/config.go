@@ -1,9 +1,9 @@
-package generic
+package startup
 
 import (
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/mockserver"
-	"github.com/alsritter/middlebaby/pkg/storage"
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"github.com/alsritter/middlebaby/pkg/targetprocess"
 	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util"
@@ -16,7 +16,7 @@ type Config struct {
 	ApiManager    *apimanager.Config
 	TargetProcess *targetprocess.Config
 	MockServer    *mockserver.Config
-	Storage       *storage.Config `yaml:"storage"` // mock server needs
+	Storage       *storageprovider.Config `yaml:"storageprovider"` // mock server needs
 	TaskService   *taskserver.Config
 }
 
@@ -26,7 +26,7 @@ func NewConfig() *Config {
 		ApiManager:    apimanager.NewConfig(),
 		TargetProcess: targetprocess.NewConfig(),
 		MockServer:    mockserver.NewConfig(),
-		Storage:       storage.NewConfig(),
+		Storage:       storageprovider.NewConfig(),
 		TaskService:   taskserver.NewConfig(),
 	}
 }

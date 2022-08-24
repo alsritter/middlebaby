@@ -2,21 +2,41 @@ package startup
 
 import (
 	"context"
-	"github.com/alsritter/middlebaby/pkg/util"
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/mockserver"
+	"github.com/alsritter/middlebaby/pkg/runner"
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
+	"github.com/alsritter/middlebaby/pkg/targetprocess"
+	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
-func Startup(ctx context.Context) {
-	log, err := logger.New(logger.NewConfig(), "main")
+func Startup(ctx context.Context, cancelFunc context.CancelFunc, config *Config, log logger.Logger) error {
+	apiManager := apimanager.New(log, config.ApiManager)
+	run, err := runner.New(log, storageprovider.New(log, config.Storage))
 	if err != nil {
-		panic(err)
+		log.Fatal(nil, "runner init failed %v", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	stop := util.RegisterExitHandlers(log, cancel)
-	defer cancel()
+	taskService, err := taskserver.New(log, config.TaskService, apiManager, run)
+	if err != nil {
+		log.Fatal(nil, "task service init failed %v", err)
+	}
+	if err := taskService.Start(); err != nil {
+		return err
+	}
 
-	log.Info(nil, "", ctx.Value("占位符"))
+	mockServer := mockserver.New(log, config.MockServer, apiManager)
+	log.Info(nil, "* start to start mockServer")
+	if err := mockServer.Start(ctx, cancelFunc); err != nil {
+		return err
+	}
+
+	target := targetprocess.New(log, config.TargetProcess)
+	log.Info(nil, "* start to start target process")
+	if err := target.Start(ctx, cancelFunc); err != nil {
+		return err
+	}
 
 	// TODO: add flag
 	//env := NewRunEnv(cfg, appPath, "http://127.0.0.1:9876", true)
@@ -66,23 +86,5 @@ func Startup(ctx context.Context) {
 	//// 	return nil
 	//// })
 
-	<-stop
-	log.Info(nil, "Goodbye")
+	return nil
 }
-
-//func newRunner(env plugin.Env) Runner {
-//	db, err := getMysqlCon(env)
-//	if err != nil {
-//		log.Error("Failed to connect to the MySQL database:", err.Error())
-//	}
-//
-//	redisPool, err := getRedisCon(env)
-//	if err != nil {
-//		log.Error("Failed to connect to the Redis:", err.Error())
-//	}
-//	runner, err := NewRunner(storage_runner2.NewMysqlRunner(db), storage_runner2.NewRedisRunner(redisPool))
-//	if err != nil {
-//		log.Fatal("Failed to initialize the running environment:", err)
-//	}
-//	return runner
-//}

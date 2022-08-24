@@ -1,19 +1,17 @@
-package storage_runner
+package runner
 
 import (
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/runner"
-
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"gorm.io/gorm"
 	db_logger "gorm.io/gorm/logger"
 )
 
-var _ runner.MysqlRunner = (*mysqlInstance)(nil)
-var _ runner.MysqlRunner = (*defaultMysqlInstance)(nil)
+var _ MysqlRunner = (*mysqlInstance)(nil)
+var _ MysqlRunner = (*defaultMysqlInstance)(nil)
 
 // NewMysqlRunner return a mysql runner.
-func NewMysqlRunner(db *gorm.DB, log logger.Logger) runner.MysqlRunner {
+func NewMysqlRunner(db *gorm.DB, log logger.Logger) MysqlRunner {
 	if db == nil {
 		return &defaultMysqlInstance{}
 	}

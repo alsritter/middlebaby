@@ -1,4 +1,4 @@
-package storage
+package storageprovider
 
 import (
 	"errors"
@@ -55,11 +55,11 @@ type Manager struct {
 	logger logger.Logger
 }
 
-func New(cfg *Config, logger logger.Logger) (Provider, error) {
+func New(logger logger.Logger, cfg *Config) Provider {
 	return &Manager{
 		cfg:    cfg,
 		logger: logger,
-	}, nil
+	}
 }
 
 func (s *Manager) toMysqlConfig() *mysql.Config {

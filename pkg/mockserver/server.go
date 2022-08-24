@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/file"
 	"github.com/spf13/pflag"
 	"io/ioutil"
@@ -46,8 +47,7 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 
 // Provider defines the mock server interface
 type Provider interface {
-	Start() error
-	Close() error
+	Start(ctx context.Context, cancelFunc context.CancelFunc) error
 }
 
 type MockServe struct {
@@ -58,7 +58,7 @@ type MockServe struct {
 	log        logger.Logger
 }
 
-func New(cfg *Config, apiManager apimanager.Provider, log logger.Logger) Provider {
+func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provider {
 	mock := &MockServe{
 		mit:        NewProxy(cfg.EnableDirect, log),
 		cfg:        cfg,
@@ -90,7 +90,7 @@ func (m *MockServe) watcher() {
 
 	file.AttachWatcher(w, func(evn watcher.Event) {
 		m.loadSingleImposter(evn.Path)
-		if err := m.Close(); err != nil {
+		if err := m.close(); err != nil {
 			m.log.Fatal(nil, "error:", err)
 		}
 
@@ -102,13 +102,23 @@ func (m *MockServe) watcher() {
 			m.log.Fatal(nil, "error:", err)
 		}
 
-		if err = m.Start(); err != nil {
+		if err = m.start(); err != nil {
 			m.log.Fatal(nil, "error:", err)
 		}
 	})
 }
 
-func (m *MockServe) Start() error {
+func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc) error {
+	util.StartServiceAsync(ctx, m.log, cancelFunc, func() error {
+		return m.start()
+	}, func() error {
+		return m.close()
+	})
+
+	return nil
+}
+
+func (m *MockServe) start() error {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", m.cfg.MockPort))
 	if err != nil {
 		return fmt.Errorf("failed to listen the port: %d, err: %v", m.cfg.MockPort, err)
@@ -135,7 +145,7 @@ func (m *MockServe) Start() error {
 }
 
 // Close shutdown the current http server
-func (m *MockServe) Close() error {
+func (m *MockServe) close() error {
 	m.log.Info(nil, "stopping server...")
 	if err := m.server.Shutdown(context.TODO()); err != nil {
 		return fmt.Errorf("server Shutdown failed:%+v", err)

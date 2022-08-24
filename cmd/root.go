@@ -16,9 +16,11 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/alsritter/middlebaby/pkg/startup"
-	"github.com/alsritter/middlebaby/pkg/startup/generic"
+	"github.com/alsritter/middlebaby/pkg/util"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +52,31 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(CommandServe(startup.Startup, generic.NewConfig()))
+	rootCmd.AddCommand(CommandServe(Setup, config))
+}
+
+var config = startup.NewConfig()
+
+func Setup(ctx context.Context) {
+	log, err := logger.New(config.Log, "main")
+	if err != nil {
+		panic(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	stop := util.RegisterExitHandlers(log, cancel)
+	defer cancel()
+
+	if err := config.Validate(); err != nil {
+		log.Fatal(nil, "failed to validate config: %s", err)
+	}
+
+	if err := startup.Startup(ctx, cancel, config, log); err != nil {
+		log.Fatal(nil, "serve startup fail: %s", err)
+	}
+
+	<-stop
+	log.Info(nil, "Goodbye")
 }
 
 func Execute() {

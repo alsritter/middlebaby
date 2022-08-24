@@ -1,8 +1,7 @@
-package storage_runner
+package runner
 
 import (
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/runner"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"regexp"
 	"strings"
@@ -10,8 +9,8 @@ import (
 	"github.com/go-redis/redis"
 )
 
-var _ runner.RedisRunner = (*redisInstance)(nil)
-var _ runner.RedisRunner = (*defaultRedisInstance)(nil)
+var _ RedisRunner = (*redisInstance)(nil)
+var _ RedisRunner = (*defaultRedisInstance)(nil)
 
 type redisInstance struct {
 	log         logger.Logger
@@ -19,7 +18,7 @@ type redisInstance struct {
 }
 
 // NewRedisRunner return a redis runner.
-func NewRedisRunner(redisClient *redis.Client) runner.RedisRunner {
+func NewRedisRunner(redisClient *redis.Client) RedisRunner {
 	if redisClient == nil {
 		return &defaultRedisInstance{}
 	}
