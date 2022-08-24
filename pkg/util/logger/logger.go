@@ -2,11 +2,12 @@ package logger
 
 import (
 	"fmt"
-	"github.com/spf13/pflag"
 	"os"
 	"path"
 	"runtime"
 	"strings"
+
+	"github.com/spf13/pflag"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -20,8 +21,8 @@ func init() {
 
 // Config defines the config structure
 type Config struct {
-	Pretty bool
-	Level  string
+	Pretty bool   `yaml:"prefix"`
+	Level  string `yaml:"level"`
 }
 
 // NewConfig is used to init config with default values
@@ -32,14 +33,14 @@ func NewConfig() *Config {
 	}
 }
 
+func (c *Config) Validate() error {
+	return nil
+}
+
 // RegisterFlagsWithPrefix is used to register flags
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 	f.StringVar(&c.Level, prefix+"log.level", c.Level, "log level(debug, info, warn, error, fatal)")
 	f.BoolVar(&c.Pretty, prefix+"log.pretty", c.Pretty, "log in a pretty format")
-}
-
-func (c *Config) Validate() error {
-	return nil
 }
 
 // Logger defines the basic log library implementation

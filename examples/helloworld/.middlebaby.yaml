@@ -1,0 +1,4 @@
+target:
+  appPath: './target'
+mock:
+  mockPort: 5556

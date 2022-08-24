@@ -13,7 +13,7 @@ type httpTaskCase struct {
 	interfaceOperator task_file.InterfaceOperator
 
 	runner     runner.Runner
-	mockCenter apimanager.ApiMockCenter
+	mockCenter apimanager.MockCaseCenter
 	log        logger.Logger
 }
 
@@ -23,7 +23,7 @@ func newHttpTaskCase(
 	testCase task_file.HttpTaskCase,
 
 	runner runner.Runner,
-	mockCenter apimanager.ApiMockCenter,
+	mockCenter apimanager.MockCaseCenter,
 	log logger.Logger,
 ) *httpTaskCase {
 	return &httpTaskCase{

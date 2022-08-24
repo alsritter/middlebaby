@@ -36,7 +36,7 @@ func New(list []*task_file.HttpTask, log logger.Logger) runner.ITaskRunner {
 }
 
 // Run executes the specified Case.
-func (h *HttpTaskRunner) Run(caseName string, mockCenter apimanager.ApiMockCenter, runner runner.Runner) error {
+func (h *HttpTaskRunner) Run(caseName string, mockCenter apimanager.MockCaseCenter, runner runner.Runner) error {
 	var (
 		testCase          *task_file.HttpTaskCase
 		serverInfo        *task_file.HttpTaskInfo

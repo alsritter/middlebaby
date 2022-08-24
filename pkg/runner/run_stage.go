@@ -10,7 +10,7 @@ import (
 )
 
 // RunSetUp setup run
-func RunSetUp(s task_file.SetUp, mockCenter apimanager.ApiMockCenter, runner Runner) error {
+func RunSetUp(s task_file.SetUp, mockCenter apimanager.MockCaseCenter, runner Runner) error {
 	for _, sql := range s.Mysql {
 		if _, err := runner.MySQL(sql); err != nil {
 			return fmt.Errorf("execution SetUp.Mysql error: %w", err)
@@ -115,7 +115,7 @@ func RunHttpAssert(a task_file.HttpAssert, responseHeader http.Header, statusCod
 }
 
 // RunTearDown run tearDown.
-func RunTearDown(t task_file.TearDown, mockCenter apimanager.ApiMockCenter, runner Runner) error {
+func RunTearDown(t task_file.TearDown, mockCenter apimanager.MockCaseCenter, runner Runner) error {
 	// when the task server is complete, empty the mock for the current case.
 	mockCenter.UnLoadHttp(runner.RunID())
 	mockCenter.UnLoadGRpc(runner.RunID())

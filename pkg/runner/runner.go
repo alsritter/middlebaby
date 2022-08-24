@@ -3,13 +3,14 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/taskserver/task_file"
@@ -23,7 +24,7 @@ var _ Runner = (*defaultRunnerInstance)(nil)
 // ITaskRunner grpc or http runner interface.
 type ITaskRunner interface {
 	// Run execution test case.
-	Run(caseName string, mockCenter apimanager.ApiMockCenter, runner Runner) error
+	Run(caseName string, mockCenter apimanager.MockCaseCenter, runner Runner) error
 	// GetTaskCaseTree Get All Task and the Task's Cases
 	GetTaskCaseTree() []*task_file.TaskCaseTree
 }
@@ -77,23 +78,6 @@ func New(log logger.Logger, storage storageprovider.Provider) (Runner, error) {
 		log:         log,
 	}, nil
 }
-
-//func newRunner(env plugin.Env) Runner {
-//	db, err := getMysqlCon(env)
-//	if err != nil {
-//		log.Error("Failed to connect to the MySQL database:", err.Error())
-//	}
-//
-//	redisPool, err := getRedisCon(env)
-//	if err != nil {
-//		log.Error("Failed to connect to the Redis:", err.Error())
-//	}
-//	runner, err := New(storage_runner2.NewMysqlRunner(db), storage_runner2.NewRedisRunner(redisPool))
-//	if err != nil {
-//		log.Fatal("Failed to initialize the running environment:", err)
-//	}
-//	return runner
-//}
 
 func (c *defaultRunnerInstance) MySQL(sql string) (result []map[string]interface{}, err error) {
 	return c.mysqlRunner.Run(sql)

@@ -2,6 +2,7 @@ package startup
 
 import (
 	"context"
+
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/mockserver"
 	"github.com/alsritter/middlebaby/pkg/runner"
@@ -12,6 +13,11 @@ import (
 )
 
 func Startup(ctx context.Context, cancelFunc context.CancelFunc, config *Config, log logger.Logger) error {
+	// TODO: remove here...
+	if config.TargetProcess.MockPort == 0 {
+		config.TargetProcess.MockPort = config.MockServer.MockPort
+	}
+
 	apiManager := apimanager.New(log, config.ApiManager)
 	run, err := runner.New(log, storageprovider.New(log, config.Storage))
 	if err != nil {

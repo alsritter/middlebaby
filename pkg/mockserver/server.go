@@ -2,19 +2,14 @@ package mockserver
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/interact"
-	"github.com/alsritter/middlebaby/pkg/util"
-	"github.com/alsritter/middlebaby/pkg/util/file"
-	"github.com/spf13/pflag"
-	"io/ioutil"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
+
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/util"
+	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/radovskyb/watcher"
@@ -23,10 +18,8 @@ import (
 )
 
 type Config struct {
-	HttpFiles    []string `yaml:"httpFiles"`    // http mock file.
-	EnableDirect bool     `yaml:"enableDirect"` // whether the missed mock allows real requests
-	MockPort     int      `yaml:"mockPort"`     // proxy port
-	Watcher      bool     `yaml:"watcher"`      // whether to enable file listening
+	EnableDirect bool `yaml:"enableDirect"` // whether the missed mock allows real requests
+	MockPort     int  `yaml:"mockPort"`     // proxy port
 }
 
 func NewConfig() *Config {
@@ -56,6 +49,7 @@ type MockServe struct {
 	mit        *mitmproxy
 	apiManager apimanager.Provider
 	log        logger.Logger
+	w          *watcher.Watcher
 }
 
 func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provider {
@@ -66,52 +60,16 @@ func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provide
 		server:     &http.Server{},
 		log:        log.NewLogger("MockServer"),
 	}
-	mock.loadImposter()
-	mock.watcher()
 	return mock
-}
-
-func (m *MockServe) loadImposter() {
-	for _, filePath := range m.cfg.HttpFiles {
-		m.loadSingleImposter(filePath)
-	}
-}
-
-//Initialize and start the file watcher if the watcher option is true
-func (m *MockServe) watcher() {
-	if !m.cfg.Watcher {
-		return
-	}
-
-	w, err := file.InitializeWatcher(m.cfg.HttpFiles...)
-	if err != nil {
-		m.log.Fatal(nil, "error:", err)
-	}
-
-	file.AttachWatcher(w, func(evn watcher.Event) {
-		m.loadSingleImposter(evn.Path)
-		if err := m.close(); err != nil {
-			m.log.Fatal(nil, "error:", err)
-		}
-
-		if err = m.apiManager.Close(); err != nil {
-			m.log.Fatal(nil, "error:", err)
-		}
-
-		if err = m.apiManager.Start(); err != nil {
-			m.log.Fatal(nil, "error:", err)
-		}
-
-		if err = m.start(); err != nil {
-			m.log.Fatal(nil, "error:", err)
-		}
-	})
 }
 
 func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc) error {
 	util.StartServiceAsync(ctx, m.log, cancelFunc, func() error {
 		return m.start()
 	}, func() error {
+		if m.w != nil {
+			m.w.Close()
+		}
 		return m.close()
 	})
 
@@ -132,12 +90,12 @@ func (m *MockServe) start() error {
 	}
 
 	if err := http2.ConfigureServer(m.server, &http2.Server{}); err != nil {
-		return fmt.Errorf("proxy http2 error: ", err)
+		return fmt.Errorf("proxy http2 error: %v", err)
 	}
 
 	if err := m.server.Serve(l); err != nil {
 		if err.Error() != "http: Server closed" {
-			return fmt.Errorf("failed to start the proxy server: ", err)
+			return fmt.Errorf("failed to start the proxy server: %v", err)
 		}
 	}
 
@@ -151,31 +109,4 @@ func (m *MockServe) close() error {
 		return fmt.Errorf("server Shutdown failed:%+v", err)
 	}
 	return nil
-}
-
-// loading single http file to imposter
-func (m *MockServe) loadSingleImposter(filePath string) {
-	m.apiManager.UnLoadAllGlobalHttp()
-	if !filepath.IsAbs(filePath) {
-		if fp, err := filepath.Abs(filePath); err != nil {
-			m.log.Error(nil, "to absolute representation path err: %s", err)
-			return
-		} else {
-			filePath = fp
-		}
-	}
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		m.log.Error(nil, "%w: error trying to read config file: %s", err, filePath)
-	}
-	defer file.Close()
-	bytes, _ := ioutil.ReadAll(file)
-
-	var imposter []interact.HttpImposter
-	if err := json.Unmarshal(bytes, &imposter); err != nil {
-		m.log.Error(nil, "%w: error while unmarshal configFile file %s", err, filePath)
-	}
-
-	m.apiManager.AddGlobalHttp(imposter...)
 }

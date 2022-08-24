@@ -2,8 +2,9 @@ package storageprovider
 
 import (
 	"errors"
-	"github.com/spf13/pflag"
 	"time"
+
+	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
@@ -35,10 +36,40 @@ type Redis struct {
 }
 
 func NewConfig() *Config {
-	return &Config{}
+	return &Config{
+		Mysql: Mysql{
+			Port:     "3306",
+			Host:     "127.0.0.1",
+			Database: "",
+			Username: "root",
+			Password: "123456",
+			Local:    "",
+			Charset:  "",
+		},
+		Redis: Redis{
+			Port: "6379",
+			Host: "127.0.0.1",
+			Auth: "",
+			DB:   0,
+		},
+	}
 }
 
 func (c *Config) Validate() error {
+	cfg := mysql.NewConfig()
+	cfg.User = c.Mysql.Username
+	cfg.Passwd = c.Mysql.Password
+	cfg.Net = "tcp"
+	cfg.Addr = c.Mysql.Host + ":" + c.Mysql.Port
+	cfg.DBName = c.Mysql.Database
+	cfg.Loc, _ = time.LoadLocation(c.Mysql.Local)
+	cfg.ParseTime = true
+	cfg.Params = map[string]string{"charset": c.Mysql.Charset}
+
+	if _, err := mysql.ParseDSN(cfg.FormatDSN()); err != nil {
+		return errors.New("[storage] check your mysql database configuration")
+	}
+
 	return nil
 }
 

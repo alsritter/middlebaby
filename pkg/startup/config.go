@@ -12,11 +12,11 @@ import (
 )
 
 type Config struct {
-	Log           *logger.Config
-	ApiManager    *apimanager.Config
-	TargetProcess *targetprocess.Config
-	MockServer    *mockserver.Config
-	Storage       *storageprovider.Config `yaml:"storageprovider"` // mock server needs
+	Log           *logger.Config          `yaml:"log"`
+	ApiManager    *apimanager.Config      `yaml:"api"`
+	TargetProcess *targetprocess.Config   `yaml:"target"`
+	MockServer    *mockserver.Config      `yaml:"mock"`
+	Storage       *storageprovider.Config `yaml:"storage"` // mock server needs
 	TaskService   *taskserver.Config
 }
 

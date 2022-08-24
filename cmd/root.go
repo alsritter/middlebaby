@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+
 	"github.com/alsritter/middlebaby/pkg/startup"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
@@ -35,7 +36,7 @@ const (
                                                  /____/   
 -----------------------------------------------------------
 Powered by: alsritter
-	`
+`
 )
 
 var (
@@ -49,13 +50,13 @@ var (
 			_ = cmd.Help()
 		},
 	}
+
+	config = startup.NewConfig()
 )
 
 func init() {
 	rootCmd.AddCommand(CommandServe(Setup, config))
 }
-
-var config = startup.NewConfig()
 
 func Setup(ctx context.Context) {
 	log, err := logger.New(config.Log, "main")
@@ -63,7 +64,7 @@ func Setup(ctx context.Context) {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	stop := util.RegisterExitHandlers(log, cancel)
 	defer cancel()
 

@@ -22,7 +22,7 @@ func New(list []*task_file.GRpcTask, log logger.Logger) runner.ITaskRunner {
 	}
 }
 
-func (g *GRpcTaskRunner) Run(caseName string, mockCenter apimanager.ApiMockCenter, runner runner.Runner) error {
+func (g *GRpcTaskRunner) Run(caseName string, mockCenter apimanager.MockCaseCenter, runner runner.Runner) error {
 	return nil
 }
 

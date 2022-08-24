@@ -3,11 +3,12 @@ package taskserver
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/pflag"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/runner"
 	"github.com/alsritter/middlebaby/pkg/runner/grpc_runner"
@@ -52,7 +53,7 @@ type TaskService struct {
 	// provides an interface for use case execution.
 	runner runner.Runner
 	// mock center
-	mockCenter apimanager.ApiMockCenter
+	mockCenter apimanager.MockCaseCenter
 	// configuration information required by the service.
 	cfg *Config
 
@@ -62,7 +63,7 @@ type TaskService struct {
 }
 
 // New return a TaskService
-func New(log logger.Logger, cfg *Config, mockCenter apimanager.ApiMockCenter, r runner.Runner) (*TaskService, error) {
+func New(log logger.Logger, cfg *Config, mockCenter apimanager.MockCaseCenter, r runner.Runner) (*TaskService, error) {
 	ts := &TaskService{
 		runner:      r,
 		mockCenter:  mockCenter,

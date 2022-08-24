@@ -3,20 +3,21 @@ package targetprocess
 import (
 	"context"
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/util"
-	"github.com/spf13/pflag"
 	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"syscall"
 
+	"github.com/alsritter/middlebaby/pkg/util"
+	"github.com/spf13/pflag"
+
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
 type Config struct {
-	AppPath string `yaml:"appPath"`
-	Port    int    `yaml:"port"`
+	AppPath  string `yaml:"appPath"`
+	MockPort int    `yaml:"mockPort"`
 }
 
 func NewConfig() *Config {
@@ -58,12 +59,13 @@ func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc
 
 		t.command = exec.Command(t.cfg.AppPath)
 
-		port := 8888
+		port := t.cfg.MockPort
 
 		parentEnv := os.Environ()
 		// set target application proxy path.
 		parentEnv = append(parentEnv, fmt.Sprintf("HTTP_PROXY=http://127.0.0.1:%d", port))
 		parentEnv = append(parentEnv, fmt.Sprintf("http_proxy=http://127.0.0.1:%d", port))
+
 		// https to http.
 		parentEnv = append(parentEnv, fmt.Sprintf("HTTPS_PROXY=http://127.0.0.1:%d", port))
 		parentEnv = append(parentEnv, fmt.Sprintf("https_proxy=http://127.0.0.1:%d", port))
