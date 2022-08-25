@@ -17,7 +17,7 @@ type Config struct {
 	TargetProcess *targetprocess.Config   `yaml:"target"`
 	MockServer    *mockserver.Config      `yaml:"mock"`
 	Storage       *storageprovider.Config `yaml:"storage"` // mock server needs
-	TaskService   *taskserver.Config
+	TaskService   *taskserver.Config      `yaml:"task"`
 }
 
 func NewConfig() *Config {
