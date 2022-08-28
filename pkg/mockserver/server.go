@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/util"
@@ -40,7 +41,7 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 
 // Provider defines the mock server interface
 type Provider interface {
-	Start(ctx context.Context, cancelFunc context.CancelFunc) error
+	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
 }
 
 type MockServe struct {
@@ -63,8 +64,8 @@ func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provide
 	return mock
 }
 
-func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc) error {
-	util.StartServiceAsync(ctx, m.log, cancelFunc, func() error {
+func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
+	util.StartServiceAsync(ctx, m.log, cancelFunc, wg, func() error {
 		return m.start()
 	}, func() error {
 		if m.w != nil {

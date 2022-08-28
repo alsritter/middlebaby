@@ -8,13 +8,31 @@ CP = cp
 RM = rm -rf
 endif
 
-.PHONY: buildandrun install
 BIN_FILE=middlebaby
+PROTO_FILES=$(shell find . -name *.proto)
 
+.PHONY: buildandrun
 buildandrun:
 	@go build -o "${BIN_FILE}" main.go
 	./"${BIN_FILE}"
 	${RM} "${BIN_FILE}"
 
-install:
-	@go install .
+# use 'kratos proto add api/task/task.proto'
+# 'kratos proto client api/task/task.proto'
+.PHONY: proto
+proto:
+	$(call build_proto_files, $(PROTO_FILES))
+
+# dirname: remove the non-directory part of the file name. (the 'pwd' command output)
+define build_proto_files
+@for file in $(1); do \
+( 	echo "---\nbuilding: $$file" && \
+ 	protoc --proto_path=. \
+  		--proto_path=$(shell dirname $(shell pwd)) \
+  		--grpc-gateway_out=. \
+  		--go_out=paths=source_relative:. \
+  		--go-grpc_out=paths=source_relative:. \
+  		--go-errors_out=paths=source_relative:. $$file)  \
+done;
+endef
+

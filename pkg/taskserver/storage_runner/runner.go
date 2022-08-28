@@ -1,4 +1,4 @@
-package runner
+package storagerunner
 
 import (
 	"encoding/json"

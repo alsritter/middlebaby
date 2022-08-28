@@ -1,11 +1,12 @@
 package http
 
 import (
-	"github.com/alsritter/middlebaby/pkg/interact"
-	"github.com/alsritter/middlebaby/pkg/util/logger"
 	http "net/http"
 	"net/http/httputil"
 	"time"
+
+	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
 type httpImposterHandler struct {
@@ -16,7 +17,7 @@ func NewHttpImposterHandler(log logger.Logger) *httpImposterHandler {
 	return &httpImposterHandler{log: log}
 }
 
-func (h *httpImposterHandler) ImposterHandler(imposter interact.HttpImposter) http.HandlerFunc {
+func (h *httpImposterHandler) ImposterHandler(imposter interact.ImposterCase) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h.log.Trace(nil, "hit mock:", r.URL.String())
 		dump, _ := httputil.DumpRequest(r, true)
@@ -32,7 +33,7 @@ func (h *httpImposterHandler) ImposterHandler(imposter interact.HttpImposter) ht
 	}
 }
 
-func (h *httpImposterHandler) writeHeaders(imposter interact.HttpImposter, w http.ResponseWriter) {
+func (h *httpImposterHandler) writeHeaders(imposter interact.ImposterCase, w http.ResponseWriter) {
 	if imposter.Response.Headers == nil {
 		return
 	}
@@ -42,6 +43,6 @@ func (h *httpImposterHandler) writeHeaders(imposter interact.HttpImposter, w htt
 	}
 }
 
-func (h *httpImposterHandler) writeBody(imposter interact.HttpImposter, w http.ResponseWriter) {
-	_, _ = w.Write([]byte(imposter.Response.Body))
+func (h *httpImposterHandler) writeBody(imposter interact.ImposterCase, w http.ResponseWriter) {
+	_, _ = w.Write(imposter.Response.Body.Bytes())
 }

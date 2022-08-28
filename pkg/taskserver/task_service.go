@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/runner"
-	"github.com/alsritter/middlebaby/pkg/runner/grpc_runner"
-	"github.com/alsritter/middlebaby/pkg/runner/http_runner"
+	"github.com/alsritter/middlebaby/pkg/taskserver/grpc_runner"
+	"github.com/alsritter/middlebaby/pkg/taskserver/http_runner"
 	"github.com/alsritter/middlebaby/pkg/util/file"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 
@@ -44,6 +44,12 @@ func (c *Config) Validate() error {
 
 // RegisterFlagsWithPrefix is used to register flags
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
+
+// var _ hello_proto.HelloServiceServer = (*TaskService)(nil)
+
+type Provider interface {
+	GetAllTestCase() map[task_file.TestCaseType]runner.ITaskRunner
+}
 
 type TaskService struct {
 	// all test case files. (file absolute path)
@@ -125,6 +131,7 @@ func (t *TaskService) init() error {
 }
 
 func (t TaskService) Start() error {
+
 	return nil
 }
 

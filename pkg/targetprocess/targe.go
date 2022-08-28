@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"sync"
 	"syscall"
 
 	"github.com/alsritter/middlebaby/pkg/util"
@@ -37,13 +38,18 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 	f.StringVar(&c.AppPath, prefix+"target.path", c.AppPath, "target application address")
 }
 
+// Provider defines the target process interface
+type Provider interface {
+	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+}
+
 type TargetProcess struct {
 	cfg     *Config
 	command *exec.Cmd
 	log     logger.Logger
 }
 
-func New(log logger.Logger, cfg *Config) *TargetProcess {
+func New(log logger.Logger, cfg *Config) Provider {
 	return &TargetProcess{
 		cfg: cfg,
 		log: log.NewLogger("target"),
@@ -51,8 +57,8 @@ func New(log logger.Logger, cfg *Config) *TargetProcess {
 }
 
 // Start the service to be tested
-func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc) error {
-	util.StartServiceAsync(ctx, t.log, cancelFunc, func() error {
+func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
+	util.StartServiceAsync(ctx, t.log, cancelFunc, wg, func() error {
 		if _, err := os.Stat(t.cfg.AppPath); err != nil {
 			return fmt.Errorf("target app err: %v", err)
 		}
