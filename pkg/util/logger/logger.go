@@ -13,12 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var DefaultLog Logger
-
-func init() {
-	DefaultLog, _ = New(&Config{}, "default")
-}
-
 // Config defines the config structure
 type Config struct {
 	Pretty bool   `yaml:"prefix"`

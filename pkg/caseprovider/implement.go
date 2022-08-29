@@ -71,6 +71,27 @@ func New(log logger.Logger, cfg *Config) (Provider, error) {
 	return b, b.init()
 }
 
+// GetItfInfoFromItfName implements Provider
+func (b *basicProvider) GetItfInfoFromItfName(serviceName string) *TaskInfo {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+	return b.taskInterface[serviceName].TaskInfo
+}
+
+// GetAllCaseFromCaseName implements Provider
+func (b *basicProvider) GetAllCaseFromCaseName(serviceName string, caseName string) *CaseTask {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+	cases := b.taskInterface[serviceName].Cases
+	for _, v := range cases {
+		if v.Name == caseName {
+			return v
+		}
+	}
+
+	return nil
+}
+
 // GetAllCaseFromItfName implements Provider
 func (b *basicProvider) GetAllCaseFromItfName(serviceName string) []*CaseTask {
 	b.mux.RLock()

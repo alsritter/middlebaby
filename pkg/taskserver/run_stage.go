@@ -1,4 +1,4 @@
-package storagerunner
+package taskserver
 
 import (
 	"fmt"

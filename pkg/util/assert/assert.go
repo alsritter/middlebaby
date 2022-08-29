@@ -11,8 +11,8 @@ import (
 )
 
 // So Verify that the input value is consistent with the expected value
-func So(assertType string, actual interface{}, expected interface{}) error {
-	return NewAssert(assertType, actual, expected).assert()
+func So(log logger.Logger, assertType string, actual interface{}, expected interface{}) error {
+	return NewAssert(log, assertType, actual, expected).assert()
 }
 
 var (
@@ -60,8 +60,8 @@ type Assert struct {
 	log logger.Logger
 }
 
-func NewAssert(assertType string, actual interface{}, expected interface{}) *Assert {
-	return &Assert{assertType: assertType, actual: actual, expected: expected, log: logger.DefaultLog}
+func NewAssert(log logger.Logger, assertType string, actual interface{}, expected interface{}) *Assert {
+	return &Assert{assertType: assertType, actual: actual, expected: expected, log: log}
 }
 
 // an entry function for an assertion

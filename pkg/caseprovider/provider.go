@@ -9,8 +9,12 @@ import (
 type Provider interface {
 	// GetAllCaseFromItfName Get all cases form the interface serviceName.
 	GetAllCaseFromItfName(serviceName string) []*CaseTask
+	GetAllCaseFromCaseName(serviceName, caseName string) *CaseTask
+
+	GetItfInfoFromItfName(serviceName string) *TaskInfo
 	// GetAllInterfaceInfo Get all interface info.
 	GetAllItfInfo() []*TaskInfo
+
 	// GetItfSetupCommand Get the Setup Commands of a type under the interface.
 	GetItfSetupCommand(serviceName, typeName string) []Command
 	// GetItfSetupCommand Get the TearDown Commands of a type under the interface.

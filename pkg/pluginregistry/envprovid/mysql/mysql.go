@@ -19,7 +19,7 @@ func New(db *gorm.DB, log logger.Logger) pluginregistry.EnvPlugin {
 		db.Logger = db.Logger.LogMode(db_logger.Info)
 	}
 
-	return &MySQLEnvPlugin{db: db, log: log.NewLogger("mysql.plugin")}
+	return &MySQLEnvPlugin{db: db, log: log.NewLogger("plugin.env.mysql")}
 }
 
 // GetTypeName implements pluginregistry.EnvPlugin
