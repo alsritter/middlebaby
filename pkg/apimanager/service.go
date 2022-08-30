@@ -3,10 +3,13 @@ package apimanager
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"sync"
+
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
-	"net/http"
-	"sync"
+	"github.com/gorilla/mux"
 
 	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
@@ -14,21 +17,10 @@ import (
 )
 
 type Config struct {
-	Methods          []string `yaml:"methods"`
-	Headers          []string `yaml:"headers"`
-	Origins          []string `yaml:"origins"`
-	ExposedHeaders   []string `yaml:"exposed_headers"`
-	AllowCredentials bool     `yaml:"allow_credentials"`
 }
 
 func NewConfig() *Config {
-	return &Config{
-		Methods:          []string{},
-		Headers:          []string{},
-		Origins:          []string{},
-		ExposedHeaders:   []string{},
-		AllowCredentials: false,
-	}
+	return &Config{}
 }
 
 func (c *Config) Validate() error {
@@ -39,10 +31,12 @@ func (c *Config) Validate() error {
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
-	Start() error
-	Close() error
-
-	MockResponse(ctx context.Context, request *interact.Request) (*interact.ImposterCase, error)
+	// Initialize the environment before executing the use case
+	LoadCaseEnv(itfName, caseName string)
+	// Mock Request.
+	MockResponse(ctx context.Context, request *interact.Request) (*interact.Response, error)
+	// clear environment
+	ClearCaseEnv()
 }
 
 type Manager struct {
@@ -66,12 +60,12 @@ func New(log logger.Logger, cfg *Config, caseProvider caseprovider.Provider) Pro
 	}
 }
 
-func (m *Manager) Start() error {
-	return nil
-}
-
-func (m *Manager) Close() error {
-	return nil
+func (m *Manager) MockResponse(ctx context.Context, request *interact.Request) (*interact.Response, error) {
+	api, isMock := m.MatchAPI(request)
+	if !isMock {
+		return nil, fmt.Errorf("cannot mock http request: %v", request)
+	}
+	return &api.Response, nil
 }
 
 // MatchAPI is used to match MockAPI
@@ -104,7 +98,38 @@ func (m *Manager) MatchAPI(req *interact.Request) (*interact.ImposterCase, bool)
 	return nil, false
 }
 
+func (m *Manager) LoadCaseEnv(itfName, caseName string) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.globalApis = m.caseProvider.GetMockCasesFromGlobals()
+	m.caseApis = m.caseProvider.GetMockCasesFromCase(itfName, caseName)
+	m.itfApis = m.caseProvider.GetMockCasesFromItf(itfName)
+}
+
+func (m *Manager) ClearCaseEnv() {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.globalApis = make([]*interact.ImposterCase, 0)
+	m.caseApis = make([]*interact.ImposterCase, 0)
+	m.itfApis = make([]*interact.ImposterCase, 0)
+}
+
 func (m *Manager) match(req, target *interact.Request) bool {
+	// use mux match single router
+	var match mux.RouteMatch
+	matched := mux.NewRouter().
+		Host(target.Host).
+		Methods(target.Method).
+		Path(target.Path).
+		Match(&http.Request{
+			Method: req.Method,
+			URL:    &url.URL{Path: req.Path},
+			Host:   req.Host,
+		}, &match)
+	if !matched {
+		return false
+	}
+
 	if err := assert.So(m.log, "mock header assert", req.Headers, target.Headers); err != nil {
 		m.log.Trace(nil, "mock head cannot hit expected:[%v] actual:[%v]", target.Headers, req.Headers)
 		return false
@@ -115,37 +140,11 @@ func (m *Manager) match(req, target *interact.Request) bool {
 		return false
 	}
 
-	if err := assert.So(m.log, "mock body assert", target.Body.Bytes(), req.Body.Bytes()); err != nil {
-		m.log.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.Body.Bytes(), req.Body.Bytes())
-		return false
-	}
-
-	return true
-}
-
-func (m *Manager) LoadCaseEnv(itfName, caseName string) {
-	m.loadCaseImposter(itfName, caseName)
-}
-
-func (m *Manager) MockResponse(ctx context.Context, request *interact.Request) (*interact.ImposterCase, error) {
-	api, isMock := m.MatchAPI(request)
-	if !isMock {
-		return nil, fmt.Errorf("cannot mock http request: %v", request)
-	}
-	return nil, fmt.Errorf("cannot mock http request: %v", request)
-}
-
-func (m *Manager) toHttpHeader(headers map[string]interface{}) (httpHeader http.Header) {
-	httpHeader = make(http.Header)
-	for k, v := range headers {
-		switch vv := v.(type) {
-		case string:
-			httpHeader.Add(k, vv)
-		case []string:
-			for _, vvv := range vv {
-				httpHeader.Add(k, vvv)
-			}
+	if req.Body != nil && target.Body != nil {
+		if err := assert.So(m.log, "mock body assert", target.Body.Bytes(), req.Body.Bytes()); err != nil {
+			m.log.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.Body.Bytes(), req.Body.Bytes())
+			return false
 		}
 	}
-	return
+	return true
 }

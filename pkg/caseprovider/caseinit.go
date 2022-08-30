@@ -258,7 +258,7 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 	defer file.Close()
 	bytes, _ := ioutil.ReadAll(file)
 
-	var imposter []interact.ImposterCase
+	var imposter []*interact.ImposterCase
 	if err := json.Unmarshal(bytes, &imposter); err != nil {
 		b.log.Error(nil, "%w: error while unmarshal configFile file %s", err, filePath)
 	}
@@ -270,7 +270,7 @@ func (b *basicProvider) clearAllData() {
 	b.mux.Lock()
 	defer b.mux.Unlock()
 	b.taskInterface = make(map[string]*InterfaceTask)
-	b.mockCases = make(map[string][]interact.ImposterCase)
+	b.mockCases = make(map[string][]*interact.ImposterCase)
 }
 
 func (b *basicProvider) clearGlobalMock() {

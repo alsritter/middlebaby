@@ -1,7 +1,7 @@
-package http
+package httphandler
 
 import (
-	http "net/http"
+	"net/http"
 	"net/http/httputil"
 	"time"
 

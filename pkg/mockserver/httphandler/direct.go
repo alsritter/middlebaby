@@ -1,9 +1,9 @@
-package http
+package httphandler
 
 import (
 	"io"
 	"net"
-	http "net/http"
+	"net/http"
 	"net/http/httputil"
 	"time"
 )

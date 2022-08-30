@@ -118,7 +118,7 @@ func (b *basicProvider) GetItfSetupCommand(serviceName string, typeName string) 
 
 	for _, c := range itf.SetUp {
 		if c.TypeName == typeName {
-			cms = append(cms, &c)
+			cms = append(cms, c)
 		}
 	}
 
@@ -133,7 +133,7 @@ func (b *basicProvider) GetItfTearDownCommand(serviceName string, typeName strin
 
 	for _, c := range itf.TearDown {
 		if c.TypeName == typeName {
-			cms = append(cms, &c)
+			cms = append(cms, c)
 		}
 	}
 
@@ -148,9 +148,7 @@ func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms [
 	itf := b.taskInterface[serviceName]
 	for _, c := range itf.Cases {
 		if c.Name == caseName {
-			for _, mock := range c.Mocks {
-				ms = append(ms, &mock)
-			}
+			ms = append(ms, c.Mocks...)
 			return
 		}
 	}
@@ -165,9 +163,7 @@ func (b *basicProvider) GetMockCasesFromItf(serviceName string) (ms []*interact.
 	defer b.mux.RUnlock()
 
 	itf := b.taskInterface[serviceName]
-	for _, mock := range itf.Mocks {
-		ms = append(ms, &mock)
-	}
+	ms = append(ms, itf.Mocks...)
 	return
 }
 

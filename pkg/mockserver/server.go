@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/mockserver/httphandler"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/spf13/pflag"
+	"google.golang.org/grpc"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/radovskyb/watcher"
@@ -47,15 +50,16 @@ type Provider interface {
 type MockServe struct {
 	cfg        *Config
 	server     *http.Server
-	mit        *mitmproxy
+	httpServer *httphandler.MiddlemanProxy
 	apiManager apimanager.Provider
 	log        logger.Logger
 	w          *watcher.Watcher
+	grpcServer *grpc.Server
 }
 
 func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provider {
 	mock := &MockServe{
-		mit:        NewProxy(cfg.EnableDirect, log),
+		httpServer: httphandler.NewProxy(cfg.EnableDirect, log),
 		cfg:        cfg,
 		apiManager: apiManager,
 		server:     &http.Server{},
@@ -85,10 +89,14 @@ func (m *MockServe) start() error {
 
 	// call ServeHTTP function handle request.
 	// support HTTP2.0 with h2c package.
-	m.server.Handler = h2c.NewHandler(m.mit.px, &http2.Server{})
-	if err != nil {
-		return err
-	}
+	m.server.Handler = h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.HasPrefix(
+			r.Header.Get("Content-Type"), "application/grpc") {
+			m.grpcServer.ServeHTTP(w, r)
+		} else {
+			m.httpServer.ServeHTTP(w, r)
+		}
+	}), &http2.Server{})
 
 	if err := http2.ConfigureServer(m.server, &http2.Server{}); err != nil {
 		return fmt.Errorf("proxy http2 error: %v", err)
@@ -107,7 +115,7 @@ func (m *MockServe) start() error {
 func (m *MockServe) close() error {
 	m.log.Info(nil, "stopping server...")
 	if err := m.server.Shutdown(context.TODO()); err != nil {
-		return fmt.Errorf("server Shutdown failed:%+v", err)
+		return fmt.Errorf("server Shutdown failed: [%w]", err)
 	}
 	return nil
 }

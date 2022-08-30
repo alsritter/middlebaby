@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/spf13/pflag"
 )
@@ -29,4 +30,19 @@ func ValidateConfigs(configs ...ValidatableConfig) error {
 type RegistrableConfig interface {
 	// RegisterFlagsWithPrefix is used to registerer flag with prefix
 	RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet)
+}
+
+func ToHttpHeader(headers map[string]interface{}) (httpHeader http.Header) {
+	httpHeader = make(http.Header)
+	for k, v := range headers {
+		switch vv := v.(type) {
+		case string:
+			httpHeader.Add(k, vv)
+		case []string:
+			for _, vvv := range vv {
+				httpHeader.Add(k, vvv)
+			}
+		}
+	}
+	return
 }

@@ -28,21 +28,21 @@ type Provider interface {
 // InterfaceTask interface level.
 type InterfaceTask struct {
 	*TaskInfo
-	SetUp    []Command               `json:"setup"`
-	Mocks    []interact.ImposterCase `json:"mocks"`
-	TearDown []Command               `json:"teardown"`
-	Cases    []*CaseTask             `json:"cases"`
+	SetUp    []*Command               `json:"setup"`
+	Mocks    []*interact.ImposterCase `json:"mocks"`
+	TearDown []*Command               `json:"teardown"`
+	Cases    []*CaseTask              `json:"cases"`
 }
 
 // CaseTask case level
 type CaseTask struct {
-	Name        string                  `json:"name"`
-	Description string                  `json:"description"`
-	SetUp       []Command               `json:"setup"`
-	Mocks       []interact.ImposterCase `json:"mocks"`
-	Request     CaseRequest             `json:"request"`
-	Assert      Assert                  `json:"assertprovid"`
-	TearDown    []Command               `json:"teardown"`
+	Name        string                   `json:"name"`
+	Description string                   `json:"description"`
+	SetUp       []*Command               `json:"setup"`
+	Mocks       []*interact.ImposterCase `json:"mocks"`
+	Request     *CaseRequest             `json:"request"`
+	Assert      *Assert                  `json:"assertprovid"`
+	TearDown    []*Command               `json:"teardown"`
 }
 
 // CaseRequest case request data.

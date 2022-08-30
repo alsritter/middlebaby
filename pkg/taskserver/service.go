@@ -119,7 +119,7 @@ func (t *TaskService) Run(ctx context.Context, itfName string, caseName string) 
 		assertCmdType[oa.TypeName] = append(assertCmdType[oa.TypeName], oa)
 	}
 
-	// other assertprovid
+	// other assert
 	for _, a := range ass {
 		if err = a.Assert(assertCmdType[a.GetTypeName()]); err != nil {
 			return err
@@ -129,7 +129,7 @@ func (t *TaskService) Run(ctx context.Context, itfName string, caseName string) 
 }
 
 func (t *TaskService) runRequest(info *caseprovider.TaskInfo, runCase *caseprovider.CaseTask) error {
-	// request assertprovid
+	// request assert
 	if info.Protocol == caseprovider.ProtocolHTTP {
 		return t.httpRequest(info, runCase)
 	} else {
@@ -149,7 +149,7 @@ func (t *TaskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 		return err
 	}
 
-	// assertprovid
+	// assert
 	t.log.Debug(nil, "response message: responseHeader: [%v] responseBody: [%v] statusCode: [%v] Assert.Response: [%v]", responseHeader, responseBody, statusCode, ct.Assert.Response.Data)
 	if err := t.imposterAssert(ct.Assert, responseHeader, statusCode, responseBody); err != nil {
 		return err
@@ -162,7 +162,7 @@ func (t *TaskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 	return
 }
 
-func (t *TaskService) imposterAssert(a caseprovider.Assert, responseHeader http.Header, statusCode int, responseBody string) error {
+func (t *TaskService) imposterAssert(a *caseprovider.Assert, responseHeader http.Header, statusCode int, responseBody string) error {
 	if a.Response.StatusCode != 0 {
 		if err := assert.So(t.log, "response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
 			return err
