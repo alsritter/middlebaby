@@ -50,7 +50,7 @@ type basicProvider struct {
 	log logger.Logger
 	// key: serviceName
 	taskInterface map[string]*InterfaceTask
-	mockCases     map[string][]interact.ImposterCase
+	mockCases     map[string][]*interact.ImposterCase
 
 	// all test case files. (file absolute path)
 	taskFiles []string
@@ -62,7 +62,7 @@ type basicProvider struct {
 
 func New(log logger.Logger, cfg *Config) (Provider, error) {
 	b := &basicProvider{
-		mockCases:     make(map[string][]interact.ImposterCase),
+		mockCases:     make(map[string][]*interact.ImposterCase),
 		taskInterface: make(map[string]*InterfaceTask),
 		log:           log.NewLogger("caseProvider"),
 		cfg:           cfg,
@@ -111,14 +111,14 @@ func (b *basicProvider) GetAllItfInfo() (infos []*TaskInfo) {
 }
 
 // GetItfSetupCommand implements Provider
-func (b *basicProvider) GetItfSetupCommand(serviceName string, typeName string) (cms []Command) {
+func (b *basicProvider) GetItfSetupCommand(serviceName string, typeName string) (cms []*Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	itf := b.taskInterface[serviceName]
 
 	for _, c := range itf.SetUp {
 		if c.TypeName == typeName {
-			cms = append(cms, c)
+			cms = append(cms, &c)
 		}
 	}
 
@@ -126,14 +126,14 @@ func (b *basicProvider) GetItfSetupCommand(serviceName string, typeName string) 
 }
 
 // GetItfTearDownCommand implements Provider
-func (b *basicProvider) GetItfTearDownCommand(serviceName string, typeName string) (cms []Command) {
+func (b *basicProvider) GetItfTearDownCommand(serviceName string, typeName string) (cms []*Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	itf := b.taskInterface[serviceName]
 
 	for _, c := range itf.TearDown {
 		if c.TypeName == typeName {
-			cms = append(cms, c)
+			cms = append(cms, &c)
 		}
 	}
 
@@ -141,16 +141,16 @@ func (b *basicProvider) GetItfTearDownCommand(serviceName string, typeName strin
 }
 
 // GetMockCasesFromCase implements Provider
-func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms []interact.ImposterCase) {
+func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms []*interact.ImposterCase) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 
 	itf := b.taskInterface[serviceName]
-	ms = append(ms, b.mockCases[globalCaseID]...)
-	ms = append(ms, itf.Mocks...)
 	for _, c := range itf.Cases {
 		if c.Name == caseName {
-			ms = append(ms, c.Mocks...)
+			for _, mock := range c.Mocks {
+				ms = append(ms, &mock)
+			}
 			return
 		}
 	}
@@ -160,12 +160,19 @@ func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms [
 }
 
 // GetMockCasesFromItf implements Provider
-func (b *basicProvider) GetMockCasesFromItf(serviceName string) (ms []interact.ImposterCase) {
+func (b *basicProvider) GetMockCasesFromItf(serviceName string) (ms []*interact.ImposterCase) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 
 	itf := b.taskInterface[serviceName]
-	ms = append(ms, b.mockCases[globalCaseID]...)
-	ms = append(ms, itf.Mocks...)
+	for _, mock := range itf.Mocks {
+		ms = append(ms, &mock)
+	}
 	return
+}
+
+func (b *basicProvider) GetMockCasesFromGlobals() []*interact.ImposterCase {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+	return b.mockCases[globalCaseID]
 }

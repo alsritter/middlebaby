@@ -2,39 +2,42 @@ package redis
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
-
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
+	"regexp"
+	"strings"
 )
 
 type redisAssertPlugin struct {
-	log logger.Logger
 	rc  *redis.Client
+	log logger.Logger
 }
 
 func New(rc *redis.Client, log logger.Logger) pluginregistry.AssertPlugin {
-	return &redisAssertPlugin{rc: rc, log: log.NewLogger("redis.plugin")}
+	return &redisAssertPlugin{rc: rc, log: log.NewLogger("plugin.assert.redis")}
 }
 
-// Name implements pluginregistry.AssertPlugin
-func (*redisAssertPlugin) Name() string {
-	return "redisAssertPlugin"
+func (r *redisAssertPlugin) Name() string {
+	return "mysqlAssertPlugin"
 }
 
-// Assert implements pluginregistry.AssertPlugin
-func (r *redisAssertPlugin) Assert(cs []caseprovider.CommonAssert) error {
-	for _, redisAssert := range cs {
-		if result, err := r.run(redisAssert.Actual); err != nil {
+func (r *redisAssertPlugin) GetTypeName() string {
+	return "redis"
+}
+
+// Assert run mysql assertprovid.
+func (r *redisAssertPlugin) Assert(asserts []caseprovider.CommonAssert) error {
+	for _, commonAssert := range asserts {
+		if result, err := r.run(commonAssert.Actual); err != nil {
 			return err
-		} else if err := assert.So(r.log, "Redis data assert", result, redisAssert.Expected); err != nil {
+		} else if err = assert.So(r.log, "Redis data assert", result, commonAssert.Expected); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 

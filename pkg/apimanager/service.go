@@ -3,12 +3,13 @@ package apimanager
 import (
 	"context"
 	"fmt"
-	"net/url"
+	"github.com/alsritter/middlebaby/pkg/caseprovider"
+	"github.com/alsritter/middlebaby/pkg/util/assert"
+	"net/http"
+	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/spf13/pflag"
 )
 
@@ -45,92 +46,106 @@ type Provider interface {
 }
 
 type Manager struct {
-	caseApis map[string]*interact.ImposterCase
-	cfg      *Config
-	router   *mux.Router
-	log      logger.Logger
+	caseApis     []*interact.ImposterCase
+	itfApis      []*interact.ImposterCase
+	globalApis   []*interact.ImposterCase
+	cfg          *Config
+	log          logger.Logger
+	lock         sync.RWMutex
+	caseProvider caseprovider.Provider
 }
 
-func New(log logger.Logger, cfg *Config) Provider {
+func New(log logger.Logger, cfg *Config, caseProvider caseprovider.Provider) Provider {
 	return &Manager{
-		router:   mux.NewRouter(),
-		caseApis: make(map[string]*interact.ImposterCase),
-		log:      log.NewLogger("api"),
-		cfg:      cfg,
+		caseApis:     make([]*interact.ImposterCase, 0),
+		itfApis:      make([]*interact.ImposterCase, 0),
+		globalApis:   make([]*interact.ImposterCase, 0),
+		log:          log.NewLogger("api"),
+		cfg:          cfg,
+		caseProvider: caseProvider,
 	}
 }
 
 func (m *Manager) Start() error {
-	handlers.CORS(PrepareAccessControl(m.cfg)...)(m.router)
-	m.addHttpImposterHandler()
-	m.printRouter()
 	return nil
 }
 
 func (m *Manager) Close() error {
-	//TODO: Avoid full load.
-	m.caseApis = make(map[string]*interact.ImposterCase)
-	m.router = mux.NewRouter()
 	return nil
 }
 
+// MatchAPI is used to match MockAPI
+func (m *Manager) MatchAPI(req *interact.Request) (*interact.ImposterCase, bool) {
+	m.lock.RLock()
+	caseApis := m.caseApis
+	itfApis := m.itfApis
+	globalApis := m.globalApis
+	m.lock.RUnlock()
+
+	// Matching Priority: case -> interface -> global
+	for _, api := range caseApis {
+		if m.match(req, &api.Request) {
+			return api, true
+		}
+	}
+
+	for _, api := range itfApis {
+		if m.match(req, &api.Request) {
+			return api, true
+		}
+	}
+
+	for _, api := range globalApis {
+		if m.match(req, &api.Request) {
+			return api, true
+		}
+	}
+
+	return nil, false
+}
+
+func (m *Manager) match(req, target *interact.Request) bool {
+	if err := assert.So(m.log, "mock header assert", req.Headers, target.Headers); err != nil {
+		m.log.Trace(nil, "mock head cannot hit expected:[%v] actual:[%v]", target.Headers, req.Headers)
+		return false
+	}
+
+	if err := assert.So(m.log, "mock params assert", target.Params, req.Params); err != nil {
+		m.log.Trace(nil, "mock params cannot hit expected:[%v] actual:[%v]", target.Params, req.Params)
+		return false
+	}
+
+	if err := assert.So(m.log, "mock body assert", target.Body.Bytes(), req.Body.Bytes()); err != nil {
+		m.log.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.Body.Bytes(), req.Body.Bytes())
+		return false
+	}
+
+	return true
+}
+
+func (m *Manager) LoadCaseEnv(itfName, caseName string) {
+	m.loadCaseImposter(itfName, caseName)
+}
+
 func (m *Manager) MockResponse(ctx context.Context, request *interact.Request) (*interact.ImposterCase, error) {
-	// TODO: add a lock, Cannot use when loading mock !!!!
-	var match mux.RouteMatch
-	if m.router.Match(request, &match) {
-		return m.caseApis[match.Route.GetName()], nil
+	api, isMock := m.MatchAPI(request)
+	if !isMock {
+		return nil, fmt.Errorf("cannot mock http request: %v", request)
 	}
 	return nil, fmt.Errorf("cannot mock http request: %v", request)
 }
 
-// Register proxy request to Router.
-// It will match: "path", "host", "method", "params".
-func (m *Manager) addHttpImposterHandler() {
-	for _, imposter := range m.GetAllCase() {
-		u, err := url.Parse(imposter.Request.Path)
-		if err != nil {
-			m.log.Error(nil, err.Error())
-			continue
-		}
-
-		r := m.router.
-			Path(u.Path).
-			Methods(imposter.Request.Method).
-			Host(u.Host)
-
-		if imposter.Request.Headers != nil {
-			for k, v := range imposter.Request.Headers {
-				r.HeadersRegexp(k, v)
+func (m *Manager) toHttpHeader(headers map[string]interface{}) (httpHeader http.Header) {
+	httpHeader = make(http.Header)
+	for k, v := range headers {
+		switch vv := v.(type) {
+		case string:
+			httpHeader.Add(k, vv)
+		case []string:
+			for _, vvv := range vv {
+				httpHeader.Add(k, vvv)
 			}
 		}
-
-		if imposter.Request.Params != nil {
-			for k, v := range imposter.Request.Params {
-				r.Queries(k, v)
-			}
-		}
-
-		r.Name(imposter.Id)
-		m.caseApis[imposter.Id] = &imposter
 	}
-}
-
-// print all router.
-func (m *Manager) printRouter() {
-	m.log.Debug(nil, "print all http router:")
-	_ = m.router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		met, err1 := route.GetMethods()
-		tpl, err2 := route.GetPathTemplate()
-		host, err3 := route.GetHostTemplate()
-		queries, err4 := route.GetQueriesTemplates()
-		m.log.Debug(nil, `
-			--------------------
-			Method: %v, err1: %v
-			path: %s, err2: %v
-			Host: %v, err3: %v
-			queries: %v, err4: %v
-			--------------------
-		`, met, err1, tpl, err2, host, err3, queries, err4)
-		return nil
-	})
+	return
 }

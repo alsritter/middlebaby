@@ -17,20 +17,17 @@ type RedisEnvPlugin struct {
 }
 
 func New(rc *redis.Client, log logger.Logger) pluginregistry.EnvPlugin {
-	return &RedisEnvPlugin{rc: rc, log: log.NewLogger("redis.plugin")}
+	return &RedisEnvPlugin{rc: rc, log: log.NewLogger("plugin.env.redis")}
 }
 
-// Name implements pluginregistry.EnvPlugin
 func (*RedisEnvPlugin) Name() string {
 	return "RedisEnvPlugin"
 }
 
-// GetTypeName implements pluginregistry.EnvPlugin
 func (*RedisEnvPlugin) GetTypeName() string {
 	return "redis"
 }
 
-// RunSetUp implements pluginregistry.EnvPlugin
 func (r *RedisEnvPlugin) Run(commands []string) error {
 	var errs error
 	for _, cmd := range commands {

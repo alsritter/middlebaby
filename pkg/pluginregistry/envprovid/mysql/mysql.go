@@ -22,17 +22,14 @@ func New(db *gorm.DB, log logger.Logger) pluginregistry.EnvPlugin {
 	return &MySQLEnvPlugin{db: db, log: log.NewLogger("plugin.env.mysql")}
 }
 
-// GetTypeName implements pluginregistry.EnvPlugin
 func (*MySQLEnvPlugin) GetTypeName() string {
 	return "mysql"
 }
 
-// Name implements pluginregistry.EnvPlugin
 func (*MySQLEnvPlugin) Name() string {
 	return "MySQLEnvPlugin"
 }
 
-// RunSetUp implements pluginregistry.EnvPlugin
 func (m *MySQLEnvPlugin) Run(commands []string) error {
 	var errs error
 	for _, cmd := range commands {

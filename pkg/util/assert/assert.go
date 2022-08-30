@@ -22,7 +22,7 @@ var (
 	ErrorLengthNotEqual  = errors.New("data length is inconsistent")
 )
 
-// cases assert error types
+// cases assertprovid error types
 type AssertError struct {
 	Type      string
 	Err       error

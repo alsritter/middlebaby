@@ -17,7 +17,7 @@ const (
 	ProtocolGRPC Protocol = "GRPC"
 )
 
-// Imposter define an imposter structure (a mock case)
+// ImposterCase define an imposter structure (a mock case)
 type ImposterCase struct {
 	Id       string   `json:"-"`
 	Request  Request  `json:"request"`
@@ -31,16 +31,16 @@ func (i *ImposterCase) Delay() time.Duration {
 
 // Request defines the request structure
 type Request struct {
-	Protocol Protocol          `json:"protocol"`
-	Method   string            `json:"method"`
-	Host     string            `json:"host"`
-	Path     string            `json:"path"`
-	Headers  map[string]string `json:"header"`
-	Params   map[string]string `json:"params"`
-	Body     Message           `json:"body"`
+	Protocol Protocol               `json:"protocol"`
+	Method   string                 `json:"method"`
+	Host     string                 `json:"host"`
+	Path     string                 `json:"path"`
+	Headers  map[string]interface{} `json:"header"`
+	Params   map[string]string      `json:"params"`
+	Body     Message                `json:"body"`
 }
 
-// HttpResponse represent the structure of real response
+// Response represent the structure of real response
 type Response struct {
 	Status  int               `json:"status"`
 	Headers map[string]string `json:"headers"`

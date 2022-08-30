@@ -12,19 +12,20 @@ type Provider interface {
 	GetAllCaseFromCaseName(serviceName, caseName string) *CaseTask
 
 	GetItfInfoFromItfName(serviceName string) *TaskInfo
-	// GetAllInterfaceInfo Get all interface info.
+	// GetAllItfInfo Get all interface info.
 	GetAllItfInfo() []*TaskInfo
 
 	// GetItfSetupCommand Get the Setup Commands of a type under the interface.
-	GetItfSetupCommand(serviceName, typeName string) []Command
-	// GetItfSetupCommand Get the TearDown Commands of a type under the interface.
-	GetItfTearDownCommand(serviceName, typeName string) []Command
+	GetItfSetupCommand(serviceName, typeName string) []*Command
+	// GetItfTearDownCommand Get the TearDown Commands of a type under the interface.
+	GetItfTearDownCommand(serviceName, typeName string) []*Command
 
-	GetMockCasesFromItf(serviceName string) []interact.ImposterCase
-	GetMockCasesFromCase(serviceName, caseName string) []interact.ImposterCase
+	GetMockCasesFromGlobals() []*interact.ImposterCase
+	GetMockCasesFromItf(serviceName string) []*interact.ImposterCase
+	GetMockCasesFromCase(serviceName, caseName string) []*interact.ImposterCase
 }
 
-// interface level.
+// InterfaceTask interface level.
 type InterfaceTask struct {
 	*TaskInfo
 	SetUp    []Command               `json:"setup"`
@@ -33,18 +34,18 @@ type InterfaceTask struct {
 	Cases    []*CaseTask             `json:"cases"`
 }
 
-// case level
+// CaseTask case level
 type CaseTask struct {
 	Name        string                  `json:"name"`
 	Description string                  `json:"description"`
 	SetUp       []Command               `json:"setup"`
 	Mocks       []interact.ImposterCase `json:"mocks"`
 	Request     CaseRequest             `json:"request"`
-	Assert      ImposterAssert          `json:"assert"`
+	Assert      Assert                  `json:"assertprovid"`
 	TearDown    []Command               `json:"teardown"`
 }
 
-// HttpCaseRequest case request data.
+// CaseRequest case request data.
 type CaseRequest struct {
 	Header map[string]string
 	Query  url.Values
@@ -62,7 +63,7 @@ type CommonAssert struct {
 	Expected interface{} // expect result.
 }
 
-type ImposterAssert struct {
+type Assert struct {
 	Response struct {
 		Header     map[string]string
 		Data       interface{}
