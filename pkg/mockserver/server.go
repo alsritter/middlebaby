@@ -44,6 +44,7 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 
 // Provider defines the mock server interface
 type Provider interface {
+	GetPort() int
 	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
 }
 
@@ -66,6 +67,10 @@ func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provide
 		log:        log.NewLogger("mock"),
 	}
 	return mock
+}
+
+func (m *MockServe) GetPort() int {
+	return m.cfg.MockPort
 }
 
 func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
