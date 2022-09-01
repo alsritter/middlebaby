@@ -19,7 +19,6 @@ import (
 
 // Config defines the config structure
 type Config struct {
-	Address      string
 	ProtoManager *protomanager.Config
 }
 
@@ -31,7 +30,8 @@ type mockServer struct {
 }
 
 type Provider interface {
-	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) (*grpc.Server, error)
+	Init(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	GetServer() *grpc.Server
 }
 
 func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider, protoManager protomanager.Provider) (Provider, error) {
@@ -47,13 +47,16 @@ func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider, protoMa
 	return m, nil
 }
 
-func (s *mockServer) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) (*grpc.Server, error) {
+func (s *mockServer) Init(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
 	s.Info(nil, "stating proto manager")
 	if err := s.protoManager.Start(ctx, cancelFunc, wg); err != nil {
-		return nil, err
+		return err
 	}
+	return nil
+}
 
-	return grpc.NewServer(grpc.UnknownServiceHandler(s.handleStream)), nil
+func (s *mockServer) GetServer() *grpc.Server {
+	return grpc.NewServer(grpc.UnknownServiceHandler(s.handleStream))
 }
 
 func (s *mockServer) setup() error {

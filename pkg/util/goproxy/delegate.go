@@ -26,6 +26,13 @@ type Context struct {
 	Data        map[interface{}]interface{}
 	TunnelProxy bool
 	abort       bool
+
+	isNeedMock bool
+	Resp       *http.Response
+}
+
+func (c *Context) IsNeedMock() {
+	c.isNeedMock = true
 }
 
 func (c *Context) IsHTTPS() bool {

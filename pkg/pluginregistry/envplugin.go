@@ -1,6 +1,6 @@
 package pluginregistry
 
-// Provide environmental support at runtime. (mysql, redis, ....)
+// EnvPlugin Provide environmental support at runtime. (mysql, redis, ....)
 type EnvPlugin interface {
 	Plugin
 	// GetTypeName the plugin type

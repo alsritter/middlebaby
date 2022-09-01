@@ -31,11 +31,11 @@ func (c *Config) Validate() error {
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
-	// Initialize the environment before executing the use case
+	// LoadCaseEnv Initialize the environment before executing the use case
 	LoadCaseEnv(itfName, caseName string)
-	// Mock Request.
+	// MockResponse Mock Request.
 	MockResponse(ctx context.Context, request *interact.Request) (*interact.Response, error)
-	// clear environment
+	// ClearCaseEnv clear environment
 	ClearCaseEnv()
 }
 

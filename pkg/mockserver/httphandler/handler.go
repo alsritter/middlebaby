@@ -1,42 +1,25 @@
 package httphandler
 
 import (
+	"bytes"
+	"context"
 	"crypto/tls"
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"io/ioutil"
 	"net/http"
-	"net/http/httptrace"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"
-	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
 type delegateHandler struct {
+	logger.Logger
+	apiManager   apimanager.Provider
 	enableDirect bool
-}
-
-type MiddlemanProxy struct {
-	*goproxy.Proxy
-	log logger.Logger
-}
-
-func NewProxy(enableDirect bool, log logger.Logger) *MiddlemanProxy {
-	return &MiddlemanProxy{
-		log: log.NewLogger("mit-proxy"),
-		Proxy: goproxy.New(goproxy.WithDelegate(&delegateHandler{
-			enableDirect: enableDirect,
-		}),
-			goproxy.WithDecryptHTTPS(&cache{}),
-			goproxy.WithClientTrace(&httptrace.ClientTrace{
-				DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-					log.Trace(nil, "DNS Info: %+v.", dnsInfo)
-				},
-				GotConn: func(connInfo httptrace.GotConnInfo) {
-					log.Trace(nil, "Got Conn: %+v.", connInfo)
-				},
-			}),
-		),
-	}
 }
 
 // Connect check the request type.
@@ -44,7 +27,32 @@ func (e *delegateHandler) Connect(ctx *goproxy.Context, rw http.ResponseWriter) 
 
 func (e *delegateHandler) Auth(ctx *goproxy.Context, rw http.ResponseWriter) {}
 
-func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {}
+func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
+	body, err := ioutil.ReadAll(ctx.Req.Body)
+	ctx.Req.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+	if err != nil {
+		//sendError(w, http.StatusInternalServerError, err)
+		//return
+	}
+
+	resp, err := e.apiManager.MockResponse(context.TODO(), &interact.Request{
+		Protocol: interact.ProtocolHTTP,
+		Method:   ctx.Req.Method,
+		Host:     ctx.Req.Host,
+		Path:     ctx.Req.URL.Path,
+		Headers:  getHeadersFromHttpHeaders(ctx.Req.Header),
+		Body:     interact.NewBytesMessage(body),
+	})
+
+	if err != nil {
+		e.Warn(nil, "%w", err)
+		return
+	}
+
+	ctx.IsNeedMock()
+	ctx.Resp = resp
+}
 
 func (e *delegateHandler) BeforeResponse(ctx *goproxy.Context, resp *http.Response, err error) {}
 
@@ -74,4 +82,16 @@ func (c *cache) Get(host string) *tls.Certificate {
 	}
 
 	return v.(*tls.Certificate)
+}
+
+// getHeadersFromHttpHeaders is used to get map[string]string from http.Header
+func getHeadersFromHttpHeaders(input http.Header) map[string]interface{} {
+	headers := map[string]interface{}{}
+	for key, values := range input {
+		key = strings.ToLower(key)
+		if len(values) > 0 {
+			headers[key] = values[0]
+		}
+	}
+	return headers
 }
