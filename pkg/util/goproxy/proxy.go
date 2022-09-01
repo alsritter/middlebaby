@@ -17,14 +17,10 @@ package goproxy
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/util/goproxy/cert"
-	"github.com/viki-org/dnscache"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -32,6 +28,9 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/alsritter/middlebaby/pkg/util/goproxy/cert"
+	"github.com/viki-org/dnscache"
 )
 
 const (
@@ -290,6 +289,11 @@ func (p *Proxy) DoRequest(ctx *Context, responseFunc func(*http.Response, error)
 		return
 	}
 
+	if ctx.failFast || ctx.needMock {
+		responseFunc(ctx.Resp, nil)
+		return
+	}
+
 	newReq := requestPool.Get()
 	*newReq = *ctx.Req
 	newHeader := headerPool.Get()
@@ -304,22 +308,7 @@ func (p *Proxy) DoRequest(ctx *Context, responseFunc func(*http.Response, error)
 		newReq = newReq.WithContext(httptrace.WithClientTrace(newReq.Context(), p.clientTrace))
 	}
 
-	var resp *http.Response
-	var err error
-	if enableDirect, ok := ctx.Data["enable_direct"]; ok && !enableDirect.(bool) {
-		resp = &http.Response{
-			Status:     "200 OK",
-			StatusCode: http.StatusOK,
-			Proto:      "1.1",
-			ProtoMajor: 1,
-			ProtoMinor: 1,
-			Header:     http.Header{},
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(""))),
-		}
-	} else {
-		resp, err = p.transport.RoundTrip(newReq)
-	}
-
+	resp, err := p.transport.RoundTrip(newReq)
 	p.delegate.BeforeResponse(ctx, resp, err)
 	if ctx.abort {
 		return
@@ -385,7 +374,7 @@ func (p *Proxy) tunnelProxy(ctx *Context, rw http.ResponseWriter) {
 
 	parentProxyURL, err := p.delegate.ParentProxy(ctx.Req)
 	if err != nil {
-		p.delegate.ErrorLog(fmt.Errorf("%s - 解析代理地址错误: %s", ctx.Req.URL.Host, err))
+		p.delegate.ErrorLog(fmt.Errorf("%s - Failed to resolve the proxy address: %s", ctx.Req.URL.Host, err))
 		rw.WriteHeader(http.StatusBadGateway)
 		return
 	}
@@ -455,7 +444,7 @@ func (p *Proxy) tunnelProxy(ctx *Context, rw http.ResponseWriter) {
 	}
 }
 
-// 双向转发
+// Bidirectional forwarding
 func (p *Proxy) transfer(src net.Conn, dst net.Conn) {
 	go func() {
 		buf := bufPool.Get().([]byte)
@@ -485,6 +474,12 @@ func (p *Proxy) tunnelConnected(ctx *Context, err error) {
 		p.delegate.BeforeResponse(ctx, nil, err)
 		return
 	}
+
+	if ctx.failFast || ctx.needMock {
+		p.delegate.BeforeResponse(ctx, ctx.Resp, nil)
+		return
+	}
+
 	resp := &http.Response{
 		Status:     "200 OK",
 		StatusCode: http.StatusOK,

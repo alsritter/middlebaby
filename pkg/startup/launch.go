@@ -14,6 +14,7 @@ import (
 )
 
 func Startup(ctx context.Context, cancelFunc context.CancelFunc, config *Config, log logger.Logger) error {
+	// TODO: remove this wg, wrap it in context.
 	var wg sync.WaitGroup
 
 	// TODO: remove here...

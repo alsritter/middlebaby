@@ -42,11 +42,11 @@ type Request struct {
 
 // Response represent the structure of real response
 type Response struct {
-	Status  int               `json:"status"`
-	Headers map[string]string `json:"headers"`
-	Body    Message           `json:"body"`
-	Trailer map[string]string `json:"trailer"`
-	Delay   ResponseDelay     `json:"delay"`
+	Status  int                 `json:"status"`
+	Headers map[string][]string `json:"headers"`
+	Body    Message             `json:"body"`
+	Trailer map[string]string   `json:"trailer"`
+	Delay   ResponseDelay       `json:"delay"`
 }
 
 // Message defines a generic message interface
@@ -84,7 +84,7 @@ func NewDefaultResponse(request *Request) *Response {
 	}
 	return &Response{
 		Status:  code,
-		Headers: map[string]string{},
+		Headers: map[string][]string{},
 		Trailer: map[string]string{},
 		Body:    NewBytesMessage(nil),
 	}

@@ -10,18 +10,19 @@ import (
 	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/mockserver/grpchandler"
 	"github.com/alsritter/middlebaby/pkg/mockserver/httphandler"
+	"github.com/alsritter/middlebaby/pkg/protomanager"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/spf13/pflag"
-	"google.golang.org/grpc"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
-	"github.com/radovskyb/watcher"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
 type Config struct {
+	*protomanager.Config
 	EnableDirect bool `yaml:"enableDirect"` // whether the missed mock allows real requests
 	MockPort     int  `yaml:"mockPort"`     // proxy port
 }
@@ -49,22 +50,26 @@ type Provider interface {
 }
 
 type MockServe struct {
-	cfg        *Config
-	server     *http.Server
-	httpServer *httphandler.MiddlemanProxy
-	apiManager apimanager.Provider
-	log        logger.Logger
-	w          *watcher.Watcher
-	grpcServer *grpc.Server
+	cfg *Config
+	logger.Logger
+	server       *http.Server
+	apiManager   apimanager.Provider
+	httpServer   http.Handler
+	grpcServer   http.Handler
+	grpcProvider grpchandler.Provider
+	httpProvider httphandler.Provider
 }
 
-func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provider {
+func New(log logger.Logger, cfg *Config,
+	apiManager apimanager.Provider, protoManager protomanager.Provider) Provider {
+	l := log.NewLogger("mock")
 	mock := &MockServe{
-		httpServer: httphandler.NewProxy(cfg.EnableDirect, log),
-		cfg:        cfg,
-		apiManager: apiManager,
-		server:     &http.Server{},
-		log:        log.NewLogger("mock"),
+		cfg:          cfg,
+		Logger:       l,
+		server:       &http.Server{},
+		apiManager:   apiManager,
+		grpcProvider: grpchandler.New(l, apiManager, protoManager),
+		httpProvider: httphandler.New(l, &httphandler.Config{EnableDirect: cfg.EnableDirect}, apiManager),
 	}
 	return mock
 }
@@ -74,12 +79,13 @@ func (m *MockServe) GetPort() int {
 }
 
 func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
-	util.StartServiceAsync(ctx, m.log, cancelFunc, wg, func() error {
+	m.grpcProvider.Init(ctx, cancelFunc, wg)
+	m.grpcServer = m.grpcProvider.GetServer()
+	m.httpServer = m.httpProvider.GetServer()
+
+	util.StartServiceAsync(ctx, m, cancelFunc, wg, func() error {
 		return m.start()
 	}, func() error {
-		if m.w != nil {
-			m.w.Close()
-		}
 		return m.close()
 	})
 
@@ -118,7 +124,7 @@ func (m *MockServe) start() error {
 
 // Close shutdown the current http server
 func (m *MockServe) close() error {
-	m.log.Info(nil, "stopping server...")
+	m.Info(nil, "stopping server...")
 	if err := m.server.Shutdown(context.TODO()); err != nil {
 		return fmt.Errorf("server Shutdown failed: [%w]", err)
 	}

@@ -27,12 +27,17 @@ type Context struct {
 	TunnelProxy bool
 	abort       bool
 
-	isNeedMock bool
-	Resp       *http.Response
+	needMock bool
+	failFast bool
+	Resp     *http.Response
+}
+
+func (c *Context) IsFailFast() {
+	c.failFast = true
 }
 
 func (c *Context) IsNeedMock() {
-	c.isNeedMock = true
+	c.needMock = true
 }
 
 func (c *Context) IsHTTPS() bool {

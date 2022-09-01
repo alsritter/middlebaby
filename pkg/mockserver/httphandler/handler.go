@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/interact"
-	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/util/logger"
 
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"
 )
@@ -30,10 +31,10 @@ func (e *delegateHandler) Auth(ctx *goproxy.Context, rw http.ResponseWriter) {}
 func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 	body, err := ioutil.ReadAll(ctx.Req.Body)
 	ctx.Req.Body = ioutil.NopCloser(bytes.NewReader(body))
-
 	if err != nil {
-		//sendError(w, http.StatusInternalServerError, err)
-		//return
+		e.Error(nil, "read request body error: %w", err)
+		ctx.Abort()
+		return
 	}
 
 	resp, err := e.apiManager.MockResponse(context.TODO(), &interact.Request{
@@ -47,11 +48,32 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 
 	if err != nil {
 		e.Warn(nil, "%w", err)
+
+		if !e.enableDirect {
+			ctx.Resp = &http.Response{
+				Status:     http.StatusText(http.StatusInternalServerError),
+				StatusCode: http.StatusInternalServerError,
+				Proto:      ctx.Req.Proto,
+				ProtoMajor: ctx.Req.ProtoMajor,
+				ProtoMinor: ctx.Req.ProtoMinor,
+				Header:     http.Header{},
+				Body:       ioutil.NopCloser(bytes.NewReader([]byte(""))),
+			}
+		}
+		ctx.IsFailFast()
 		return
 	}
 
 	ctx.IsNeedMock()
-	ctx.Resp = resp
+	ctx.Resp = &http.Response{
+		Status:     http.StatusText(resp.Status),
+		StatusCode: resp.Status,
+		Proto:      ctx.Req.Proto,
+		ProtoMajor: ctx.Req.ProtoMajor,
+		ProtoMinor: ctx.Req.ProtoMinor,
+		Header:     resp.Headers,
+		Body:       ioutil.NopCloser(bytes.NewReader(resp.Body.Bytes())),
+	}
 }
 
 func (e *delegateHandler) BeforeResponse(ctx *goproxy.Context, resp *http.Response, err error) {}

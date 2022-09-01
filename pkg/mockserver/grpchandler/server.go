@@ -23,7 +23,6 @@ type Config struct {
 }
 
 type mockServer struct {
-	cfg *Config
 	logger.Logger
 	apiManager   apimanager.Provider
 	protoManager protomanager.Provider
@@ -34,17 +33,12 @@ type Provider interface {
 	GetServer() *grpc.Server
 }
 
-func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider, protoManager protomanager.Provider) (Provider, error) {
-	m := &mockServer{
-		cfg:          cfg,
+func New(log logger.Logger, apiManager apimanager.Provider, protoManager protomanager.Provider) Provider {
+	return &mockServer{
 		Logger:       log.NewLogger("grpcMockServer"),
 		apiManager:   apiManager,
 		protoManager: protoManager,
 	}
-	if err := m.setup(); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 func (s *mockServer) Init(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
@@ -57,22 +51,6 @@ func (s *mockServer) Init(ctx context.Context, cancelFunc context.CancelFunc, wg
 
 func (s *mockServer) GetServer() *grpc.Server {
 	return grpc.NewServer(grpc.UnknownServiceHandler(s.handleStream))
-}
-
-func (s *mockServer) setup() error {
-	if err := s.setupProtoManager(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *mockServer) setupProtoManager() error {
-	service, err := protomanager.New(s.cfg.ProtoManager, s.Logger)
-	if err != nil {
-		return err
-	}
-	s.protoManager = service
-	return nil
 }
 
 func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) error {
@@ -111,7 +89,7 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 	}
 	stream.SetTrailer(metadata.New(response.Trailer))
 	if len(response.Headers) > 0 {
-		if err := stream.SetHeader(metadata.New(response.Headers)); err != nil {
+		if err := stream.SetHeader(getMetadataFromHeaderMap(response.Headers)); err != nil {
 			return status.Errorf(codes.Unavailable, "failed to set header: %s", err)
 		}
 	}
@@ -146,4 +124,13 @@ func getAuthorityFromMetadata(md metadata.MD) string {
 		}
 	}
 	return ""
+}
+
+// func getHeadersFromMetadata
+func getMetadataFromHeaderMap(headers map[string][]string) metadata.MD {
+	tmp := make(map[string]string)
+	for k, v := range headers {
+		tmp[k] = v[0]
+	}
+	return metadata.New(tmp)
 }
