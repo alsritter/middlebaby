@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"gorm.io/gorm"
@@ -15,7 +16,12 @@ type mysqlAssertPlugin struct {
 	log logger.Logger
 }
 
-func New(db *gorm.DB, log logger.Logger) pluginregistry.AssertPlugin {
+func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.AssertPlugin {
+	db, err := storage.GetMysqlCon()
+	if err != nil {
+		log.Error(nil, "mysqlAssertPlugin init failed: %w", err)
+	}
+
 	db.Logger = db.Logger.LogMode(dblogger.Silent)
 	if log.GetCurrentLevel() == "trace" {
 		db.Logger = db.Logger.LogMode(dblogger.Info)

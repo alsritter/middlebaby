@@ -42,7 +42,7 @@ type BasicRegistry struct {
 	logger.Logger
 }
 
-func New(cfg *Config, logger logger.Logger) (Registry, error) {
+func New(logger logger.Logger, cfg *Config) (Registry, error) {
 	service := &BasicRegistry{
 		envPlugins:    []EnvPlugin{},
 		assertPlugins: []AssertPlugin{},

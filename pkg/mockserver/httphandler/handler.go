@@ -59,8 +59,8 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 				Header:     http.Header{},
 				Body:       ioutil.NopCloser(bytes.NewReader([]byte(""))),
 			}
+			ctx.IsFailFast()
 		}
-		ctx.IsFailFast()
 		return
 	}
 

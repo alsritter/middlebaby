@@ -49,7 +49,7 @@ type TaskService struct {
 
 	pluginRegistry pluginregistry.Registry
 
-	log logger.Logger
+	logger.Logger
 }
 
 // New return a TaskService
@@ -61,7 +61,7 @@ func New(log logger.Logger, cfg *Config,
 		caseProvider:   caseProvider,
 		pluginRegistry: pluginRegistry,
 		cfg:            cfg,
-		log:            log.NewLogger("task"),
+		Logger:         log.NewLogger("task"),
 	}
 }
 
@@ -150,7 +150,7 @@ func (t *TaskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 	}
 
 	// assert
-	t.log.Debug(nil, "response message: responseHeader: [%v] responseBody: [%v] statusCode: [%v] Assert.Response: [%v]", responseHeader, responseBody, statusCode, ct.Assert.Response.Data)
+	t.Debug(nil, "response message: responseHeader: [%v] responseBody: [%v] statusCode: [%v] Assert.Response: [%v]", responseHeader, responseBody, statusCode, ct.Assert.Response.Data)
 	if err := t.imposterAssert(ct.Assert, responseHeader, statusCode, responseBody); err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (t *TaskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 
 func (t *TaskService) imposterAssert(a *caseprovider.Assert, responseHeader http.Header, statusCode int, responseBody string) error {
 	if a.Response.StatusCode != 0 {
-		if err := assert.So(t.log, "response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
+		if err := assert.So(t, "response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
 			return err
 		}
 	}
@@ -174,10 +174,10 @@ func (t *TaskService) imposterAssert(a *caseprovider.Assert, responseHeader http
 		responseKeyVal[k] = responseHeader.Get(k)
 	}
 
-	if err := assert.So(t.log, "response header data assertion", responseKeyVal, a.Response.Header); err != nil {
+	if err := assert.So(t, "response header data assertion", responseKeyVal, a.Response.Header); err != nil {
 		return err
 	}
-	if err := assert.So(t.log, "interfaces respond to data assertions", responseBody, a.Response.Data); err != nil {
+	if err := assert.So(t, "interfaces respond to data assertions", responseBody, a.Response.Data); err != nil {
 		return err
 	}
 	return nil
@@ -224,7 +224,7 @@ func (t *TaskService) http(reqUrl, method string, query url.Values, header map[s
 	request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
 
 	out, _ := httputil.DumpRequest(request, true)
-	t.log.Debug(nil, "%s", out)
+	t.Debug(nil, "%s", out)
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, 0, "", fmt.Errorf("failed to execute the request: [%s] err: [%w]", reqUrl, err)

@@ -1,7 +1,8 @@
-package provided
+package envmysql
 
 import (
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/hashicorp/go-multierror"
 	"gorm.io/gorm"
@@ -13,7 +14,12 @@ type MySQLEnvPlugin struct {
 	log logger.Logger
 }
 
-func New(db *gorm.DB, log logger.Logger) pluginregistry.EnvPlugin {
+func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.EnvPlugin {
+	db, err := storage.GetMysqlCon()
+	if err != nil {
+		log.Error(nil, "MySQLEnvPlugin init failed: %w", err)
+	}
+
 	db.Logger = db.Logger.LogMode(db_logger.Silent)
 	if log.GetCurrentLevel() == "trace" {
 		db.Logger = db.Logger.LogMode(db_logger.Info)

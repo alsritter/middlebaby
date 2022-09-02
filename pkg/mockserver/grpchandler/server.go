@@ -18,9 +18,7 @@ import (
 )
 
 // Config defines the config structure
-type Config struct {
-	ProtoManager *protomanager.Config
-}
+type Config struct{}
 
 type mockServer struct {
 	logger.Logger

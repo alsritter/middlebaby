@@ -22,7 +22,6 @@ import (
 )
 
 type Config struct {
-	*protomanager.Config
 	EnableDirect bool `yaml:"enableDirect"` // whether the missed mock allows real requests
 	MockPort     int  `yaml:"mockPort"`     // proxy port
 }

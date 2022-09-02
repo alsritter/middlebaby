@@ -2,9 +2,8 @@ package storageprovider
 
 import (
 	"errors"
-	"time"
-
 	"github.com/spf13/pflag"
+	"time"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
@@ -14,8 +13,9 @@ import (
 )
 
 type Config struct {
-	Mysql Mysql `yaml:"mysql"`
-	Redis Redis `yaml:"redis"`
+	EnableDocker bool  `json:"enableDocker"`
+	Mysql        Mysql `yaml:"mysql"`
+	Redis        Redis `yaml:"redis"`
 }
 
 type Mysql struct {
@@ -39,6 +39,7 @@ type Redis struct {
 
 func NewConfig() *Config {
 	return &Config{
+		EnableDocker: true,
 		Mysql: Mysql{
 			Enabled:  true,
 			Port:     "3306",
@@ -58,6 +59,9 @@ func NewConfig() *Config {
 		},
 	}
 }
+
+// RegisterFlagsWithPrefix is used to register flags
+func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 func (c *Config) Validate() error {
 	if !c.Mysql.Enabled {
@@ -80,9 +84,6 @@ func (c *Config) Validate() error {
 
 	return nil
 }
-
-// RegisterFlagsWithPrefix is used to register flags
-func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
 	GetMysqlCon() (*gorm.DB, error)

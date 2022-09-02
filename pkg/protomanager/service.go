@@ -20,14 +20,14 @@ import (
 type Config struct {
 	ProtoImportPaths []string
 	ProtoDir         string
-	Synchronization  *synchronization.Config
+	SyncGitManger    *synchronization.Config `yaml:"sync"`
 }
 
 func NewConfig() *Config {
 	return &Config{
 		ProtoImportPaths: []string{},
 		ProtoDir:         "",
-		Synchronization:  &synchronization.Config{},
+		SyncGitManger:    synchronization.NewConfig(),
 	}
 }
 
@@ -59,18 +59,18 @@ type Manager struct {
 }
 
 // New is used to init service
-func New(cfg *Config, log logger.Logger) (*Manager, error) {
+func New(log logger.Logger, cfg *Config) (Provider, error) {
 	service := &Manager{
 		cfg:     cfg,
 		methods: &sync.Map{},
 		Logger:  log.NewLogger("protoManager"),
 	}
-	if cfg.Synchronization.Enable {
-		synchronization, err := synchronization.New(cfg.Synchronization, log)
+	if cfg.SyncGitManger.Enable {
+		s, err := synchronization.New(cfg.SyncGitManger, log)
 		if err != nil {
 			return nil, err
 		}
-		service.synchronization = synchronization
+		service.synchronization = s
 		if err := service.synchronizeProto(context.Background(), true); err != nil {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func (s *Manager) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *
 }
 
 func (s *Manager) startSynchronization(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
-	if !s.cfg.Synchronization.Enable {
+	if !s.cfg.SyncGitManger.Enable {
 		return nil
 	}
 	util.StartServiceAsync(ctx, s.Logger, cancelFunc, wg, func() error {

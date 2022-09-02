@@ -1,7 +1,8 @@
-package provided
+package envredis
 
 import (
 	"fmt"
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"regexp"
 	"strings"
 
@@ -16,7 +17,11 @@ type RedisEnvPlugin struct {
 	rc  *redis.Client
 }
 
-func New(rc *redis.Client, log logger.Logger) pluginregistry.EnvPlugin {
+func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.EnvPlugin {
+	rc, err := storage.GetRedisCon()
+	if err != nil {
+		log.Error(nil, "redisAssertPlugin init failed: %w", err)
+	}
 	return &RedisEnvPlugin{rc: rc, log: log.NewLogger("plugin.env.redis")}
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
@@ -16,7 +17,11 @@ type redisAssertPlugin struct {
 	log logger.Logger
 }
 
-func New(rc *redis.Client, log logger.Logger) pluginregistry.AssertPlugin {
+func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.AssertPlugin {
+	rc, err := storage.GetRedisCon()
+	if err != nil {
+		log.Error(nil, "redisAssertPlugin init failed: %w", err)
+	}
 	return &redisAssertPlugin{rc: rc, log: log.NewLogger("plugin.assert.redis")}
 }
 

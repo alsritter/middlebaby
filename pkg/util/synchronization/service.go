@@ -26,12 +26,20 @@ type Config struct {
 	Repository []*Repository
 }
 
+func NewConfig() *Config {
+	return &Config{
+		Enable:     false,
+		StorageDir: "",
+		Repository: nil,
+	}
+}
+
 type Repository struct {
 	Address string
 	Branch  string
 }
 
-// 自动同步本地和远程库的服务
+// New 自动同步本地和远程库的服务
 func New(cfg *Config, log logger.Logger) (*Service, error) {
 	service := &Service{
 		cfg:    cfg,
@@ -40,7 +48,7 @@ func New(cfg *Config, log logger.Logger) (*Service, error) {
 	return service, nil
 }
 
-// 同步仓库，同步完成后会执行 callback，其中 updated 字段用于通知这个 callback 当前仓库是否有变更过
+// Synchronize 同步仓库，同步完成后会执行 callback，其中 updated 字段用于通知这个 callback 当前仓库是否有变更过
 func (s *Service) Synchronize(ctx context.Context, callback func(repository string, updated bool, err error) error) error {
 	for _, repo := range s.cfg.Repository {
 		repository := repo.Address
