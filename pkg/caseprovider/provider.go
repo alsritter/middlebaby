@@ -92,6 +92,6 @@ type TaskInfo struct {
 
 	// test target
 	// http: "/hello"
-	// grpc: "/examples.greeter.api.Greeter/Hello"
+	// grpc: "/examples.greeter.proto.Greeter/Hello"
 	ServicePath string `json:"servicePath"`
 }

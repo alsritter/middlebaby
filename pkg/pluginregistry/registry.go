@@ -9,10 +9,10 @@ import (
 
 type Registry interface {
 	EnvPlugins() []EnvPlugin
-	RegisterEnvPlugin(...EnvPlugin) error
+	RegisterEnvPlugin(...EnvPlugin)
 
 	AssertPlugins() []AssertPlugin
-	RegisterAssertPlugin(...AssertPlugin) error
+	RegisterAssertPlugin(...AssertPlugin)
 }
 
 // Config defines the config structure
@@ -63,17 +63,17 @@ func (b *BasicRegistry) EnvPlugins() []EnvPlugin {
 }
 
 // RegisterAssertPlugin implements Registry
-func (b *BasicRegistry) RegisterAssertPlugin(plugins ...AssertPlugin) error {
+func (b *BasicRegistry) RegisterAssertPlugin(plugins ...AssertPlugin) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	b.assertPlugins = append(b.assertPlugins, plugins...)
-	return nil
+	return
 }
 
 // RegisterEnvPlugin implements Registry
-func (b *BasicRegistry) RegisterEnvPlugin(plugins ...EnvPlugin) error {
+func (b *BasicRegistry) RegisterEnvPlugin(plugins ...EnvPlugin) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	b.envPlugins = append(b.envPlugins, plugins...)
-	return nil
+	return
 }

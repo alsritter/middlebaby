@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptrace"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -39,41 +41,38 @@ func (c *Config) Validate() error {
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
+	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
 }
 
 type TaskService struct {
-	// case center
-	caseProvider caseprovider.Provider
-	// configuration information required by the service.
-	cfg *Config
-
-	pluginRegistry pluginregistry.Registry
-
 	logger.Logger
+	cfg            *Config
+	caseProvider   caseprovider.Provider
+	apiProvider    apimanager.Provider
+	pluginRegistry pluginregistry.Registry
 }
 
 // New return a TaskService
 func New(log logger.Logger, cfg *Config,
 	caseProvider caseprovider.Provider,
-	pluginRegistry pluginregistry.Registry) Provider {
-
+	apiProvider apimanager.Provider,
+	pluginRegistry pluginregistry.Registry,
+) Provider {
 	return &TaskService{
-		caseProvider:   caseProvider,
-		pluginRegistry: pluginRegistry,
 		cfg:            cfg,
+		caseProvider:   caseProvider,
+		apiProvider:    apiProvider,
+		pluginRegistry: pluginRegistry,
 		Logger:         log.NewLogger("task"),
 	}
 }
 
-func (t *TaskService) Start() error {
-	return nil
-}
-
-func (t *TaskService) Close() error {
+func (t *TaskService) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
 	return nil
 }
 
 func (t *TaskService) Run(ctx context.Context, itfName string, caseName string) (err error) {
+	t.apiProvider.LoadCaseEnv(itfName, caseName)
 	var (
 		ass             = t.pluginRegistry.AssertPlugins()
 		envs            = t.pluginRegistry.EnvPlugins()
@@ -109,6 +108,7 @@ func (t *TaskService) Run(ctx context.Context, itfName string, caseName string) 
 				err = fmt.Errorf("teardown command failed: %v", err)
 			}
 		}
+		t.apiProvider.ClearCaseEnv()
 	}()
 
 	if err = t.runRequest(info, runCase); err != nil {

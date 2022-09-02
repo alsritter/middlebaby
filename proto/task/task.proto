@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package api.task;
+
+option go_package = "github.com/alsritter/middlebaby/proto/task;task";
+
+import "google/api/annotations.proto";
+
+// NOTE: https://formatter.org/protobuf-formatter
+
+service Task {
+  rpc GetAllTaskCases(CommonRequest) returns (GetAllTaskCasesReply) {
+    option (google.api.http) = {
+      post: "/task/get_all_task_cases"
+      body: "*"
+    };
+  };
+  rpc RunSingleTaskCase(RunTaskRequest) returns (RunTaskReply) {
+    option (google.api.http) = {
+      post: "/task/run_single_task_case"
+      body: "*"
+    };
+  };
+}
+
+message CommonRequest {}
+message GetAllTaskCasesReply {
+  repeated TaskCase TaskCases = 1;
+}
+
+message RunTaskRequest {}
+message RunTaskReply {}
+
+// ----------------------------------------------------------------
+message TaskCase {
+
+}

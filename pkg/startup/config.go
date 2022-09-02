@@ -16,7 +16,7 @@ import (
 
 type Config struct {
 	Log            *logger.Config          `yaml:"log"`
-	ApiManager     *apimanager.Config      `yaml:"api"`
+	ApiManager     *apimanager.Config      `yaml:"proto"`
 	TargetProcess  *targetprocess.Config   `yaml:"target"`
 	MockServer     *mockserver.Config      `yaml:"mock"`
 	TaskService    *taskserver.Config      `yaml:"task"`

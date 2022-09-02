@@ -193,7 +193,7 @@ func (s *Manager) loadProto() error {
 					name := GetPathByFullyQualifiedName(method.GetFullyQualifiedName())
 					s.Info(map[string]interface{}{
 						"name": name,
-					}, "api loaded")
+					}, "proto loaded")
 					_, loaded := methods.LoadOrStore(name, method)
 					if loaded {
 						s.Warn(map[string]interface{}{

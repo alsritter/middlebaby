@@ -54,7 +54,7 @@ func New(log logger.Logger, cfg *Config, caseProvider caseprovider.Provider) Pro
 		caseApis:     make([]*interact.ImposterCase, 0),
 		itfApis:      make([]*interact.ImposterCase, 0),
 		globalApis:   make([]*interact.ImposterCase, 0),
-		log:          log.NewLogger("api"),
+		log:          log.NewLogger("proto"),
 		cfg:          cfg,
 		caseProvider: caseProvider,
 	}

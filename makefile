@@ -17,8 +17,8 @@ buildandrun:
 	./"${BIN_FILE}"
 	${RM} "${BIN_FILE}"
 
-# use 'kratos proto add api/task/task.proto'
-# 'kratos proto client api/task/task.proto'
+# use 'kratos proto add proto/task/task.proto'
+# 'kratos proto client proto/task/task.proto'
 .PHONY: proto
 proto:
 	$(call build_proto_files, $(PROTO_FILES))

@@ -78,7 +78,10 @@ func (m *MockServe) GetPort() int {
 }
 
 func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
-	m.grpcProvider.Init(ctx, cancelFunc, wg)
+	if err := m.grpcProvider.Init(ctx, cancelFunc, wg); err != nil {
+		return err
+	}
+
 	m.grpcServer = m.grpcProvider.GetServer()
 	m.httpServer = m.httpProvider.GetServer()
 

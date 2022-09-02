@@ -3,6 +3,7 @@ package targetprocess
 import (
 	"context"
 	"fmt"
+	"github.com/alsritter/middlebaby/pkg/mockserver"
 	"os"
 	"os/exec"
 	"runtime"
@@ -49,7 +50,8 @@ type TargetProcess struct {
 	log     logger.Logger
 }
 
-func New(log logger.Logger, cfg *Config) Provider {
+func New(log logger.Logger, cfg *Config, mock mockserver.Provider) Provider {
+	cfg.MockPort = mock.GetPort()
 	return &TargetProcess{
 		cfg: cfg,
 		log: log.NewLogger("target"),
