@@ -105,7 +105,7 @@ func (b *basicProvider) loadCaseFiles() error {
 		}
 
 		if err != nil {
-			b.log.Error(nil, "gets the taskserver file %s service type error: %w \n", file, err)
+			b.Error(nil, "gets the taskserver file %s service type error: %w \n", file, err)
 			continue
 		}
 
@@ -156,7 +156,7 @@ func (b *basicProvider) loadCaseFiles() error {
 		b.mockCases[t.ServiceName] = append(b.mockCases[t.ServiceName], t.Mocks...)
 	}
 
-	b.log.Info(nil, "loading all case, total: %d", total)
+	b.Info(nil, "loading all case, total: %d", total)
 	return nil
 }
 
@@ -172,7 +172,7 @@ func (b *basicProvider) watchCaseFiles() error {
 	}
 
 	file.AttachWatcher(w, func(event watcher.Event) {
-		b.log.Trace(nil, "listening file event is triggered: ", event)
+		b.Trace(nil, "listening file event is triggered: ", event)
 		// If it is a file creation event, It is added to the listener
 		if event.Op == watcher.Create {
 			if strings.HasSuffix(event.Name(), b.cfg.TaskFileSuffix) {
@@ -180,7 +180,7 @@ func (b *basicProvider) watchCaseFiles() error {
 				// if you created a directory.
 				if err == nil && fi.IsDir() {
 					if err := w.AddRecursive(event.Name()); err != nil {
-						b.log.Error(nil, "Add test case directory listening %s :%s \n", event.Name, err.Error())
+						b.Error(nil, "Add test case directory listening %s :%s \n", event.Name, err.Error())
 					}
 					return
 				} else {
@@ -201,7 +201,7 @@ func (b *basicProvider) watchCaseFiles() error {
 
 		// FIXME: Global loading is not required here
 		if err := b.loadCaseFiles(); err != nil {
-			b.log.Error(nil, "Failed to re-read task server file error: ", err)
+			b.Error(nil, "Failed to re-read task server file error: ", err)
 		}
 
 		if event.Op != watcher.Remove {
@@ -243,7 +243,7 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 
 	if !filepath.IsAbs(filePath) {
 		if fp, err := filepath.Abs(filePath); err != nil {
-			b.log.Error(nil, "to absolute representation path err: %s", err)
+			b.Error(nil, "to absolute representation path err: %s", err)
 			return
 		} else {
 			filePath = fp
@@ -252,7 +252,7 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		b.log.Error(nil, "%w: error trying to read config file: %s", err, filePath)
+		b.Error(nil, "%w: error trying to read config file: %s", err, filePath)
 	}
 
 	defer file.Close()
@@ -260,7 +260,7 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 
 	var imposter []*interact.ImposterCase
 	if err := json.Unmarshal(bytes, &imposter); err != nil {
-		b.log.Error(nil, "%w: error while unmarshal configFile file %s", err, filePath)
+		b.Error(nil, "%w: error while unmarshal configFile file %s", err, filePath)
 	}
 
 	b.mockCases[globalCaseID] = append(b.mockCases[globalCaseID], imposter...)

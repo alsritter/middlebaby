@@ -47,7 +47,7 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type basicProvider struct {
 	cfg *Config
-	log logger.Logger
+	logger.Logger
 	// key: serviceName
 	taskInterface map[string]*InterfaceTask
 	mockCases     map[string][]*interact.ImposterCase
@@ -62,10 +62,10 @@ type basicProvider struct {
 
 func New(log logger.Logger, cfg *Config) (Provider, error) {
 	b := &basicProvider{
-		mockCases:     make(map[string][]*interact.ImposterCase),
-		taskInterface: make(map[string]*InterfaceTask),
-		log:           log.NewLogger("caseProvider"),
 		cfg:           cfg,
+		Logger:        log.NewLogger("caseProvider"),
+		taskInterface: make(map[string]*InterfaceTask),
+		mockCases:     make(map[string][]*interact.ImposterCase),
 	}
 
 	return b, b.init()
@@ -153,7 +153,7 @@ func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms [
 		}
 	}
 
-	b.log.Warn(nil, "cannot find case with name [%s] from interface [%s]", caseName, serviceName)
+	b.Warn(nil, "cannot find case with name [%s] from interface [%s]", caseName, serviceName)
 	return
 }
 

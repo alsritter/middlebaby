@@ -18,15 +18,15 @@ func TestManager_GetMethod(t *testing.T) {
 	)
 
 	basePath, _ := os.Getwd()
-	pms, err := New(&Config{
+	pms, err := New(clog, &Config{
 		ProtoDir:         basePath,
 		ProtoImportPaths: []string{"temporary/alsritter/protobuf-examples"},
-		Synchronization: &synchronization.Config{
+		SyncGitManger: &synchronization.Config{
 			Enable:     true,
 			StorageDir: "temporary",
 			Repository: []*synchronization.Repository{{Address: "git@github.com:alsritter/protobuf-examples.git", Branch: "main"}},
 		},
-	}, clog)
+	})
 	if err != nil {
 		t.Error(err)
 	}

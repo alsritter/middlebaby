@@ -40,23 +40,23 @@ type Provider interface {
 }
 
 type Manager struct {
-	caseApis     []*interact.ImposterCase
-	itfApis      []*interact.ImposterCase
-	globalApis   []*interact.ImposterCase
-	cfg          *Config
-	log          logger.Logger
+	caseApis   []*interact.ImposterCase
+	itfApis    []*interact.ImposterCase
+	globalApis []*interact.ImposterCase
+	cfg        *Config
+	logger.Logger
 	lock         sync.RWMutex
 	caseProvider caseprovider.Provider
 }
 
 func New(log logger.Logger, cfg *Config, caseProvider caseprovider.Provider) Provider {
 	return &Manager{
+		cfg:          cfg,
+		caseProvider: caseProvider,
+		Logger:       log.NewLogger("proto"),
 		caseApis:     make([]*interact.ImposterCase, 0),
 		itfApis:      make([]*interact.ImposterCase, 0),
 		globalApis:   make([]*interact.ImposterCase, 0),
-		log:          log.NewLogger("proto"),
-		cfg:          cfg,
-		caseProvider: caseProvider,
 	}
 }
 
@@ -130,19 +130,19 @@ func (m *Manager) match(req, target *interact.Request) bool {
 		return false
 	}
 
-	if err := assert.So(m.log, "mock header assert", req.Headers, target.Headers); err != nil {
-		m.log.Trace(nil, "mock head cannot hit expected:[%v] actual:[%v]", target.Headers, req.Headers)
+	if err := assert.So(m, "mock header assert", req.Headers, target.Headers); err != nil {
+		m.Trace(nil, "mock head cannot hit expected:[%v] actual:[%v]", target.Headers, req.Headers)
 		return false
 	}
 
-	if err := assert.So(m.log, "mock params assert", target.Params, req.Params); err != nil {
-		m.log.Trace(nil, "mock params cannot hit expected:[%v] actual:[%v]", target.Params, req.Params)
+	if err := assert.So(m, "mock params assert", target.Params, req.Params); err != nil {
+		m.Trace(nil, "mock params cannot hit expected:[%v] actual:[%v]", target.Params, req.Params)
 		return false
 	}
 
 	if req.Body != nil && target.Body != nil {
-		if err := assert.So(m.log, "mock body assert", target.Body.Bytes(), req.Body.Bytes()); err != nil {
-			m.log.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.Body.Bytes(), req.Body.Bytes())
+		if err := assert.So(m, "mock body assert", target.Body.Bytes(), req.Body.Bytes()); err != nil {
+			m.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.Body.Bytes(), req.Body.Bytes())
 			return false
 		}
 	}

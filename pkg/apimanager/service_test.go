@@ -98,7 +98,7 @@ func TestManager_match(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &Manager{log: logger.NewDefault("test")}
+			m := &Manager{Logger: logger.NewDefault("test")}
 			if got := m.match(tt.args.req, tt.args.target); got != tt.want {
 				t.Errorf("Manager.match() = %v, want %v", got, tt.want)
 			}
