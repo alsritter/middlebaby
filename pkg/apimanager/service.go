@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
@@ -65,6 +66,12 @@ func (m *Manager) MockResponse(ctx context.Context, request *interact.Request) (
 	if !isMock {
 		return nil, fmt.Errorf("cannot mock http request: %v", request)
 	}
+
+	// block request.
+	if api.Response.Delay != nil {
+		time.Sleep(api.Response.Delay.GetDelay())
+	}
+
 	return &api.Response, nil
 }
 

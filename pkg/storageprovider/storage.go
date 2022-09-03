@@ -2,8 +2,9 @@ package storageprovider
 
 import (
 	"errors"
-	"github.com/spf13/pflag"
 	"time"
+
+	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
@@ -39,7 +40,7 @@ type Redis struct {
 
 func NewConfig() *Config {
 	return &Config{
-		EnableDocker: true,
+		EnableDocker: false,
 		Mysql: Mysql{
 			Enabled:  true,
 			Port:     "3306",

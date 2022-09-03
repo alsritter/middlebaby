@@ -46,7 +46,7 @@ type Response struct {
 	Header  map[string][]string `json:"header" yaml:"header"`
 	Body    Message             `json:"body" yaml:"body"`
 	Trailer map[string]string   `json:"trailer" yaml:"trailer"`
-	Delay   ResponseDelay       `json:"delay" yaml:"delay"`
+	Delay   *ResponseDelay      `json:"delay" yaml:"delay"`
 }
 
 // Message defines a generic message interface

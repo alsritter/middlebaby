@@ -25,6 +25,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Version is set via build flag -ldflags -X main.Version
+var (
+	Version   string
+	Branch    string
+	Revision  string
+	BuildDate string
+)
+
 const (
 	asciiImage = `
 -----------------------------------------------------------
@@ -36,7 +44,7 @@ const (
                                                  /____/   
 -----------------------------------------------------------
 Powered by: alsritter
-`
+ `
 )
 
 var (
@@ -44,7 +52,7 @@ var (
 		Use:     "middlebaby",
 		Short:   "middlebaby",
 		Long:    `a auto mock tool.`,
-		Version: "",
+		Version: fmt.Sprintf("%s, branch: %s, revision: %s, buildDate: %s", Version, Branch, Revision, BuildDate),
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(asciiImage)
 			_ = cmd.Help()
@@ -56,6 +64,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(CommandServe(Setup, config))
+	rootCmd.AddCommand(initCmd)
 }
 
 func Setup(ctx context.Context) {

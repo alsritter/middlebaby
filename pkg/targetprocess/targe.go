@@ -3,13 +3,14 @@ package targetprocess
 import (
 	"context"
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/mockserver"
 	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"sync"
 	"syscall"
+
+	"github.com/alsritter/middlebaby/pkg/mockserver"
 
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/spf13/pflag"
@@ -19,7 +20,7 @@ import (
 
 type Config struct {
 	AppPath  string `yaml:"appPath"`
-	MockPort int    `yaml:"mockPort"`
+	mockPort int    `yaml:"-" json:"-"`
 }
 
 func NewConfig() *Config {
@@ -51,7 +52,7 @@ type TargetProcess struct {
 }
 
 func New(log logger.Logger, cfg *Config, mock mockserver.Provider) Provider {
-	cfg.MockPort = mock.GetPort()
+	cfg.mockPort = mock.GetPort()
 	return &TargetProcess{
 		cfg: cfg,
 		log: log.NewLogger("target"),
@@ -67,8 +68,7 @@ func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc
 
 		t.command = exec.Command(t.cfg.AppPath)
 
-		port := t.cfg.MockPort
-
+		port := t.cfg.mockPort
 		parentEnv := os.Environ()
 		// set target application proxy path.
 		parentEnv = append(parentEnv, fmt.Sprintf("HTTP_PROXY=http://127.0.0.1:%d", port))

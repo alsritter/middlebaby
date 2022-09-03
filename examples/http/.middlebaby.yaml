@@ -1,0 +1,44 @@
+log:
+  prefix: true
+  level: debug
+target:
+  appPath: "./target"
+mock:
+  enableDirect: true
+  mockPort: 9090
+task:
+  closeTearDown: false
+  taskServicePort: 0
+storage:
+  enabledocker: false
+  mysql:
+    enabled: true
+    port: "3306"
+    host: "127.0.0.1"
+    database: "test_mb"
+    username: "root"
+    password: "123456"
+    local: "Asia/Shanghai"
+    charset: "utf8mb4"
+  redis:
+    enabled: true
+    port: "6379"
+    host: "127.0.0.1"
+    auth: "123456"
+    db: 0
+case:
+  taskFileSuffix: .case.json
+  caseFiles: 
+      - "./tests/cases/*.case.json"
+  watcherCases: true
+  mockFiles:
+      - ./tests/http.mock.json
+  watcherMock: true
+proto:
+  protoimportpaths: []
+  protodir: ""
+  sync:
+    enable: false
+    storagedir: ""
+    repository: []
+plugin: {}
