@@ -9,7 +9,8 @@ RM = rm -rf
 endif
 
 BIN_FILE=middlebaby
-PROTO_FILES=$(shell find . -name *.proto)
+# PROTO_FILES=$(shell find . -name *.proto)
+PROTO_FILES=proto/task/task.proto
 
 .PHONY: buildandrun
 buildandrun:
@@ -28,11 +29,10 @@ define build_proto_files
 @for file in $(1); do \
 ( 	echo "---\nbuilding: $$file" && \
  	protoc --proto_path=. \
-  		--proto_path=$(shell dirname $(shell pwd)) \
-  		--grpc-gateway_out=. \
+  		--proto_path=./proto \
+  		--grpc-gateway_out=./proto/task \
   		--go_out=paths=source_relative:. \
-  		--go-grpc_out=paths=source_relative:. \
-  		--go-errors_out=paths=source_relative:. $$file)  \
+  		--go-grpc_out=paths=source_relative:. $$file)  \
 done;
 endef
 

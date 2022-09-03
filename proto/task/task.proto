@@ -25,13 +25,86 @@ service Task {
 
 message CommonRequest {}
 message GetAllTaskCasesReply {
-  repeated TaskCase TaskCases = 1;
+  repeated InterfaceTask interfaceTask = 1;
 }
 
-message RunTaskRequest {}
-message RunTaskReply {}
+message RunTaskRequest {
+  string itfName = 1;
+  string caseName = 2;
+}
+message RunTaskReply {
+  int32 status = 1; // 1 = successful, 0 = failed
+  string failedReason = 2;
+}
 
 // ----------------------------------------------------------------
-message TaskCase {
+message InterfaceTask {
+  string protocol = 1;
+  string serviceName = 2;
+  string serviceMethod = 3;
+  string serviceDescription = 4;
+  string servicePath = 5;
+  repeated Command setUp = 6;
+  repeated Command teardown = 7;
+  repeated ImposterCase mocks = 8;
+  repeated TaskCase cases = 9;
+}
 
+message TaskCase {
+  string name = 1;
+  string description = 2;
+  Assert assert = 3;
+  repeated Command setUp = 4;
+  repeated Command teardown = 5;
+  repeated ImposterCase mocks = 6;
+}
+
+message Command {
+  string typeName = 1;
+  repeated string commands = 2;
+}
+
+message CommonAssert {
+  string typeName = 1;
+  string actual = 2;
+  string expected = 3;
+}
+
+message ImposterCase {
+  Request request = 1;
+  Response response = 2;
+}
+
+message Request {
+  string protocol = 1;
+  string method = 2;
+  string host = 3;
+  string path = 4;
+  map<string, string> header = 5;
+  map<string, string> params = 6;
+  string body = 7;
+}
+
+message Response {
+  int32 status = 1;
+  map<string, string> header = 2;
+  map<string, string> trailer = 3;
+  string body = 4;
+  ResponseDelay delay = 5;
+}
+
+message Assert {
+  AssertResponse response = 1;
+  repeated CommonAssert otherAsserts = 2;
+}
+
+message ResponseDelay {
+  int64 delay = 1;
+  int64 offset = 2;
+}
+
+message AssertResponse {
+  map<string, string> header = 1;
+  string data = 2;
+  int32 statusCode = 3;
 }

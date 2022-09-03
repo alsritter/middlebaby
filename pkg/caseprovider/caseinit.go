@@ -114,18 +114,14 @@ func (b *basicProvider) loadCaseFiles() error {
 			return fmt.Errorf("serialization %s file error: %w", file, err)
 		}
 
-		if t.ServiceName == globalCaseID {
-			return fmt.Errorf("interface name cannot be %s", globalCaseID)
+		if err := b.checkItfInfo(*t.TaskInfo); err != nil {
+			return err
 		}
 
 		// check case name
 		for _, e := range t.Cases {
-			if e.Name == t.ServiceName {
-				return fmt.Errorf("case name cannot be the same as interface name %s", e.Name)
-			}
-
-			if e.Name == globalCaseID {
-				return fmt.Errorf("case name cannot be %s", globalCaseID)
+			if err := b.checkCaseInfo(e, *t.TaskInfo); err != nil {
+				return err
 			}
 
 			b.mockCases[e.Name] = append(b.mockCases[e.Name], e.Mocks...)
@@ -157,6 +153,31 @@ func (b *basicProvider) loadCaseFiles() error {
 	}
 
 	b.Info(nil, "loading all case, total: %d", total)
+	return nil
+}
+
+// Check whether the file is correct.
+func (b *basicProvider) checkItfInfo(info TaskInfo) error {
+	if info.ServiceName == globalCaseID {
+		return fmt.Errorf("interface name cannot be %s", globalCaseID)
+	}
+
+	if info.Protocol == ProtocolGRPC && info.ServiceProtoFile == "" {
+		return fmt.Errorf("grpc request proto file path cannot be empty")
+	}
+
+	return nil
+}
+
+func (b *basicProvider) checkCaseInfo(e *CaseTask, info TaskInfo) error {
+	if e.Name == info.ServiceName {
+		return fmt.Errorf("case name cannot be the same as interface name %s", e.Name)
+	}
+
+	if e.Name == globalCaseID {
+		return fmt.Errorf("case name cannot be %s", globalCaseID)
+	}
+
 	return nil
 }
 

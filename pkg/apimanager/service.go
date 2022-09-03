@@ -130,8 +130,8 @@ func (m *Manager) match(req, target *interact.Request) bool {
 		return false
 	}
 
-	if err := assert.So(m, "mock header assert", req.Headers, target.Headers); err != nil {
-		m.Trace(nil, "mock head cannot hit expected:[%v] actual:[%v]", target.Headers, req.Headers)
+	if err := assert.So(m, "mock header assert", req.Header, target.Header); err != nil {
+		m.Trace(nil, "mock head cannot hit expected:[%v] actual:[%v]", target.Header, req.Header)
 		return false
 	}
 

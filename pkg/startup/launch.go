@@ -2,6 +2,8 @@ package startup
 
 import (
 	"context"
+	"sync"
+
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/mysql"
@@ -9,7 +11,6 @@ import (
 	envmysql "github.com/alsritter/middlebaby/pkg/pluginregistry/envprovid/mysql"
 	envredis "github.com/alsritter/middlebaby/pkg/pluginregistry/envprovid/redis"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
-	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/mockserver"
@@ -32,12 +33,24 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, cfg *Config, lo
 	pluginRegistry.RegisterEnvPlugin(envmysql.New(storageProvider, log), envredis.New(storageProvider, log))
 	pluginRegistry.RegisterAssertPlugin(mysql.New(storageProvider, log), redis.New(storageProvider, log))
 
+	log.Info(nil, "start loading case...")
 	caseProvider, err := caseprovider.New(log, cfg.CaseProvider)
+	if err != nil {
+		return err
+	}
+	log.Info(nil, "loaded case successfully")
+
+	log.Info(nil, "start loading proto file...")
 	protoProvider, err := protomanager.New(log, cfg.ProtoManager)
+	if err != nil {
+		return err
+	}
+	log.Info(nil, "loaded proto file successfully")
+
 	apiManager := apimanager.New(log, cfg.ApiManager, caseProvider)
 
 	mockServer := mockserver.New(log, cfg.MockServer, apiManager, protoProvider)
-	taskServer := taskserver.New(log, cfg.TaskService, caseProvider, apiManager, pluginRegistry)
+	taskServer := taskserver.New(log, cfg.TaskService, caseProvider, protoProvider, apiManager, pluginRegistry)
 	targetProcess := targetprocess.New(log, cfg.TargetProcess, mockServer)
 
 	log.Info(nil, "* start to start mockServer")

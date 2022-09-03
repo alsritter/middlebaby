@@ -79,15 +79,15 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 		Method:   http.MethodPost,
 		Host:     getAuthorityFromMetadata(md),
 		Path:     fullMethodName,
-		Headers:  getHeadersFromMetadata(md),
+		Header:   getHeadersFromMetadata(md),
 		Body:     interact.NewBytesMessage(data),
 	})
 	if err != nil {
 		return err
 	}
 	stream.SetTrailer(metadata.New(response.Trailer))
-	if len(response.Headers) > 0 {
-		if err := stream.SetHeader(getMetadataFromHeaderMap(response.Headers)); err != nil {
+	if len(response.Header) > 0 {
+		if err := stream.SetHeader(getMetadataFromHeaderMap(response.Header)); err != nil {
 			return status.Errorf(codes.Unavailable, "failed to set header: %s", err)
 		}
 	}

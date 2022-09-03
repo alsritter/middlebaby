@@ -44,6 +44,8 @@ type Provider interface {
 	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
 	// GetMethod is used to get descriptor of specified grpc path
 	GetMethod(name string) (*desc.MethodDescriptor, bool)
+	// get proto importPaths
+	GetImportPaths() []string
 }
 
 // Manager is the implement of Provider
@@ -80,6 +82,11 @@ func New(log logger.Logger, cfg *Config) (Provider, error) {
 		}
 	}
 	return service, nil
+}
+
+// GetImportPaths implements Provider
+func (m *Manager) GetImportPaths() []string {
+	return m.cfg.ProtoImportPaths
 }
 
 // GetMethod is used to get descriptor of specified grpc path

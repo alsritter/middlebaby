@@ -24,7 +24,7 @@ func TestManager_match(t *testing.T) {
 					Method: "POST",
 					Host:   "localhost",
 					Path:   "/get/hello/world",
-					Headers: map[string]interface{}{
+					Header: map[string]interface{}{
 						"Accept-Encoding:": "gzip, deflate",
 					},
 					Params: map[string]string{},
@@ -34,7 +34,7 @@ func TestManager_match(t *testing.T) {
 					Method: "POST",
 					Host:   "localhost",
 					Path:   "/get/hello/world",
-					Headers: map[string]interface{}{
+					Header: map[string]interface{}{
 						"Accept-Encoding:": "gzip, deflate",
 					},
 					Params: map[string]string{},
@@ -80,7 +80,7 @@ func TestManager_match(t *testing.T) {
 					Method: "GET",
 					Host:   "localhost",
 					Path:   "/path",
-					Headers: map[string]interface{}{
+					Header: map[string]interface{}{
 						"Accept-Encoding:": "gzip, deflate",
 					},
 				},
@@ -88,7 +88,7 @@ func TestManager_match(t *testing.T) {
 					Method: "GET",
 					Host:   "localhost",
 					Path:   "/path",
-					Headers: map[string]interface{}{
+					Header: map[string]interface{}{
 						"Accept-Encoding:": "text/plain",
 					},
 				},

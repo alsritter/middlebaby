@@ -20,8 +20,8 @@ const (
 // ImposterCase define an imposter structure (a mock case)
 type ImposterCase struct {
 	Id       string   `json:"-"`
-	Request  Request  `json:"request"`
-	Response Response `json:"response"`
+	Request  Request  `json:"request" yaml:"request"`
+	Response Response `json:"response" yaml:"response"`
 }
 
 // Delay returns delay for response that user can specify in imposter config
@@ -31,22 +31,22 @@ func (i *ImposterCase) Delay() time.Duration {
 
 // Request defines the request structure
 type Request struct {
-	Protocol Protocol               `json:"protocol"`
-	Method   string                 `json:"method"`
-	Host     string                 `json:"host"`
-	Path     string                 `json:"path"`
-	Headers  map[string]interface{} `json:"header"`
-	Params   map[string]string      `json:"params"`
-	Body     Message                `json:"body"`
+	Protocol Protocol               `json:"protocol" yaml:"protocol"`
+	Method   string                 `json:"method" yaml:"method"`
+	Host     string                 `json:"host" yaml:"host"`
+	Path     string                 `json:"path" yaml:"path"`
+	Header   map[string]interface{} `json:"header" yaml:"header"`
+	Params   map[string]string      `json:"params" yaml:"params"`
+	Body     Message                `json:"body" yaml:"body"`
 }
 
 // Response represent the structure of real response
 type Response struct {
-	Status  int                 `json:"status"`
-	Headers map[string][]string `json:"headers"`
-	Body    Message             `json:"body"`
-	Trailer map[string]string   `json:"trailer"`
-	Delay   ResponseDelay       `json:"delay"`
+	Status  int                 `json:"status" yaml:"status"`
+	Header  map[string][]string `json:"header" yaml:"header"`
+	Body    Message             `json:"body" yaml:"body"`
+	Trailer map[string]string   `json:"trailer" yaml:"trailer"`
+	Delay   ResponseDelay       `json:"delay" yaml:"delay"`
 }
 
 // Message defines a generic message interface
@@ -60,8 +60,8 @@ type Message interface {
 
 // ResponseDelay represent time delay before server responds.
 type ResponseDelay struct {
-	Delay  int64 `json:"delay"`
-	Offset int64 `json:"offset"`
+	Delay  int64 `json:"delay" yaml:"delay"`
+	Offset int64 `json:"offset" yaml:"offset"`
 }
 
 // GetDelay return random time.Duration with respect to specified time range.
@@ -84,7 +84,7 @@ func NewDefaultResponse(request *Request) *Response {
 	}
 	return &Response{
 		Status:  code,
-		Headers: map[string][]string{},
+		Header:  map[string][]string{},
 		Trailer: map[string]string{},
 		Body:    NewBytesMessage(nil),
 	}

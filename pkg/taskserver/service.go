@@ -2,38 +2,38 @@ package taskserver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptrace"
-	"net/http/httputil"
-	"net/url"
-	"strings"
+	"net"
 	"sync"
-	"time"
+
+	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/protomanager"
+	"github.com/alsritter/middlebaby/pkg/util"
+	taskproto "github.com/alsritter/middlebaby/proto/task"
+	"google.golang.org/grpc"
 
 	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
-	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
 type Config struct {
-	CaseFiles       []string `yaml:"caseFiles"`
-	TaskFileSuffix  string   `yaml:"taskFileSuffix"` // the default test case suffix name. example: ".case.json"
-	WatcherCases    bool     `yaml:"watcherCases"`
-	MustRunTearDown bool     `yaml:"mustRunTearDown"`
+	CloseTearDown   bool `yaml:"closeTearDown"`
+	TaskServicePort int  `yaml:"taskServicePort"`
 }
 
 func NewConfig() *Config {
-	return &Config{}
+	return &Config{
+		CloseTearDown: false,
+	}
 }
 
 func (c *Config) Validate() error {
+	if c.TaskServicePort == 0 {
+		return fmt.Errorf("task service port is required")
+	}
 	return nil
 }
 
@@ -44,21 +44,25 @@ type Provider interface {
 	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
 }
 
-type TaskService struct {
+type taskService struct {
 	logger.Logger
+	taskproto.TaskServer // implements grpc server interface task.TaskServer
+
 	cfg            *Config
 	caseProvider   caseprovider.Provider
 	apiProvider    apimanager.Provider
+	protoProvider  protomanager.Provider
 	pluginRegistry pluginregistry.Registry
 }
 
 // New return a TaskService
 func New(log logger.Logger, cfg *Config,
 	caseProvider caseprovider.Provider,
+	protoProvider protomanager.Provider,
 	apiProvider apimanager.Provider,
 	pluginRegistry pluginregistry.Registry,
 ) Provider {
-	return &TaskService{
+	return &taskService{
 		cfg:            cfg,
 		caseProvider:   caseProvider,
 		apiProvider:    apiProvider,
@@ -67,189 +71,43 @@ func New(log logger.Logger, cfg *Config,
 	}
 }
 
-func (t *TaskService) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
+// GetAllTaskCases implements task.TaskServer
+func (t *taskService) GetAllTaskCases(context.Context, *taskproto.CommonRequest) (*taskproto.GetAllTaskCasesReply, error) {
+	all := t.caseProvider.GetAllItf()
+	return t.toGetAllTaskCasesReply(all), nil
+}
+
+// RunSingleTaskCase implements task.TaskServer
+func (t *taskService) RunSingleTaskCase(ctx context.Context, req *taskproto.RunTaskRequest) (*taskproto.RunTaskReply, error) {
+	t.apiProvider.LoadCaseEnv(req.ItfName, req.CaseName)
+	defer t.apiProvider.ClearCaseEnv()
+	if err := t.Run(ctx, req.ItfName, req.CaseName); err != nil {
+		return &taskproto.RunTaskReply{
+			Status:       0,
+			FailedReason: err.Error(),
+		}, nil
+	}
+
+	return &taskproto.RunTaskReply{
+		Status:       1,
+		FailedReason: "",
+	}, nil
+}
+
+func (t *taskService) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", t.cfg.TaskServicePort))
+	if err != nil {
+		t.Fatal(nil, "task service failed to listen: %v", err)
+		return err
+	}
+	server := grpc.NewServer()
+	taskproto.RegisterTaskServer(server, t)
+
+	util.StartServiceAsync(ctx, t.NewLogger("task-server"), cancelFunc, wg, func() error {
+		return server.Serve(listener)
+	}, func() error {
+		server.GracefulStop()
+		return nil
+	})
 	return nil
-}
-
-func (t *TaskService) Run(ctx context.Context, itfName string, caseName string) (err error) {
-	t.apiProvider.LoadCaseEnv(itfName, caseName)
-	var (
-		ass             = t.pluginRegistry.AssertPlugins()
-		envs            = t.pluginRegistry.EnvPlugins()
-		info            = t.caseProvider.GetItfInfoFromItfName(itfName)
-		runCase         = t.caseProvider.GetAllCaseFromCaseName(itfName, caseName)
-		setupCmds       = t.caseProvider.GetItfSetupCommand(itfName, caseName)
-		teardownCmds    = t.caseProvider.GetItfTearDownCommand(itfName, caseName)
-		setupCmdType    = make(map[string][]string)
-		teardownCmdType = make(map[string][]string)
-		assertCmdType   = make(map[string][]caseprovider.CommonAssert)
-	)
-
-	for _, c := range setupCmds {
-		setupCmdType[c.TypeName] = append(setupCmdType[c.TypeName], c.Commands...)
-	}
-
-	for _, c := range teardownCmds {
-		teardownCmdType[c.TypeName] = append(setupCmdType[c.TypeName], c.Commands...)
-	}
-
-	// before run command
-
-	for _, e := range envs {
-		if err := e.Run(setupCmdType[e.GetTypeName()]); err != nil {
-			return fmt.Errorf("setup command failed: %v", err)
-		}
-	}
-
-	// after run command
-	defer func() {
-		for _, e := range envs {
-			if err = e.Run(teardownCmdType[e.GetTypeName()]); err != nil {
-				err = fmt.Errorf("teardown command failed: %v", err)
-			}
-		}
-		t.apiProvider.ClearCaseEnv()
-	}()
-
-	if err = t.runRequest(info, runCase); err != nil {
-		return
-	}
-
-	for _, oa := range runCase.Assert.OtherAsserts {
-		assertCmdType[oa.TypeName] = append(assertCmdType[oa.TypeName], oa)
-	}
-
-	// other assert
-	for _, a := range ass {
-		if err = a.Assert(assertCmdType[a.GetTypeName()]); err != nil {
-			return err
-		}
-	}
-	return
-}
-
-func (t *TaskService) runRequest(info *caseprovider.TaskInfo, runCase *caseprovider.CaseTask) error {
-	// request assert
-	if info.Protocol == caseprovider.ProtocolHTTP {
-		return t.httpRequest(info, runCase)
-	} else {
-		return t.grpcRequest(info, runCase)
-	}
-}
-
-func (t *TaskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (err error) {
-	// request
-	responseHeader, statusCode, responseBody, err := t.http(
-		info.ServicePath,
-		info.ServiceMethod,
-		ct.Request.Query,
-		ct.Request.Header,
-		ct.Request.Data)
-	if err != nil {
-		return err
-	}
-
-	// assert
-	t.Debug(nil, "response message: responseHeader: [%v] responseBody: [%v] statusCode: [%v] Assert.Response: [%v]", responseHeader, responseBody, statusCode, ct.Assert.Response.Data)
-	if err := t.imposterAssert(ct.Assert, responseHeader, statusCode, responseBody); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (t *TaskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (err error) {
-	return
-}
-
-func (t *TaskService) imposterAssert(a *caseprovider.Assert, responseHeader http.Header, statusCode int, responseBody string) error {
-	if a.Response.StatusCode != 0 {
-		if err := assert.So(t, "response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
-			return err
-		}
-	}
-
-	responseKeyVal := make(map[string]string)
-	for k := range responseHeader {
-		responseKeyVal[k] = responseHeader.Get(k)
-	}
-
-	if err := assert.So(t, "response header data assertion", responseKeyVal, a.Response.Header); err != nil {
-		return err
-	}
-	if err := assert.So(t, "interfaces respond to data assertions", responseBody, a.Response.Data); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *TaskService) http(reqUrl, method string, query url.Values, header map[string]string, reqBody interface{}) (http.Header, int, string, error) {
-	parseUrl, err := url.Parse(reqUrl)
-	if err != nil {
-		return nil, 0, "", fmt.Errorf("格式化请求地址错误: %s 错误:%w", reqUrl, err)
-	}
-
-	parseQuery := parseUrl.Query()
-	for k := range query {
-		parseQuery.Add(k, query.Get(k))
-	}
-	parseUrl.RawQuery = parseQuery.Encode()
-
-	reqBodyStr, err := t.toStrBody(reqBody)
-	if err != nil {
-		return nil, 0, "", fmt.Errorf("格式化请求数据失败: %s body: %v 错误:%w", reqUrl, reqBody, err)
-	}
-	reqBodyReader := strings.NewReader(reqBodyStr)
-
-	request, err := http.NewRequest(method, parseUrl.String(), reqBodyReader)
-	if err != nil {
-		return nil, 0, "", fmt.Errorf("创建请求失败: %s 错误:%w", reqUrl, err)
-	}
-	for key, val := range header {
-		request.Header.Add(key, val)
-	}
-	client := http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	trace := &httptrace.ClientTrace{
-		GotConn: func(connInfo httptrace.GotConnInfo) {
-			fmt.Printf("Got Conn: %+v\n", connInfo)
-		},
-		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-			fmt.Printf("DNS Info: %+v\n", dnsInfo)
-		},
-	}
-
-	request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
-
-	out, _ := httputil.DumpRequest(request, true)
-	t.Debug(nil, "%s", out)
-	response, err := client.Do(request)
-	if err != nil {
-		return nil, 0, "", fmt.Errorf("failed to execute the request: [%s] err: [%w]", reqUrl, err)
-	}
-	resBody := ""
-	if response.Body != nil {
-		defer response.Body.Close()
-		byteBody, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			return nil, 0, "", fmt.Errorf("read response failed: [%s] err: [%w]", reqUrl, err)
-		}
-		resBody = string(byteBody)
-	}
-	return response.Header, response.StatusCode, resBody, nil
-}
-
-func (t *TaskService) toStrBody(reqBody interface{}) (string, error) {
-	var reqBodyStr string
-	reqBodyStr, ok := reqBody.(string)
-	if !ok {
-		reqBodyByte, err := json.Marshal(reqBody)
-		if err != nil {
-			return "", err
-		}
-		reqBodyStr = string(reqBodyByte)
-	}
-	return reqBodyStr, nil
 }

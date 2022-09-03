@@ -71,6 +71,18 @@ func New(log logger.Logger, cfg *Config) (Provider, error) {
 	return b, b.init()
 }
 
+// GetAllItf implements Provider
+func (b *basicProvider) GetAllItf() []*InterfaceTask {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+	all := make([]*InterfaceTask, 0, len(b.taskInterface))
+	for _, v := range b.taskInterface {
+		all = append(all, v)
+	}
+
+	return all
+}
+
 // GetItfInfoFromItfName implements Provider
 func (b *basicProvider) GetItfInfoFromItfName(serviceName string) *TaskInfo {
 	b.mux.RLock()

@@ -42,7 +42,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		Method:   ctx.Req.Method,
 		Host:     ctx.Req.Host,
 		Path:     ctx.Req.URL.Path,
-		Headers:  getHeadersFromHttpHeaders(ctx.Req.Header),
+		Header:   getHeadersFromHttpHeaders(ctx.Req.Header),
 		Body:     interact.NewBytesMessage(body),
 	})
 
@@ -71,7 +71,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		Proto:      ctx.Req.Proto,
 		ProtoMajor: ctx.Req.ProtoMajor,
 		ProtoMinor: ctx.Req.ProtoMinor,
-		Header:     resp.Headers,
+		Header:     resp.Header,
 		Body:       ioutil.NopCloser(bytes.NewReader(resp.Body.Bytes())),
 	}
 }
