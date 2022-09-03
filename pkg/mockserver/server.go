@@ -90,7 +90,6 @@ func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc, wg
 	}, func() error {
 		return m.close()
 	})
-
 	return nil
 }
 
@@ -115,6 +114,7 @@ func (m *MockServe) start() error {
 		return fmt.Errorf("proxy http2 error: %v", err)
 	}
 
+	m.Info(nil, "Mock server started, Listen port: %d", m.cfg.MockPort)
 	if err := m.server.Serve(l); err != nil {
 		if err.Error() != "http: Server closed" {
 			return fmt.Errorf("failed to start the proxy server: %v", err)

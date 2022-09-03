@@ -103,7 +103,8 @@ func (t *taskService) Start(ctx context.Context, cancelFunc context.CancelFunc, 
 	server := grpc.NewServer()
 	taskproto.RegisterTaskServer(server, t)
 
-	util.StartServiceAsync(ctx, t.NewLogger("task-server"), cancelFunc, wg, func() error {
+	util.StartServiceAsync(ctx, t, cancelFunc, wg, func() error {
+		t.Info(nil, "Task server started, Listen port: %d", t.cfg.TaskServicePort)
 		return server.Serve(listener)
 	}, func() error {
 		server.GracefulStop()

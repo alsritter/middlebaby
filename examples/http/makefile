@@ -11,13 +11,13 @@ endif
 BIN_FILE=testmb
 LEVEL=trace
 
-.PHONY: buildandrun genpb
-
+.PHONY: buildandrun 
 buildandrun:
 	@go build -o "${BIN_FILE}" main.go
 	middlebaby serve --config.file=".middlebaby.yaml" --log.level=$(LEVEL) --target.path="./${BIN_FILE}"
 	@${RM} testmb
 
+.PHONY: genpb
 genpb:
 	@protoc --go_out=./proto \
 	--go-grpc_out=require_unimplemented_servers=false:./proto proto/hello.proto

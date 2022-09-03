@@ -25,7 +25,7 @@ service Task {
 
 message CommonRequest {}
 message GetAllTaskCasesReply {
-  repeated InterfaceTask interfaceTask = 1;
+  repeated InterfaceTask itfs = 1;
 }
 
 message RunTaskRequest {
@@ -44,6 +44,7 @@ message InterfaceTask {
   string serviceMethod = 3;
   string serviceDescription = 4;
   string servicePath = 5;
+
   repeated Command setUp = 6;
   repeated Command teardown = 7;
   repeated ImposterCase mocks = 8;

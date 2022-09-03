@@ -202,10 +202,10 @@ func (t *taskService) httpClient(reqUrl, method string, query url.Values, header
 
 	trace := &httptrace.ClientTrace{
 		GotConn: func(connInfo httptrace.GotConnInfo) {
-			fmt.Printf("Got Conn: %+v\n", connInfo)
+			t.Trace(nil, "got conn: %+v\n", connInfo)
 		},
 		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-			fmt.Printf("DNS Info: %+v\n", dnsInfo)
+			t.Trace(nil, "dns info: %+v\n", dnsInfo)
 		},
 	}
 

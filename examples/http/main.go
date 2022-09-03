@@ -58,7 +58,7 @@ func CallTest(w http.ResponseWriter, r *http.Request) {
 
 func CallExternalRequest(w http.ResponseWriter, r *http.Request) {
 	// call external request.
-	resp, err := http.Get("http://example.org/get?name=John&age=55") // the url need mock.
+	resp, err := http.Get("https://example.org/get?name=John&age=55") // the url need mock.
 	if err != nil {
 		fmt.Println("err01: ", err)
 		return

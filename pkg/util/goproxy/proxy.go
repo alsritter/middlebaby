@@ -274,12 +274,12 @@ func (p *Proxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// ClientConnNum 获取客户端连接数
+// ClientConnNum get client connection number
 func (p *Proxy) ClientConnNum() int32 {
 	return atomic.LoadInt32(&p.clientConnNum)
 }
 
-// DoRequest 执行HTTP请求，并调用responseFunc处理response
+// DoRequest
 func (p *Proxy) DoRequest(ctx *Context, responseFunc func(*http.Response, error)) {
 	if ctx.Data == nil {
 		ctx.Data = make(map[interface{}]interface{})
@@ -324,12 +324,12 @@ func (p *Proxy) DoRequest(ctx *Context, responseFunc func(*http.Response, error)
 	requestPool.Put(newReq)
 }
 
-// HTTP代理
+// HTTP proxy
 func (p *Proxy) httpProxy(ctx *Context, rw http.ResponseWriter) {
 	ctx.Req.URL.Scheme = "http"
 	p.DoRequest(ctx, func(resp *http.Response, err error) {
 		if err != nil {
-			p.delegate.ErrorLog(fmt.Errorf("%s - HTTP请求错误: %s", ctx.Req.URL, err))
+			p.delegate.ErrorLog(fmt.Errorf("%s - HTTP request failed: %s", ctx.Req.URL, err))
 			rw.WriteHeader(http.StatusBadGateway)
 			return
 		}

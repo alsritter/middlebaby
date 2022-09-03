@@ -8,7 +8,7 @@ mock:
   mockPort: 9090
 task:
   closeTearDown: false
-  taskServicePort: 0
+  taskServicePort: 6060
 storage:
   enabledocker: false
   mysql:

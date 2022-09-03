@@ -1,17 +1,3 @@
-// Copyright 2018 ouqiang authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License"): you may
-// not use this file except in compliance with the License. You may obtain
-// a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
-
 // Package cert 证书管理
 package cert
 
@@ -35,24 +21,24 @@ import (
 
 var (
 	defaultRootCAPem = []byte(`-----BEGIN CERTIFICATE-----
-MIICJzCCAcygAwIBAgIITWWCIQf8/VIwCgYIKoZIzj0EAwIwUzEOMAwGA1UEBhMF
-Q2hpbmExDzANBgNVBAgTBkZ1SmlhbjEPMA0GA1UEBxMGWGlhbWVuMRAwDgYDVQQK
-EwdHb3Byb3h5MQ0wCwYDVQQDEwRNYXJzMB4XDTIyMDMyNTA1NDgwMFoXDTQyMDQy
-NTA1NDgwMFowUzEOMAwGA1UEBhMFQ2hpbmExDzANBgNVBAgTBkZ1SmlhbjEPMA0G
-A1UEBxMGWGlhbWVuMRAwDgYDVQQKEwdHb3Byb3h5MQ0wCwYDVQQDEwRNYXJzMFkw
-EwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEf0mhVJmuTmxnLimKshdEE4+PYdxvBfQX
-mRgsFV5KHHmxOrVJBFC/nDetmGowkARShWtBsX1Irm4w6i6Qk2QliKOBiTCBhjAO
-BgNVHQ8BAf8EBAMCAQYwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMBIG
-A1UdEwEB/wQIMAYBAf8CAQIwHQYDVR0OBBYEFBI5TkWYcvUIWsBAdffs833FnBrI
-MCIGA1UdEQQbMBmBF3FpbmdxaWFubHVkYW9AZ21haWwuY29tMAoGCCqGSM49BAMC
-A0kAMEYCIQCk1DhW7AmIW/n/QLftQq8BHZKLevWYJ813zdrNr5kXlwIhAIVvqglY
-9BkYWg4NEe/mVO4C5Vtu4FnzNU9I+rFpXVSO
+MIICMzCCAdqgAwIBAgIITWWCIQf8/VIwCgYIKoZIzj0EAwIwWzEOMAwGA1UEBhMF
+Q2hpbmExEjAQBgNVBAgTCUd1YW5nZG9uZzERMA8GA1UEBxMIU2hlbnpoZW4xEzAR
+BgNVBAoTCm1pZGRsZWJhYnkxDTALBgNVBAMTBE1hcnMwHhcNMjIwODAzMTYwOTM3
+WhcNNDIwOTAzMTYwOTM3WjBbMQ4wDAYDVQQGEwVDaGluYTESMBAGA1UECBMJR3Vh
+bmdkb25nMREwDwYDVQQHEwhTaGVuemhlbjETMBEGA1UEChMKbWlkZGxlYmFieTEN
+MAsGA1UEAxMETWFyczBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABFVoa0AEathz
+me8b2JJ1/miuMjogK2yKx4nPutoSwFJgkyTHzrRASV/1w1akT7y2qq/7mIB4xV6Q
+EQjVTm0YHWCjgYcwgYQwDgYDVR0PAQH/BAQDAgEGMB0GA1UdJQQWMBQGCCsGAQUF
+BwMCBggrBgEFBQcDATASBgNVHRMBAf8ECDAGAQH/AgECMB0GA1UdDgQWBBR2vEX9
+wf6DKsfgOlEF5NEpXOSZ4zAgBgNVHREEGTAXgRVhbHNyaXR0ZXJAb3V0bG9vay5j
+b20wCgYIKoZIzj0EAwIDRwAwRAIgToo/zb4vWYW7m/9/zjqETBN0VqkaohHoFHmF
+VPj8ltkCIDfD4yflWny/XoZkEtY7MzSOwRU337xeiv6yRQKnBKN7
 -----END CERTIFICATE-----
 `)
 	defaultRootKeyPem = []byte(`-----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIAXeEHO0FtFqQhTvsn/DT4g3rEos97+1Nibp9RfKOKhroAoGCCqGSM49
-AwEHoUQDQgAEf0mhVJmuTmxnLimKshdEE4+PYdxvBfQXmRgsFV5KHHmxOrVJBFC/
-nDetmGowkARShWtBsX1Irm4w6i6Qk2QliA==
+MHcCAQEEIOMrMDPgWm4EdydF3RWkr70uiH5OKJ3+xsOOpw5jX4lGoAoGCCqGSM49
+AwEHoUQDQgAEVWhrQARq2HOZ7xvYknX+aK4yOiArbIrHic+62hLAUmCTJMfOtEBJ
+X/XDVqRPvLaqr/uYgHjFXpARCNVObRgdYA==
 -----END EC PRIVATE KEY-----
 `)
 )
@@ -204,9 +190,9 @@ func (c *Certificate) GenerateCA() (*Pair, error) {
 		Subject: pkix.Name{
 			CommonName:   "Mars",
 			Country:      []string{"China"},
-			Organization: []string{"Goproxy"},
-			Province:     []string{"FuJian"},
-			Locality:     []string{"Xiamen"},
+			Organization: []string{"middlebaby"},
+			Province:     []string{"Guangdong"},
+			Locality:     []string{"Shenzhen"},
 		},
 		NotBefore:             time.Now().AddDate(0, -1, 0),
 		NotAfter:              time.Now().AddDate(20, 0, 0),
@@ -215,7 +201,7 @@ func (c *Certificate) GenerateCA() (*Pair, error) {
 		MaxPathLen:            2,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		EmailAddresses:        []string{"qingqianludao@gmail.com"},
+		EmailAddresses:        []string{"alsritter@outlook.com"},
 	}
 
 	derBytes, err := x509.CreateCertificate(crand.Reader, tmpl, tmpl, &priv.PublicKey, priv)
@@ -257,16 +243,16 @@ func (c *Certificate) template(host string, expireYears int) *x509.Certificate {
 		Subject: pkix.Name{
 			CommonName:   host,
 			Country:      []string{"China"},
-			Organization: []string{"Goproxy"},
-			Province:     []string{"FuJian"},
-			Locality:     []string{"Xiamen"},
+			Organization: []string{"middlebaby"},
+			Province:     []string{"Guangdong"},
+			Locality:     []string{"Shenzhen"},
 		},
 		NotBefore:             time.Now().AddDate(-1, 0, 0),
 		NotAfter:              time.Now().AddDate(expireYears, 0, 0),
 		BasicConstraintsValid: true,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment | x509.KeyUsageKeyEncipherment,
-		EmailAddresses:        []string{"qingqianludao@gmail.com"},
+		EmailAddresses:        []string{"alsritter@outlook.com"},
 	}
 	hosts := strings.Split(host, ",")
 	for _, item := range hosts {

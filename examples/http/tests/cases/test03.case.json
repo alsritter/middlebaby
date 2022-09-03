@@ -1,46 +1,41 @@
 {
-  "serviceType": "http",
+  "protocol": "http",
   "serviceMethod": "GET",
-  "serviceURL": "http://localhost:8011/redis",
-  "serviceDescription": "This is the third test service",
   "serviceName": "Test Redis",
-  "setup": {
-    "mysql": [],
-    "redis": [],
-    "http": []
-  },
-  "teardown": {
-    "mysql": [],
-    "redis": [
-      "DEL Name"
-    ]
-  },
+  "serviceDescription": "This is the third test service",
+  "servicePath": "http://localhost:8011/redis",
+  "serviceProtoFile": "",
+  "setup": [],
+  "mocks": [],
+  "teardown": [
+    {
+      "typeName": "redis",
+      "commands": [
+        "DEL Name"
+      ]
+    }
+  ],
   "cases": [
     {
       "name": "successfully find redis",
-      "setup": {
-        "mysql": [],
-        "redis": [],
-        "http": []
-      },
+      "description": "",
+      "setup": [],
+      "mocks": [],
       "request": {
-        "header": {},
-        "data": {}
+        "Header": {},
+        "Query": {}
       },
       "assert": {
-        "response": {},
-        "mysql": [],
-        "redis": [
+        "Response": {},
+        "otherAsserts": [
           {
+            "typeName": "redis",
             "actual": "GET Name",
             "expected": "John"
           }
         ]
       },
-      "teardown": {
-        "mysql": [],
-        "redis": []
-      }
+      "teardown": []
     }
   ]
 }

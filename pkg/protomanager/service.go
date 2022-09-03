@@ -65,7 +65,7 @@ func New(log logger.Logger, cfg *Config) (Provider, error) {
 	service := &Manager{
 		cfg:     cfg,
 		methods: &sync.Map{},
-		Logger:  log.NewLogger("protoManager"),
+		Logger:  log.NewLogger("proto"),
 	}
 	if cfg.SyncGitManger.Enable {
 		s, err := synchronization.New(cfg.SyncGitManger, log)
@@ -176,6 +176,7 @@ func (s *Manager) loadProto() error {
 			// * skip fs error
 			return nil
 		}
+
 		ext := filepath.Ext(path)
 		if ext != ".proto" {
 			return nil

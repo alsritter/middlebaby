@@ -1,8 +1,10 @@
 [
   {
     "request": {
+      "protocol": "http",
       "method": "GET",
-      "url": "https://example.org/get",
+      "host": "example.org",
+      "path": "/get",
       "params": {
         "name": "John",
         "age": "55"
@@ -10,31 +12,35 @@
     },
     "response": {
       "status": 200,
-      "headers": {
+      "header": {
         "Content-Type": "application/json"
       },
+      "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+      "trailer": {},
       "delay": {
-        "delay": 300,
-        "offset": 200
-      },
-      "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}"
+        "delay": 100,
+        "offset": 50
+      }
     }
   },
   {
     "request": {
+      "protocol": "http",
       "method": "GET",
-      "url": "https://example02.org/get"
+      "host": "https://example02.org",
+      "path": "/get"
     },
     "response": {
       "status": 200,
-      "headers": {
+      "header": {
         "Content-Type": "application/json"
       },
+      "body": "{\"name\":\"Alice\",\"color\":\"Blue\",\"age\":18}",
+      "trailer": {},
       "delay": {
         "delay": 300,
         "offset": 200
-      },
-      "body": "{\"name\":\"Alice\",\"color\":\"Blue\",\"age\":18}"
+      }
     }
   }
 ]

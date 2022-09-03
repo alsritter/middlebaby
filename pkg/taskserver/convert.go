@@ -28,7 +28,7 @@ func (t *taskService) toGetAllTaskCasesReply(all []*caseprovider.InterfaceTask) 
 		is = append(is, t.toProtoInterfaceTask(v))
 	}
 	return &taskproto.GetAllTaskCasesReply{
-		InterfaceTask: is,
+		Itfs: is,
 	}
 }
 

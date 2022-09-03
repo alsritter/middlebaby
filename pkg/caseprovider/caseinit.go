@@ -17,6 +17,8 @@ import (
 
 // loading task server files and watcher these files modification.
 func (b *basicProvider) init() error {
+	b.loadGlobalMock()
+
 	if err := b.loadFilePaths(); err != nil {
 		return err
 	}
@@ -129,7 +131,7 @@ func (b *basicProvider) loadCaseFiles() error {
 
 		total += len(t.Cases)
 		// if exist, add case to here..
-		if old, ok := b.taskInterface[t.ServiceName]; !ok {
+		if old, ok := b.taskInterface[t.ServiceName]; ok {
 			// Check that the use case is duplicated
 			hash := make(map[string]bool)
 			for _, e := range old.Cases {
@@ -233,7 +235,7 @@ func (b *basicProvider) watchCaseFiles() error {
 	return nil
 }
 
-func (b *basicProvider) loadImposter() {
+func (b *basicProvider) loadGlobalMock() {
 	b.clearGlobalMock()
 	for _, filePath := range b.cfg.MockFiles {
 		b.loadSingleImposter(filePath)
@@ -250,7 +252,7 @@ func (b *basicProvider) watchMockFiles() error {
 	// FIXME: Global loading is not required here
 	file.AttachWatcher(w, func(evn watcher.Event) {
 		b.clearGlobalMock()
-		b.loadImposter()
+		b.loadGlobalMock()
 		// b.loadSingleImposter(evn.Path)
 	})
 

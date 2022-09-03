@@ -86,11 +86,10 @@ func (c *CommonAssert) ExpectedString() string {
 
 type Assert struct {
 	Response struct {
-		Header     map[string]string
-		Data       interface{}
-		StatusCode int
+		Header     map[string]string `json:"header" yaml:"header"`
+		Data       interface{}       `json:"data" yaml:"data"`
+		StatusCode int               `json:"statusCode" yaml:"statusCode"`
 	}
-
 	OtherAsserts []CommonAssert `json:"otherAsserts"`
 }
 
@@ -104,8 +103,8 @@ type Protocol string
 
 // defines a set of known protocols
 const (
-	ProtocolHTTP Protocol = "HTTP"
-	ProtocolGRPC Protocol = "GRPC"
+	ProtocolHTTP Protocol = "http"
+	ProtocolGRPC Protocol = "grpc"
 )
 
 type TaskInfo struct {

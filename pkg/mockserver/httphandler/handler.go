@@ -86,6 +86,7 @@ func (e *delegateHandler) ParentProxy(request *http.Request) (*url.URL, error) {
 func (e *delegateHandler) Finish(ctx *goproxy.Context) {}
 
 func (e *delegateHandler) ErrorLog(err error) {
+	e.Error(nil, "request failed %v", err)
 }
 
 // 实现证书缓存接口

@@ -33,7 +33,7 @@ type Provider interface {
 
 func New(log logger.Logger, apiManager apimanager.Provider, protoManager protomanager.Provider) Provider {
 	return &mockServer{
-		Logger:       log.NewLogger("grpcMockServer"),
+		Logger:       log.NewLogger("grpc"),
 		apiManager:   apiManager,
 		protoManager: protoManager,
 	}

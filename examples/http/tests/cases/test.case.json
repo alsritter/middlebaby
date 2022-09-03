@@ -1,45 +1,45 @@
 {
-  "serviceType": "http",
+  "protocol": "http",
   "serviceMethod": "GET",
-  "serviceURL": "http://localhost:8011/example",
-  "serviceDescription": "This is the first test service",
   "serviceName": "Test access to the Mock's external service",
-  "setup": {
-    "mysql": [],
-    "redis": [],
-    "http": []
-  },
-  "teardown": {
-    "mysql": [],
-    "redis": []
-  },
+  "serviceDescription": "This is the first test service",
+  "servicePath": "http://localhost:8011/example",
+  "serviceProtoFile": "",
+  "setup": [
+    {
+      "typeName": "",
+      "commands": []
+    }
+  ],
+  "mocks": [],
+  "teardown": [
+    {
+      "typeName": "",
+      "commands": []
+    }
+  ],
   "cases": [
     {
       "name": "first case",
-      "setup": {
-        "mysql": [],
-        "redis": [],
-        "http": []
-      },
+      "description": "",
+      "setup": [],
+      "mocks": [],
       "request": {
-        "header": {},
-        "data": {}
+        "Header": {},
+        "Query": {},
+        "Data": null
       },
       "assert": {
-        "response": {
-          "data": {
+        "Response": {
+          "Data": {
             "name": "John",
             "color": "Purples",
             "age": 55
           }
         },
-        "mysql": [],
-        "redis": []
+        "otherAsserts": []
       },
-      "teardown": {
-        "mysql": [],
-        "redis": []
-      }
+      "teardown": []
     }
   ]
 }

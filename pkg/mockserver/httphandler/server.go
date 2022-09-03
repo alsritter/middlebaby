@@ -1,11 +1,12 @@
 package httphandler
 
 import (
+	"net/http"
+	"net/http/httptrace"
+
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
-	"net/http"
-	"net/http/httptrace"
 )
 
 // Config defines the config structure
@@ -20,25 +21,21 @@ type Provider interface {
 type mockServer struct {
 	*goproxy.Proxy
 	logger.Logger
-	cfg        *Config
-	apiManager apimanager.Provider
 }
 
 func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provider {
+	l := log.NewLogger("http")
 	return &mockServer{
-		Logger: log.NewLogger("mit-proxy"),
+		Logger: log.NewLogger("http"),
 		Proxy: goproxy.New(goproxy.WithDelegate(&delegateHandler{
+			Logger:       l,
 			apiManager:   apiManager,
 			enableDirect: cfg.EnableDirect,
 		}),
 			goproxy.WithDecryptHTTPS(&cache{}),
 			goproxy.WithClientTrace(&httptrace.ClientTrace{
-				DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-					log.Trace(nil, "DNS Info: %+v.", dnsInfo)
-				},
-				GotConn: func(connInfo httptrace.GotConnInfo) {
-					log.Trace(nil, "Got Conn: %+v.", connInfo)
-				},
+				DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {},
+				GotConn: func(connInfo httptrace.GotConnInfo) {},
 			}),
 		),
 	}
