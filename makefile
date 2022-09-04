@@ -8,6 +8,7 @@ CP = cp
 RM = rm -rf
 endif
 
+LEVEL=debug
 BIN_FILE=testmb
 DEBUG_DIR=cd ./examples/http/
 

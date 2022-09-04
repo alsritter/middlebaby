@@ -31,7 +31,7 @@
         "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":88}",
         "trailer": {},
         "delay": {
-          "delay": 5000,
+          "delay": 300,
           "offset": 50
         }
       }
@@ -45,10 +45,57 @@
   ],
   "cases": [
     {
-      "name": "first case",
+      "name": "first case-fail",
       "description": "",
       "setup": [],
       "mocks": [],
+      "request": {
+        "Header": {},
+        "Query": {},
+        "Data": null
+      },
+      "assert": {
+        "Response": {
+          "Data": {
+            "name": "John",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    },
+    {
+      "name": "first case-success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/get",
+            "params": {
+              "name": "John",
+              "age": "55"
+            }
+          },
+          "response": {
+            "status": 200,
+            "header": {
+              "Content-Type": ["application/json"]
+            },
+            "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+            "trailer": {},
+            "delay": {
+              "delay": 300,
+              "offset": 50
+            }
+          }
+        }
+      ],
       "request": {
         "Header": {},
         "Query": {},

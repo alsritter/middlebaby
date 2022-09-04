@@ -147,18 +147,24 @@ func (b *BasicLogger) Fatal(fields map[string]interface{}, format string, args .
 
 // SetLogLevel is used to set log level
 func (b *BasicLogger) SetLogLevel(verbosity string) {
+	var l zerolog.Logger
 	switch verbosity {
+	case "trace":
+		l = b.logger.Level(zerolog.TraceLevel)
 	case "debug":
-		b.logger.Level(zerolog.DebugLevel)
+		l = b.logger.Level(zerolog.DebugLevel)
 	case "info":
-		b.logger.Level(zerolog.InfoLevel)
+		l = b.logger.Level(zerolog.InfoLevel)
 	case "warn":
-		b.logger.Level(zerolog.WarnLevel)
+		l = b.logger.Level(zerolog.WarnLevel)
 	case "error":
-		b.logger.Level(zerolog.ErrorLevel)
+		l = b.logger.Level(zerolog.ErrorLevel)
 	case "fatal":
-		b.logger.Level(zerolog.FatalLevel)
+		l = b.logger.Level(zerolog.FatalLevel)
+	default:
+		l = b.logger.Level(zerolog.InfoLevel)
 	}
+	b.logger = l
 }
 
 func (b *BasicLogger) GetCurrentLevel() string {

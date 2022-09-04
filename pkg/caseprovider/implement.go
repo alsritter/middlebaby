@@ -94,7 +94,7 @@ func (b *basicProvider) GetItfInfoFromItfName(serviceName string) *TaskInfo {
 }
 
 // GetAllCaseFromCaseName implements Provider
-func (b *basicProvider) GetAllCaseFromCaseName(serviceName string, caseName string) *CaseTask {
+func (b *basicProvider) GetAllCaseFromCaseName(serviceName, caseName string) *CaseTask {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if ti, ok := b.taskInterface[serviceName]; ok {
@@ -128,26 +128,49 @@ func (b *basicProvider) GetAllItfInfo() (infos []*TaskInfo) {
 }
 
 // GetItfSetupCommand implements Provider
-func (b *basicProvider) GetItfSetupCommand(serviceName string, typeName string) (cms []*Command) {
+func (b *basicProvider) GetItfSetupCommand(serviceName string) (cms []*Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
-	itf := b.taskInterface[serviceName]
-	for _, c := range itf.SetUp {
-		if c.TypeName == typeName {
-			cms = append(cms, c)
-		}
+	if itf, ok := b.taskInterface[serviceName]; ok {
+		cms = append(cms, itf.SetUp...)
 	}
 	return
 }
 
 // GetItfTearDownCommand implements Provider
-func (b *basicProvider) GetItfTearDownCommand(serviceName string, typeName string) (cms []*Command) {
+func (b *basicProvider) GetItfTearDownCommand(serviceName string) (cms []*Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if itf, ok := b.taskInterface[serviceName]; ok {
-		for _, c := range itf.TearDown {
-			if c.TypeName == typeName {
-				cms = append(cms, c)
+		cms = append(cms, itf.TearDown...)
+	}
+	return
+}
+
+// GetCaseSetupCommand implements Provider
+func (b *basicProvider) GetCaseSetupCommand(serviceName, caseName string) (cms []*Command) {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+	if itf, ok := b.taskInterface[serviceName]; ok {
+		for _, c := range itf.Cases {
+			if c.Name == caseName {
+				cms = append(cms, c.SetUp...)
+				return
+			}
+		}
+	}
+	return
+}
+
+// GetCaseTearDownCommand implements Provider
+func (b *basicProvider) GetCaseTearDownCommand(serviceName, caseName string) (cms []*Command) {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+	if itf, ok := b.taskInterface[serviceName]; ok {
+		for _, c := range itf.Cases {
+			if c.Name == caseName {
+				cms = append(cms, c.TearDown...)
+				return
 			}
 		}
 	}

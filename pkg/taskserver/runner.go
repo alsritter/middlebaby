@@ -19,24 +19,37 @@ import (
 
 func (t *taskService) Run(ctx context.Context, itfName string, caseName string) (err error) {
 	t.apiProvider.LoadCaseEnv(itfName, caseName)
+	defer t.apiProvider.ClearCaseEnv()
+
 	var (
-		ass             = t.pluginRegistry.AssertPlugins()
-		envs            = t.pluginRegistry.EnvPlugins()
-		info            = t.caseProvider.GetItfInfoFromItfName(itfName)
-		runCase         = t.caseProvider.GetAllCaseFromCaseName(itfName, caseName)
-		setupCmds       = t.caseProvider.GetItfSetupCommand(itfName, caseName)
-		teardownCmds    = t.caseProvider.GetItfTearDownCommand(itfName, caseName)
+		ass              = t.pluginRegistry.AssertPlugins()
+		envs             = t.pluginRegistry.EnvPlugins()
+		info             = t.caseProvider.GetItfInfoFromItfName(itfName)
+		runCase          = t.caseProvider.GetAllCaseFromCaseName(itfName, caseName)
+		setupItfCmds     = t.caseProvider.GetItfSetupCommand(itfName)
+		setupCaseCmds    = t.caseProvider.GetCaseSetupCommand(itfName, caseName)
+		teardownItfCmds  = t.caseProvider.GetItfTearDownCommand(itfName)
+		teardownCaseCmds = t.caseProvider.GetCaseTearDownCommand(itfName, caseName)
+
 		setupCmdType    = make(map[string][]string)
 		teardownCmdType = make(map[string][]string)
 		assertCmdType   = make(map[string][]caseprovider.CommonAssert)
 	)
 
-	for _, c := range setupCmds {
+	for _, c := range setupItfCmds {
 		setupCmdType[c.TypeName] = append(setupCmdType[c.TypeName], c.Commands...)
 	}
 
-	for _, c := range teardownCmds {
-		teardownCmdType[c.TypeName] = append(setupCmdType[c.TypeName], c.Commands...)
+	for _, c := range setupCaseCmds {
+		setupCmdType[c.TypeName] = append(setupCmdType[c.TypeName], c.Commands...)
+	}
+
+	for _, c := range teardownCaseCmds {
+		teardownCmdType[c.TypeName] = append(teardownCmdType[c.TypeName], c.Commands...)
+	}
+
+	for _, c := range teardownItfCmds {
+		teardownCmdType[c.TypeName] = append(teardownCmdType[c.TypeName], c.Commands...)
 	}
 
 	// before run command
@@ -56,8 +69,6 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 				}
 			}
 		}
-
-		t.apiProvider.ClearCaseEnv()
 	}()
 
 	if err = t.runRequest(info, runCase); err != nil {

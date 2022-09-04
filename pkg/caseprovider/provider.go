@@ -19,9 +19,12 @@ type Provider interface {
 	GetAllItf() []*InterfaceTask
 
 	// GetItfSetupCommand Get the Setup Commands of a type under the interface.
-	GetItfSetupCommand(serviceName, typeName string) []*Command
+	GetItfSetupCommand(serviceName string) []*Command
 	// GetItfTearDownCommand Get the TearDown Commands of a type under the interface.
-	GetItfTearDownCommand(serviceName, typeName string) []*Command
+	GetItfTearDownCommand(serviceName string) []*Command
+
+	GetCaseSetupCommand(serviceName, caseName string) []*Command
+	GetCaseTearDownCommand(serviceName, caseName string) []*Command
 
 	GetMockCasesFromGlobals() []*interact.ImposterCase
 	GetMockCasesFromItf(serviceName string) []*interact.ImposterCase
