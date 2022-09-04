@@ -79,8 +79,8 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 		Method:   http.MethodPost,
 		Host:     getAuthorityFromMetadata(md),
 		Path:     fullMethodName,
-		Header:   getHeadersFromMetadata(md),
-		Body:     interact.NewBytesMessage(data),
+		Header:   md,
+		Body:     data,
 	})
 	if err != nil {
 		return err
@@ -100,17 +100,6 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 		return status.Errorf(codes.Internal, "failed to send message: %s", err)
 	}
 	return nil
-}
-
-// getHeadersFromMetadata is used to convert Metadata to Headers
-func getHeadersFromMetadata(md metadata.MD) map[string]interface{} {
-	headers := map[string]interface{}{}
-	for key, values := range md {
-		if len(values) > 0 {
-			headers[key] = values[0]
-		}
-	}
-	return headers
 }
 
 // getAuthorityFromMetadata is used to get authority from metadata

@@ -39,11 +39,11 @@ func (e *AssertError) Error() string {
 	}
 
 	bf.WriteString(fmt.Sprintf(`
-		expected return value: "%v" 
-		actual return value: "%v"
+		expected return value: [%v] 
+		actual return value: [%v]
 	`, e.Expected, e.Actual))
 	if e.FieldName != "" {
-		bf.WriteString(fmt.Sprintf(" wrong field: %s", e.FieldName))
+		bf.WriteString(fmt.Sprintf(" wrong field: [%s]", e.FieldName))
 	}
 	return bf.String()
 }
@@ -153,7 +153,7 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 	}
 
 	if actualRv.Kind() != expectedRv.Kind() {
-		return retErrFun(fmt.Errorf("%w %s != %s", ErrorTypeNotEqual, actualRv.Kind().String(), expectedRv.Kind().String()))
+		return retErrFun(fmt.Errorf("%v %s != %s", ErrorTypeNotEqual, actualRv.Kind().String(), expectedRv.Kind().String()))
 	}
 
 	switch actualRv.Kind() {
@@ -205,7 +205,7 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 		actualLen := actualRv.Len()
 		expectedLen := expectedRv.Len()
 		if actualLen != expectedLen {
-			return retErrFun(fmt.Errorf("%w %d != %d", ErrorLengthNotEqual, actualLen, expectedLen))
+			return retErrFun(fmt.Errorf("%v %d != %d", ErrorLengthNotEqual, actualLen, expectedLen))
 		}
 		for i := 0; i < actualLen; i++ {
 			if err := a.so(a.appendFieldName(fieldName, fmt.Sprintf("[%d]", i)), actualRv.Index(i).Interface(), expectedRv.Index(i).Interface()); err != nil {
@@ -213,7 +213,7 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 			}
 		}
 	default:
-		return retErrFun(fmt.Errorf("%w %s != %s", ErrorUnKnownType, actualRv.Type().String(), expectedRv.Type().String()))
+		return retErrFun(fmt.Errorf("%v %s != %s", ErrorUnKnownType, actualRv.Type().String(), expectedRv.Type().String()))
 	}
 	return nil
 }

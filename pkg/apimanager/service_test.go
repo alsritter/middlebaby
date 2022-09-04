@@ -24,8 +24,8 @@ func TestManager_match(t *testing.T) {
 					Method: "POST",
 					Host:   "localhost",
 					Path:   "/get/hello/world",
-					Header: map[string]interface{}{
-						"Accept-Encoding:": "gzip, deflate",
+					Header: map[string][]string{
+						"Accept-Encoding:": {"gzip, deflate"},
 					},
 					Params: map[string]string{},
 					Body:   nil,
@@ -34,8 +34,8 @@ func TestManager_match(t *testing.T) {
 					Method: "POST",
 					Host:   "localhost",
 					Path:   "/get/hello/world",
-					Header: map[string]interface{}{
-						"Accept-Encoding:": "gzip, deflate",
+					Header: map[string][]string{
+						"Accept-Encoding:": {"gzip, deflate"},
 					},
 					Params: map[string]string{},
 					Body:   nil,
@@ -80,20 +80,20 @@ func TestManager_match(t *testing.T) {
 					Method: "GET",
 					Host:   "localhost",
 					Path:   "/path",
-					Header: map[string]interface{}{
-						"Accept-Encoding:": "gzip, deflate",
+					Header: map[string][]string{
+						"Accept-Encoding:": {"gzip, deflate"},
 					},
 				},
 				target: &interact.Request{
 					Method: "GET",
 					Host:   "localhost",
 					Path:   "/path",
-					Header: map[string]interface{}{
-						"Accept-Encoding:": "text/plain",
+					Header: map[string][]string{
+						"Accept-Encoding:": {"gzip, deflate"},
 					},
 				},
 			},
-			want: false,
+			want: true,
 		},
 	}
 	for _, tt := range tests {

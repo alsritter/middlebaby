@@ -51,8 +51,8 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 	defer func() {
 		if !t.cfg.CloseTearDown {
 			for _, e := range envs {
-				if err = e.Run(teardownCmdType[e.GetTypeName()]); err != nil {
-					err = fmt.Errorf("teardown command failed: %v", err)
+				if tearDownError := e.Run(teardownCmdType[e.GetTypeName()]); tearDownError != nil {
+					t.Error(nil, "teardown command failed: %v", tearDownError)
 				}
 			}
 		}
@@ -61,7 +61,7 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 	}()
 
 	if err = t.runRequest(info, runCase); err != nil {
-		return
+		return err
 	}
 
 	for _, oa := range runCase.Assert.OtherAsserts {
@@ -99,7 +99,12 @@ func (t *taskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 	}
 
 	// assert
-	t.Debug(nil, "response message: responseHeader: [%v] responseBody: [%v] statusCode: [%v] Assert.Response: [%v]", responseHeader, responseBody, statusCode, ct.Assert.Response.Data)
+	t.Trace(map[string]interface{}{
+		"responseHeader:": responseHeader,
+		"responseBody:":   responseBody,
+		"statusCode":      statusCode,
+		"Assert.Response": ct.Assert.Response,
+	}, "response message: ")
 
 	responseKeyVal := make(map[string]string)
 	for k := range responseHeader {
@@ -138,11 +143,15 @@ func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 
 	responseMD, responseBody, _, err := ggrpcurl.NewInvokeGRpc(&dto).Invoke()
 	if err != nil {
-		t.Error(nil, "grpc request failed, casename: [%s], error:[%w]", ct.Name, err)
+		t.Error(nil, "grpc request failed, casename: [%s], error:[%v]", ct.Name, err)
 	}
 
 	// assert
-	t.Debug(nil, "response message: responseMD: [%v] responseBody: [%v] Assert.Response: [%v]", responseMD, responseBody, ct.Assert.Response.Data)
+	t.Trace(map[string]interface{}{
+		"responseMD:":     responseMD,
+		"responseBody:":   responseBody,
+		"Assert.Response": ct.Assert.Response,
+	}, "response message: ")
 	responseKeyVal := make(map[string]string)
 	for k := range responseMD {
 		responseKeyVal[k] = textproto.MIMEHeader(responseMD).Get(k)
@@ -155,17 +164,17 @@ func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 	return nil
 }
 
-func (t *taskService) imposterAssert(a *caseprovider.Assert, responseKeyVal map[string]string, statusCode int, responseBody string) error {
+func (t *taskService) imposterAssert(a *caseprovider.Assert, headerKeyVal map[string]string, statusCode int, responseBody string) error {
 	if a.Response.StatusCode != 0 {
 		if err := assert.So(t, "response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
 			return err
 		}
 	}
 
-	if err := assert.So(t, "response header data assertion", responseKeyVal, a.Response.Header); err != nil {
+	if err := assert.So(t, "response header data assertion", headerKeyVal, a.Response.Header); err != nil {
 		return err
 	}
-	if err := assert.So(t, "interfaces respond to data assertions", responseBody, a.Response.Data); err != nil {
+	if err := assert.So(t, "response body data assertion", responseBody, a.Response.Data); err != nil {
 		return err
 	}
 	return nil
@@ -174,7 +183,7 @@ func (t *taskService) imposterAssert(a *caseprovider.Assert, responseKeyVal map[
 func (t *taskService) httpClient(reqUrl, method string, query url.Values, header map[string]string, reqBody interface{}) (http.Header, int, string, error) {
 	parseUrl, err := url.Parse(reqUrl)
 	if err != nil {
-		return nil, 0, "", fmt.Errorf("format request address error, url:[%s] err:[%w]", reqUrl, err)
+		return nil, 0, "", fmt.Errorf("format request address error, url:[%s] err:[%v]", reqUrl, err)
 	}
 
 	parseQuery := parseUrl.Query()
@@ -185,13 +194,13 @@ func (t *taskService) httpClient(reqUrl, method string, query url.Values, header
 
 	reqBodyStr, err := t.toStrBody(reqBody)
 	if err != nil {
-		return nil, 0, "", fmt.Errorf("format request body error, url:[%s] body:[%v] error:[%w]", reqUrl, reqBody, err)
+		return nil, 0, "", fmt.Errorf("format request body error, url:[%s] body:[%v] error:[%v]", reqUrl, reqBody, err)
 	}
 	reqBodyReader := strings.NewReader(reqBodyStr)
 
 	request, err := http.NewRequest(method, parseUrl.String(), reqBodyReader)
 	if err != nil {
-		return nil, 0, "", fmt.Errorf("create request failed, url:[%s] error:[%w]", reqUrl, err)
+		return nil, 0, "", fmt.Errorf("create request failed, url:[%s] error:[%v]", reqUrl, err)
 	}
 	for key, val := range header {
 		request.Header.Add(key, val)
@@ -202,27 +211,24 @@ func (t *taskService) httpClient(reqUrl, method string, query url.Values, header
 
 	trace := &httptrace.ClientTrace{
 		GotConn: func(connInfo httptrace.GotConnInfo) {
-			t.Trace(nil, "got conn: %+v\n", connInfo)
-		},
-		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-			t.Trace(nil, "dns info: %+v\n", dnsInfo)
+			t.Trace(nil, "got conn: %+v", connInfo)
 		},
 	}
 
 	request = request.WithContext(httptrace.WithClientTrace(request.Context(), trace))
+	out, _ := httputil.DumpRequestOut(request, true)
+	t.Trace(nil, "print the built interface test request \n[%s]", out)
 
-	out, _ := httputil.DumpRequest(request, true)
-	t.Debug(nil, "%s", out)
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, 0, "", fmt.Errorf("failed to execute the request: [%s] err: [%w]", reqUrl, err)
+		return nil, 0, "", fmt.Errorf("failed to execute the request: [%s] err: [%v]", reqUrl, err)
 	}
 	resBody := ""
 	if response.Body != nil {
 		defer response.Body.Close()
 		byteBody, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			return nil, 0, "", fmt.Errorf("read response failed: [%s] err: [%w]", reqUrl, err)
+			return nil, 0, "", fmt.Errorf("read response failed: [%s] err: [%v]", reqUrl, err)
 		}
 		resBody = string(byteBody)
 	}

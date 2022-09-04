@@ -82,12 +82,21 @@ func (t *taskService) RunSingleTaskCase(ctx context.Context, req *taskproto.RunT
 	t.apiProvider.LoadCaseEnv(req.ItfName, req.CaseName)
 	defer t.apiProvider.ClearCaseEnv()
 	if err := t.Run(ctx, req.ItfName, req.CaseName); err != nil {
+		t.Error(map[string]interface{}{
+			"InterfaceName": req.ItfName,
+			"CaseName":      req.CaseName,
+		}, err.Error())
+
 		return &taskproto.RunTaskReply{
 			Status:       0,
 			FailedReason: err.Error(),
 		}, nil
 	}
 
+	t.Info(map[string]interface{}{
+		"InterfaceName": req.ItfName,
+		"CaseName":      req.CaseName,
+	}, "case assert successful")
 	return &taskproto.RunTaskReply{
 		Status:       1,
 		FailedReason: "",

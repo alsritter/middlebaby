@@ -13,7 +13,7 @@
     "response": {
       "status": 200,
       "header": {
-        "Content-Type": "application/json"
+        "Content-Type": ["application/json"]
       },
       "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
       "trailer": {},
@@ -33,7 +33,7 @@
     "response": {
       "status": 200,
       "header": {
-        "Content-Type": "application/json"
+        "Content-Type": ["application/json"]
       },
       "body": "{\"name\":\"Alice\",\"color\":\"Blue\",\"age\":18}",
       "trailer": {},

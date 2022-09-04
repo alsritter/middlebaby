@@ -2,14 +2,15 @@ package redis
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
-	"regexp"
-	"strings"
 )
 
 type redisAssertPlugin struct {
@@ -20,7 +21,7 @@ type redisAssertPlugin struct {
 func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.AssertPlugin {
 	rc, err := storage.GetRedisCon()
 	if err != nil {
-		log.Error(nil, "redisAssertPlugin init failed: %w", err)
+		log.Error(nil, "redisAssertPlugin init failed: %v", err)
 	}
 	return &redisAssertPlugin{rc: rc, log: log.NewLogger("plugin.assert.redis")}
 }

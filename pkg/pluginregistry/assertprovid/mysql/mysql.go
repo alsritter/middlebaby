@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"fmt"
+
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/storageprovider"
@@ -19,7 +20,7 @@ type mysqlAssertPlugin struct {
 func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.AssertPlugin {
 	db, err := storage.GetMysqlCon()
 	if err != nil {
-		log.Error(nil, "mysqlAssertPlugin init failed: %w", err)
+		log.Error(nil, "mysqlAssertPlugin init failed: %v", err)
 	}
 
 	db.Logger = db.Logger.LogMode(dblogger.Silent)

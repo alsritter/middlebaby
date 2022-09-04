@@ -2,9 +2,10 @@ package envredis
 
 import (
 	"fmt"
-	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"regexp"
 	"strings"
+
+	"github.com/alsritter/middlebaby/pkg/storageprovider"
 
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
@@ -20,7 +21,7 @@ type RedisEnvPlugin struct {
 func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.EnvPlugin {
 	rc, err := storage.GetRedisCon()
 	if err != nil {
-		log.Error(nil, "redisAssertPlugin init failed: %w", err)
+		log.Error(nil, "redisAssertPlugin init failed: %v", err)
 	}
 	return &RedisEnvPlugin{rc: rc, log: log.NewLogger("plugin.env.redis")}
 }

@@ -48,23 +48,6 @@ func ToHttpHeader(headers map[string]interface{}) (httpHeader http.Header) {
 	return
 }
 
-func InterfaceMapToStringMap(m map[string]interface{}) map[string]string {
-	out := make(map[string]string)
-	for k, v := range m {
-		switch vv := v.(type) {
-		case string:
-			out[k] = vv
-		case []string:
-			var b strings.Builder
-			for _, vvv := range vv {
-				b.WriteString(vvv + ";")
-			}
-			out[k] = b.String()
-		}
-	}
-	return out
-}
-
 func SliceMapToStringMap(m map[string][]string) map[string]string {
 	out := make(map[string]string)
 	for k, v := range m {

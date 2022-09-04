@@ -18,7 +18,7 @@ func InitializeWatcher(pathToWatch ...string) (*watcher.Watcher, error) {
 	// add file or directory.
 	for _, file := range pathToWatch {
 		if err := w.AddRecursive(file); err != nil {
-			return nil, fmt.Errorf("%w: error trying to watch change on %s directory", err, pathToWatch)
+			return nil, fmt.Errorf("%v: error trying to watch change on %s directory", err, pathToWatch)
 		}
 	}
 

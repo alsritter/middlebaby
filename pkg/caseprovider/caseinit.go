@@ -53,14 +53,14 @@ func (b *basicProvider) loadFilePaths() error {
 		// filePath could be './dir/**/json'
 		matches, err := filepath.Glob(filePath)
 		if err != nil {
-			return fmt.Errorf("find file %s error: %w", filePath, err)
+			return fmt.Errorf("find file %s error: %v", filePath, err)
 		}
 
 		// real file path
 		for _, matchPath := range matches {
 			absFilePath, err := filepath.Abs(matchPath)
 			if err != nil {
-				return fmt.Errorf("get file %s absolute path error: %w", filePath, err)
+				return fmt.Errorf("get file %s absolute path error: %v", filePath, err)
 			}
 
 			// if exist, skip.
@@ -76,7 +76,7 @@ func (b *basicProvider) loadFilePaths() error {
 			dirPath := filepath.Dir(absFilePath)
 			absDirPath, err := filepath.Abs(dirPath)
 			if err != nil {
-				return fmt.Errorf("get directory %s absolute path error: %w", dirPath, err)
+				return fmt.Errorf("get directory %s absolute path error: %v", dirPath, err)
 			}
 
 			// if exist, skip.
@@ -103,17 +103,17 @@ func (b *basicProvider) loadCaseFiles() error {
 		}
 
 		if err != nil {
-			return fmt.Errorf("read file: %s error: %w", file, err)
+			return fmt.Errorf("read file: %s error: %v", file, err)
 		}
 
 		if err != nil {
-			b.Error(nil, "gets the taskserver file %s service type error: %w \n", file, err)
+			b.Error(nil, "gets the taskserver file %s service type error: %v \n", file, err)
 			continue
 		}
 
 		var t InterfaceTask
 		if err := json5.Unmarshal(fb, &t); err != nil {
-			return fmt.Errorf("serialization %s file error: %w", file, err)
+			return fmt.Errorf("serialization %s file error: %v", file, err)
 		}
 
 		if err := b.checkItfInfo(*t.TaskInfo); err != nil {
@@ -191,11 +191,11 @@ func (b *basicProvider) watchCaseFiles() error {
 
 	w, err := file.InitializeWatcher(paths...)
 	if err != nil {
-		return fmt.Errorf("failed to start test case description file listening %w", err)
+		return fmt.Errorf("failed to start test case description file listening %v", err)
 	}
 
 	file.AttachWatcher(w, func(event watcher.Event) {
-		b.Trace(nil, "listening file event is triggered: ", event)
+		b.Trace(nil, "listening file event is triggered: %v", event)
 		// If it is a file creation event, It is added to the listener
 		if event.Op == watcher.Create {
 			if strings.HasSuffix(event.Name(), b.cfg.TaskFileSuffix) {
@@ -246,7 +246,7 @@ func (b *basicProvider) loadGlobalMock() {
 func (b *basicProvider) watchMockFiles() error {
 	w, err := file.InitializeWatcher(b.cfg.MockFiles...)
 	if err != nil {
-		return fmt.Errorf("initialize watcher failed: %w", err)
+		return fmt.Errorf("initialize watcher failed: %v", err)
 	}
 
 	// FIXME: Global loading is not required here
@@ -275,7 +275,7 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		b.Error(nil, "%w: error trying to read config file: %s", err, filePath)
+		b.Error(nil, "%v: error trying to read config file: %s", err, filePath)
 	}
 
 	defer file.Close()
@@ -283,7 +283,7 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 
 	var imposter []*interact.ImposterCase
 	if err := json.Unmarshal(bytes, &imposter); err != nil {
-		b.Error(nil, "%w: error while unmarshal configFile file %s", err, filePath)
+		b.Error(nil, "%v: error while unmarshal configFile file %s", err, filePath)
 	}
 
 	b.mockCases[globalCaseID] = append(b.mockCases[globalCaseID], imposter...)

@@ -128,7 +128,7 @@ func (m *MockServe) start() error {
 func (m *MockServe) close() error {
 	m.Info(nil, "stopping server...")
 	if err := m.server.Shutdown(context.TODO()); err != nil {
-		return fmt.Errorf("server Shutdown failed: [%w]", err)
+		return fmt.Errorf("server Shutdown failed: [%v]", err)
 	}
 	return nil
 }

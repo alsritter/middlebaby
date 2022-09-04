@@ -115,15 +115,15 @@ func (t *taskService) toProtoImposterCase(i *interact.ImposterCase) *taskproto.I
 			Method:   i.Request.Method,
 			Host:     i.Request.Host,
 			Path:     i.Request.Path,
-			Header:   util.InterfaceMapToStringMap(i.Request.Header),
+			Header:   util.SliceMapToStringMap(i.Request.Header),
 			Params:   i.Request.Params,
-			Body:     i.Request.Body.String(),
+			Body:     i.Request.GetBodyString(),
 		},
 		Response: &taskproto.Response{
 			Status:  int32(i.Response.Status),
 			Header:  util.SliceMapToStringMap(i.Response.Header),
 			Trailer: i.Response.Trailer,
-			Body:    i.Response.Body.String(),
+			Body:    i.Response.GetBodyString(),
 		},
 	}
 }

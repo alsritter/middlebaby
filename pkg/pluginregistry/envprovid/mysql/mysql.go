@@ -17,7 +17,7 @@ type MySQLEnvPlugin struct {
 func New(storage storageprovider.Provider, log logger.Logger) pluginregistry.EnvPlugin {
 	db, err := storage.GetMysqlCon()
 	if err != nil {
-		log.Error(nil, "MySQLEnvPlugin init failed: %w", err)
+		log.Error(nil, "MySQLEnvPlugin init failed: %v", err)
 	}
 
 	db.Logger = db.Logger.LogMode(db_logger.Silent)

@@ -11,7 +11,32 @@
       "commands": []
     }
   ],
-  "mocks": [],
+  "mocks": [
+    {
+      "request": {
+        "protocol": "http",
+        "method": "GET",
+        "host": "example.org",
+        "path": "/get",
+        "params": {
+          "name": "John",
+          "age": "55"
+        }
+      },
+      "response": {
+        "status": 200,
+        "header": {
+          "Content-Type": ["application/json"]
+        },
+        "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":88}",
+        "trailer": {},
+        "delay": {
+          "delay": 5000,
+          "offset": 50
+        }
+      }
+    }
+  ],
   "teardown": [
     {
       "typeName": "",

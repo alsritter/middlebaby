@@ -3,9 +3,8 @@ package interact
 import (
 	"encoding/json"
 	"math/rand"
+	"reflect"
 	"time"
-
-	"github.com/gogo/protobuf/proto"
 )
 
 // Protocol defines the protocol of request
@@ -31,31 +30,56 @@ func (i *ImposterCase) Delay() time.Duration {
 
 // Request defines the request structure
 type Request struct {
-	Protocol Protocol               `json:"protocol" yaml:"protocol"`
-	Method   string                 `json:"method" yaml:"method"`
-	Host     string                 `json:"host" yaml:"host"`
-	Path     string                 `json:"path" yaml:"path"`
-	Header   map[string]interface{} `json:"header" yaml:"header"`
-	Params   map[string]string      `json:"params" yaml:"params"`
-	Body     Message                `json:"body" yaml:"body"`
+	Protocol Protocol            `json:"protocol" yaml:"protocol"`
+	Method   string              `json:"method" yaml:"method"`
+	Host     string              `json:"host" yaml:"host"`
+	Path     string              `json:"path" yaml:"path"`
+	Header   map[string][]string `json:"header" yaml:"header"`
+	Params   map[string]string   `json:"params" yaml:"params"`
+	Body     interface{}         `json:"body" yaml:"body"`
+}
+
+func (r *Request) GetBodyString() string {
+	if r.Body != nil {
+		if reflect.TypeOf(r.Body).Kind() == reflect.String {
+			return r.Body.(string)
+		}
+
+		if _, ok := r.Body.([]byte); ok {
+			return string(r.Body.([]byte))
+		}
+
+		str, _ := json.Marshal(r.Body)
+		return string(str)
+	}
+
+	return "{}"
 }
 
 // Response represent the structure of real response
 type Response struct {
 	Status  int                 `json:"status" yaml:"status"`
 	Header  map[string][]string `json:"header" yaml:"header"`
-	Body    Message             `json:"body" yaml:"body"`
+	Body    interface{}         `json:"body" yaml:"body"`
 	Trailer map[string]string   `json:"trailer" yaml:"trailer"`
 	Delay   *ResponseDelay      `json:"delay" yaml:"delay"`
 }
 
-// Message defines a generic message interface
-type Message interface {
-	proto.Message
-	json.Marshaler
-	json.Unmarshaler
-	proto.Marshaler
-	Bytes() []byte
+func (r *Response) GetBodyString() string {
+	if r.Body != nil {
+		if reflect.TypeOf(r.Body).Kind() == reflect.String {
+			return r.Body.(string)
+		}
+
+		if _, ok := r.Body.([]byte); ok {
+			return string(r.Body.([]byte))
+		}
+
+		str, _ := json.Marshal(r.Body)
+		return string(str)
+	}
+
+	return "{}"
 }
 
 // ResponseDelay represent time delay before server responds.
@@ -86,53 +110,6 @@ func NewDefaultResponse(request *Request) *Response {
 		Status:  code,
 		Header:  map[string][]string{},
 		Trailer: map[string]string{},
-		Body:    NewBytesMessage(nil),
+		Body:    []byte{},
 	}
-}
-
-// BytesMessage is the simple implement of Message
-type BytesMessage struct {
-	data []byte
-}
-
-// NewBytesMessage is used to init BytesMessage
-func NewBytesMessage(data []byte) Message {
-	return &BytesMessage{
-		data: data,
-	}
-}
-
-// Reset implements the proto.Message interface
-func (b *BytesMessage) Reset() {}
-
-// String implements the proto.Message interface
-func (b *BytesMessage) String() string {
-	return string(b.data)
-}
-
-// ProtoMessage implements the proto.Message interface
-func (b *BytesMessage) ProtoMessage() {}
-
-// Marshal implements the proto.Marshaler interface
-func (b *BytesMessage) Marshal() ([]byte, error) {
-	return b.data, nil
-}
-
-// UnmarshalJSON implements the json.UnmarshalJSON interface
-func (b *BytesMessage) UnmarshalJSON(data []byte) error {
-	b.data = data
-	return nil
-}
-
-// MarshalJSON implements the json.Marshaler interface
-func (b *BytesMessage) MarshalJSON() ([]byte, error) {
-	if len(b.data) == 0 {
-		return []byte(`null`), nil
-	}
-	return b.data, nil
-}
-
-// Bytes is used to return native data
-func (b *BytesMessage) Bytes() []byte {
-	return b.data
 }

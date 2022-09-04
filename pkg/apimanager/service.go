@@ -148,8 +148,8 @@ func (m *Manager) match(req, target *interact.Request) bool {
 	}
 
 	if req.Body != nil && target.Body != nil {
-		if err := assert.So(m, "mock body assert", target.Body.Bytes(), req.Body.Bytes()); err != nil {
-			m.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.Body.Bytes(), req.Body.Bytes())
+		if err := assert.So(m, "mock body assert", target.GetBodyString(), req.GetBodyString()); err != nil {
+			m.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.GetBodyString(), req.GetBodyString())
 			return false
 		}
 	}

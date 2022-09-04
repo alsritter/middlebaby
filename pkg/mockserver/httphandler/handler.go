@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
@@ -32,7 +32,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 	body, err := ioutil.ReadAll(ctx.Req.Body)
 	ctx.Req.Body = ioutil.NopCloser(bytes.NewReader(body))
 	if err != nil {
-		e.Error(nil, "read request body error: %w", err)
+		e.Error(nil, "read request body error: %v", err)
 		ctx.Abort()
 		return
 	}
@@ -42,13 +42,12 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		Method:   ctx.Req.Method,
 		Host:     ctx.Req.Host,
 		Path:     ctx.Req.URL.Path,
-		Header:   getHeadersFromHttpHeaders(ctx.Req.Header),
-		Body:     interact.NewBytesMessage(body),
+		Header:   ctx.Req.Header,
+		Body:     body,
 	})
 
 	if err != nil {
-		e.Warn(nil, "%w", err)
-
+		e.Warn(nil, "%v", err)
 		if !e.enableDirect {
 			ctx.Resp = &http.Response{
 				Status:     http.StatusText(http.StatusInternalServerError),
@@ -64,6 +63,14 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		return
 	}
 
+	var b io.ReadCloser
+	if resp.Body != nil {
+		b = ioutil.NopCloser(bytes.NewReader([]byte(resp.GetBodyString())))
+	} else {
+		b = ioutil.NopCloser(bytes.NewReader([]byte("")))
+	}
+
+	e.Debug(nil, "mock [%v] request successful", ctx.Req.URL)
 	ctx.IsNeedMock()
 	ctx.Resp = &http.Response{
 		Status:     http.StatusText(resp.Status),
@@ -72,7 +79,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		ProtoMajor: ctx.Req.ProtoMajor,
 		ProtoMinor: ctx.Req.ProtoMinor,
 		Header:     resp.Header,
-		Body:       ioutil.NopCloser(bytes.NewReader(resp.Body.Bytes())),
+		Body:       b,
 	}
 }
 
@@ -105,16 +112,4 @@ func (c *cache) Get(host string) *tls.Certificate {
 	}
 
 	return v.(*tls.Certificate)
-}
-
-// getHeadersFromHttpHeaders is used to get map[string]string from http.Header
-func getHeadersFromHttpHeaders(input http.Header) map[string]interface{} {
-	headers := map[string]interface{}{}
-	for key, values := range input {
-		key = strings.ToLower(key)
-		if len(values) > 0 {
-			headers[key] = values[0]
-		}
-	}
-	return headers
 }
