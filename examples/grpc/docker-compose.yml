@@ -1,0 +1,27 @@
+version: "3"
+
+networks:
+  middlebaby:
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: mb-redis
+    restart: always
+    networks: 
+      - middlebaby
+    ports: 
+      - "6379:6379"
+    command: redis-server --requirepass 123456
+  mysql:
+    image: mysql:5.6.17
+    container_name: mb-mysql
+    restart: always
+    networks:
+      - middlebaby
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: test_mb
+      MYSQL_PASSWORD: 123456

@@ -1,0 +1,30 @@
+syntax = "proto3"; 
+package proto;
+
+option go_package = ".;proto";
+
+// 模拟外部请求
+service OutsideService {
+    rpc GetData(GetRequest) returns (GetResponse) {}
+    rpc PutData(PutRequest) returns (PutResponse) {}
+}
+
+message GetRequest {
+    string name = 1;
+}
+
+message GetResponse {
+  string name = 1;
+  int32 age = 2;
+  string gender = 3;
+}
+
+message PutRequest {
+  string name = 1;
+  int32 age = 2;
+  string gender = 3;
+}
+
+message PutResponse {
+  bool status = 1;
+}

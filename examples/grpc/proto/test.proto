@@ -1,0 +1,60 @@
+syntax = "proto3"; 
+package proto;
+
+option go_package = ".;proto";
+
+service TestService {
+    rpc GetById(GetByIdRequest) returns (GetByIdResponse) {}
+
+    rpc Create(CreateRequest) returns (CreateResponse) {}
+
+    rpc Update(UpdateRequest) returns (UpdateResponse) {}
+
+    rpc GetList(GetListRequest) returns (GetListResponse) {}
+}
+
+message GetByIdRequest {
+  string activityId = 1;
+}
+
+message GetByIdResponse {
+    Info info = 1;
+    map<string, string> outsideInfo = 2;
+}
+
+message CreateRequest {
+  string projectId = 1;
+  Info info = 2;
+}
+
+message CreateResponse {
+  string activityId = 1;
+}
+
+message UpdateRequest {
+    string name = 1;
+    int32 age = 2;
+    string gender = 3;
+}
+
+message UpdateResponse {
+    string activityId = 1;
+}
+
+message GetListRequest {
+    string projectId = 1;
+}
+
+message GetListResponse {
+    repeated Info activities = 1;
+}
+
+message Info {
+    string name = 1;
+    int32 age = 2;
+    string gender = 3;
+    string description = 4;
+    string title = 5;
+    string subtitle = 6;
+  }
+  

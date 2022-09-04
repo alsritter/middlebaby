@@ -17,11 +17,6 @@ buildandrun:
 	middlebaby serve --config.file=".middlebaby.yaml" --log.level=$(LEVEL) --target.path="./${BIN_FILE}"
 	@${RM} testmb
 
-.PHONY: genpb
-genpb:
-	@protoc --go_out=./proto \
-	--go-grpc_out=require_unimplemented_servers=false:./proto proto/hello.proto
-
 
 # print child process tree and important-taskserver.
 # reference:  
