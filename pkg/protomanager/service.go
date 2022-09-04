@@ -3,8 +3,9 @@ package protomanager
 import (
 	"bytes"
 	"context"
-	"io/fs"
+	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,14 +20,12 @@ import (
 // Config defines the config structure
 type Config struct {
 	ProtoImportPaths []string
-	ProtoDir         string
 	SyncGitManger    *synchronization.Config `yaml:"sync"`
 }
 
 func NewConfig() *Config {
 	return &Config{
 		ProtoImportPaths: []string{},
-		ProtoDir:         "",
 		SyncGitManger:    synchronization.NewConfig(),
 	}
 }
@@ -164,71 +163,68 @@ func (s *Manager) synchronizeProto(ctx context.Context, force bool) error {
 
 // 加载 Proto 文件
 func (s *Manager) loadProto() error {
-	var methods sync.Map
-	protoDir := s.cfg.ProtoDir
-	importPaths := append([]string{protoDir}, s.cfg.ProtoImportPaths...)
-	s.Info(nil, "starting load proto from: %s", protoDir)
+	var (
+		methods sync.Map
+		count   int
+	)
 
-	var count int
-	err := filepath.Walk(protoDir, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			s.Warn(nil, "load proto error: %s", err)
-			// * skip fs error
-			return nil
-		}
+	importPaths := s.cfg.ProtoImportPaths
+	for _, importProtoPath := range importPaths {
+		if err := filepath.Walk(importProtoPath, func(path string, info os.FileInfo, e error) error {
+			if info == nil || info.IsDir() {
+				return nil
+			}
 
-		ext := filepath.Ext(path)
-		if ext != ".proto" {
-			return nil
-		}
-		relPath, err := filepath.Rel(protoDir, path)
-		if err != nil {
-			return err
-		}
-		parser := protoparse.Parser{
-			ImportPaths:           importPaths,
-			InferImportPaths:      len(importPaths) == 0,
-			IncludeSourceCodeInfo: true,
-		}
-		fds, err := parser.ParseFiles(relPath)
-		if err != nil {
-			s.Error(nil, "failed to parse file: %s", err)
-			return nil
-		}
-		for _, fd := range fds {
-			for _, service := range fd.GetServices() {
-				for _, method := range service.GetMethods() {
-					name := GetPathByFullyQualifiedName(method.GetFullyQualifiedName())
-					s.Info(map[string]interface{}{
-						"name": name,
-					}, "proto loaded")
-					_, loaded := methods.LoadOrStore(name, method)
-					if loaded {
-						s.Warn(map[string]interface{}{
-							"name":  name,
-							"error": "method already exists",
-						}, "failed to load method")
-						continue
+			if !strings.HasSuffix(info.Name(), ".proto") {
+				return nil
+			}
+			// fileNames = append(fileNames, path)
+			relPath, err := filepath.Rel(importProtoPath, path)
+			if err != nil {
+				return err
+			}
+			parser := protoparse.Parser{
+				ImportPaths:           importPaths,
+				InferImportPaths:      len(importPaths) == 0,
+				IncludeSourceCodeInfo: true,
+			}
+			fds, err := parser.ParseFiles(relPath)
+			if err != nil {
+				s.Error(nil, "failed to parse file: %s", err)
+				return nil
+			}
+			for _, fd := range fds {
+				for _, service := range fd.GetServices() {
+					for _, method := range service.GetMethods() {
+						name := GetPathByFullyQualifiedName(method.GetFullyQualifiedName())
+						s.Info(map[string]interface{}{
+							"name": name,
+						}, "proto loaded")
+						_, loaded := methods.LoadOrStore(name, method)
+						if loaded {
+							s.Warn(map[string]interface{}{
+								"name":  name,
+								"error": "method already exists",
+							}, "failed to load method")
+							continue
+						}
 					}
-					count++
 				}
 			}
+			return nil
+		}); err != nil {
+			return err
 		}
-		return nil
-	})
+	}
 
 	s.Info(map[string]interface{}{
-		"total":    count,
-		"protoDir": protoDir,
+		"total":            count,
+		"importProtoPaths": importPaths,
 	}, "methods loaded")
 
 	s.methodsLock.Lock()
 	s.methods = &methods
 	s.methodsLock.Unlock()
-
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

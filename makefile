@@ -1,3 +1,19 @@
+.PHONY: debug-http
+debug-http:
+	$(call debug_template, ./examples/http)
+
+.PHONY: debug-grpc
+debug-grpc:
+	$(call debug_template, examples/grpc)
+
+.PHONY: proto
+proto:
+	$(call build_proto_files, $(PROTO_FILES))
+
+# print process PID tree
+printTree: ; @$(value tree)
+.ONESHELL:
+
 ifeq ($(OS),Windows_NT)
 # Customize for Windows
 CP = copy
@@ -10,26 +26,19 @@ endif
 
 LEVEL=debug
 BIN_FILE=testmb
-DEBUG_DIR=cd ./examples/http/
-
-.PHONY: debug
-debug:
-	@go build -o middlebaby -gcflags=all="-N -l" main.go
-	@cp ./middlebaby ./examples/http/middlebaby
-	@${DEBUG_DIR} && go build -o "${BIN_FILE}" main.go
-	${DEBUG_DIR} && dlv --listen=:2345 --headless=true --api-version=2 \
-		--accept-multiclient exec \
-		./middlebaby serve -- --config.file=".middlebaby.yaml" --log.level=$(LEVEL) --target.path="./${BIN_FILE}"
-	@${RM} testmb
 
 # PROTO_FILES=$(shell find . -name *.proto)
 PROTO_FILES=proto/task/task.proto
 
-# use 'kratos proto add proto/task/task.proto'
-# 'kratos proto client proto/task/task.proto'
-.PHONY: proto
-proto:
-	$(call build_proto_files, $(PROTO_FILES))
+define debug_template
+	@go build -o middlebaby -gcflags=all="-N -l" main.go
+	@cp ./middlebaby $(1)/middlebaby
+	@cd $(1) && go build -o "${BIN_FILE}" main.go
+	dlv --listen=:2345 --headless=true --api-version=2 \
+		--accept-multiclient exec \
+		./middlebaby serve -- --config.file=".middlebaby.yaml" --log.level=$(LEVEL) --target.path="./${BIN_FILE}"
+	@${RM} testmb
+endef
 
 # dirname: remove the non-directory part of the file name. (the 'pwd' command output)
 define build_proto_files
@@ -43,3 +52,19 @@ define build_proto_files
 done;
 endef
 
+# print child process tree and important-taskserver.
+# reference:  
+# https://superuser.com/questions/363169/ps-how-can-i-recursively-get-all-child-process-for-a-given-pid
+# https://unix.stackexchange.com/questions/270778/how-to-write-exactly-bash-scripts-into-makefiles
+define tree =
+#!/bin/bash
+pidtree() { 
+	echo -n $1 " "
+	for _child in $(ps -o pid --no-headers --ppid $1); do
+		echo -n $_child `pidtree $_child` " "
+	done
+}
+
+# PID 
+ps f `pidtree 11958`
+endef

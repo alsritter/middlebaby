@@ -181,7 +181,6 @@ func (b *basicProvider) GetCaseTearDownCommand(serviceName, caseName string) (cm
 func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms []*interact.ImposterCase) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
-
 	if itf, ok := b.taskInterface[serviceName]; ok {
 		for _, c := range itf.Cases {
 			if c.Name == caseName {
@@ -199,9 +198,9 @@ func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms [
 func (b *basicProvider) GetMockCasesFromItf(serviceName string) (ms []*interact.ImposterCase) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
-
-	itf := b.taskInterface[serviceName]
-	ms = append(ms, itf.Mocks...)
+	if itf, ok := b.taskInterface[serviceName]; ok {
+		ms = append(ms, itf.Mocks...)
+	}
 	return
 }
 

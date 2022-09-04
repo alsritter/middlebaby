@@ -1,7 +1,6 @@
 package protomanager
 
 import (
-	"os"
 	"sync"
 	"testing"
 
@@ -12,14 +11,12 @@ import (
 
 func TestManager_GetMethod(t *testing.T) {
 	var (
-		wg          *sync.WaitGroup
+		wg          sync.WaitGroup
 		ctx, cancel = context.WithCancel(context.Background())
 		clog        = logger.NewDefault("test")
 	)
 
-	basePath, _ := os.Getwd()
 	pms, err := New(clog, &Config{
-		ProtoDir:         basePath,
 		ProtoImportPaths: []string{"temporary/alsritter/protobuf-examples"},
 		SyncGitManger: &synchronization.Config{
 			Enable:     true,
@@ -31,7 +28,7 @@ func TestManager_GetMethod(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = pms.Start(ctx, cancel, wg)
+	err = pms.Start(ctx, cancel, &wg)
 	if err != nil {
 		t.Error(err)
 	}

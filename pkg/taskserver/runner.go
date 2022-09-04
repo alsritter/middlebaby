@@ -36,6 +36,10 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 		assertCmdType   = make(map[string][]caseprovider.CommonAssert)
 	)
 
+	if info == nil || runCase == nil {
+		return fmt.Errorf("cannot find case [%s]-[%s]", itfName, caseName)
+	}
+
 	for _, c := range setupItfCmds {
 		setupCmdType[c.TypeName] = append(setupCmdType[c.TypeName], c.Commands...)
 	}
@@ -148,8 +152,8 @@ func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 		ImportPaths:   t.protoProvider.GetImportPaths(),
 		ProtoFiles:    []string{info.ServiceProtoFile},
 		Data:          reqBodyStr,
-		ServiceAddr:   info.ServicePath,
-		ServiceMethod: info.ServiceMethod,
+		ServiceAddr:   t.cfg.TargetServeAdder,
+		ServiceMethod: info.ServicePath,
 	}
 
 	responseMD, responseBody, _, err := ggrpcurl.NewInvokeGRpc(&dto).Invoke()

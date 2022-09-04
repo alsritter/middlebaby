@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"reflect"
 	"time"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 // Protocol defines the protocol of request
@@ -112,4 +114,60 @@ func NewDefaultResponse(request *Request) *Response {
 		Trailer: map[string]string{},
 		Body:    []byte{},
 	}
+}
+
+// Message defines a generic message interface
+type Message interface {
+	proto.Message
+	json.Marshaler
+	json.Unmarshaler
+	proto.Marshaler
+	Bytes() []byte
+}
+
+// BytesMessage is the simple implement of Message
+type BytesMessage struct {
+	data []byte
+}
+
+// NewBytesMessage is used to init BytesMessage
+func NewBytesMessage(data []byte) Message {
+	return &BytesMessage{
+		data: data,
+	}
+}
+
+// Reset implements the proto.Message interface
+func (b *BytesMessage) Reset() {}
+
+// String implements the proto.Message interface
+func (b *BytesMessage) String() string {
+	return string(b.data)
+}
+
+// ProtoMessage implements the proto.Message interface
+func (b *BytesMessage) ProtoMessage() {}
+
+// Marshal implements the proto.Marshaler interface
+func (b *BytesMessage) Marshal() ([]byte, error) {
+	return b.data, nil
+}
+
+// UnmarshalJSON implements the json.UnmarshalJSON interface
+func (b *BytesMessage) UnmarshalJSON(data []byte) error {
+	b.data = data
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface
+func (b *BytesMessage) MarshalJSON() ([]byte, error) {
+	if len(b.data) == 0 {
+		return []byte(`null`), nil
+	}
+	return b.data, nil
+}
+
+// Bytes is used to return native data
+func (b *BytesMessage) Bytes() []byte {
+	return b.data
 }

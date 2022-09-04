@@ -1,0 +1,84 @@
+{
+  "protocol": "grpc",
+  "serviceMethod": "POST",
+  "serviceName": "TestService-Create",
+  "serviceDescription": "测试创建活动",
+  "servicePath": "proto.TestService/Create",
+  "serviceProtoFile": "proto/test.proto",
+  "setup": [
+    {
+      "typeName": "",
+      "commands": []
+    }
+  ],
+  "mocks": [
+    {
+      "request": {
+        "protocol": "grpc",
+        "method": "POST",
+        "host": "localhost:56789",
+        "path": "/proto.OutsideService/PutData"
+      },
+      "response": {
+        "header": {},
+        "body": "{\"status\": true }",
+        "trailer": {},
+        "delay": {
+          "delay": 300,
+          "offset": 50
+        }
+      }
+    },
+    {
+      "request": {
+        "protocol": "http",
+        "method": "CONNECT",
+        "host": ":56789",
+        "path": ""
+      },
+      "response": {
+        "status": 200,
+        "header": {},
+        "body": {},
+        "trailer": {},
+        "delay": {
+          "delay": 300,
+          "offset": 50
+        }
+      }
+    }
+  ],
+  "teardown": [],
+  "cases": [
+    {
+      "name": "创建活动成功",
+      "description": "创建活动成功",
+      "setup": [],
+      "mocks": [],
+      "request": {
+        "Header": {},
+        "Query": {},
+        "Data": {
+          "projectId": "00000000",
+          "info": {
+            "name": "John",
+            "age": 18,
+            "gender": "man",
+            "description": "随便写写~",
+            "title": "John's life.",
+            "subtitle": "life"
+          }
+        }
+      },
+      "assert": {
+        "Response": {
+          "Data": {
+            "activityId": "00000000-true"
+          }
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    }
+  ]
+}

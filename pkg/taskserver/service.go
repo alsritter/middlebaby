@@ -20,8 +20,9 @@ import (
 )
 
 type Config struct {
-	CloseTearDown   bool `yaml:"closeTearDown"`
-	TaskServicePort int  `yaml:"taskServicePort"`
+	CloseTearDown    bool   `yaml:"closeTearDown"`
+	TaskServicePort  int    `yaml:"taskServicePort"`
+	TargetServeAdder string `yaml:"targetServeAdder"`
 }
 
 func NewConfig() *Config {
@@ -34,6 +35,11 @@ func (c *Config) Validate() error {
 	if c.TaskServicePort == 0 {
 		return fmt.Errorf("task service port is required")
 	}
+
+	if c.TargetServeAdder == "" {
+		return fmt.Errorf("target Serve Adder cannot be empty")
+	}
+
 	return nil
 }
 
@@ -65,6 +71,7 @@ func New(log logger.Logger, cfg *Config,
 	return &taskService{
 		cfg:            cfg,
 		caseProvider:   caseProvider,
+		protoProvider:  protoProvider,
 		apiProvider:    apiProvider,
 		pluginRegistry: pluginRegistry,
 		Logger:         log.NewLogger("task"),
@@ -79,8 +86,6 @@ func (t *taskService) GetAllTaskCases(context.Context, *taskproto.CommonRequest)
 
 // RunSingleTaskCase implements task.TaskServer
 func (t *taskService) RunSingleTaskCase(ctx context.Context, req *taskproto.RunTaskRequest) (*taskproto.RunTaskReply, error) {
-	t.apiProvider.LoadCaseEnv(req.ItfName, req.CaseName)
-	defer t.apiProvider.ClearCaseEnv()
 	if err := t.Run(ctx, req.ItfName, req.CaseName); err != nil {
 		t.Error(map[string]interface{}{
 			"InterfaceName": req.ItfName,

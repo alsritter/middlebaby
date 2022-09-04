@@ -2,6 +2,7 @@ package grpchandler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/hashicorp/go-multierror"
 	"github.com/jhump/protoreflect/dynamic"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -54,25 +56,23 @@ func (s *mockServer) GetServer() *grpc.Server {
 func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) error {
 	fullMethodName, ok := grpc.MethodFromServerStream(stream)
 	if !ok {
-		return status.Errorf(codes.Internal, "lowLevelServerStream not exists in context")
+		return s.sendError(status.Errorf(codes.Internal, "lowLevelServerStream not exists in context"))
 	}
-
 	md, _ := metadata.FromIncomingContext(stream.Context())
-	s.Info(map[string]interface{}{"path": fullMethodName, "metadata": md}, "request received")
+	s.Debug(map[string]interface{}{"path": fullMethodName, "metadata": md}, "request received")
 
 	method, ok := s.protoManager.GetMethod(fullMethodName)
 	if !ok {
-		return status.Errorf(codes.NotFound, "method not found")
+		return s.sendError(status.Errorf(codes.NotFound, "method not found"))
 	}
 	request := dynamic.NewMessage(method.GetInputType())
 	// receive request
 	if err := stream.RecvMsg(request); err != nil {
-		return status.Errorf(codes.Unknown, "failed to recv request")
+		return s.sendError(status.Errorf(codes.Unknown, "failed to recv request"))
 	}
-
 	data, err := request.MarshalJSONPB(&jsonpb.Marshaler{})
 	if err != nil {
-		return status.Errorf(codes.Unknown, "failed to marshal request")
+		return s.sendError(status.Errorf(codes.Unknown, "failed to marshal request"))
 	}
 	response, err := s.apiManager.MockResponse(context.TODO(), &interact.Request{
 		Protocol: interact.ProtocolGRPC,
@@ -83,23 +83,46 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 		Body:     data,
 	})
 	if err != nil {
-		return err
+		return s.sendError(err)
 	}
+
 	stream.SetTrailer(metadata.New(response.Trailer))
 	if len(response.Header) > 0 {
 		if err := stream.SetHeader(getMetadataFromHeaderMap(response.Header)); err != nil {
-			return status.Errorf(codes.Unavailable, "failed to set header: %s", err)
+			return s.sendError(status.Errorf(codes.Unavailable, "failed to set header: %s", err))
 		}
 	}
+
 	if response.Status != 0 {
-		return status.Errorf(codes.Code(response.Status), "expected code is: %d", response.Status)
+		return s.sendError(status.Errorf(codes.Code(response.Status), "expected code is: %d", response.Status))
+	}
+
+	mds, ok := s.protoManager.GetMethod(fullMethodName)
+	if !ok {
+		return s.sendError(fmt.Errorf("unable to find descriptor: %s", fullMethodName))
+	}
+
+	respBody := []byte(response.GetBodyString())
+	message := dynamic.NewMessage(mds.GetOutputType())
+	if err := message.UnmarshalJSONPB(&jsonpb.Unmarshaler{}, respBody); err != nil {
+		return s.sendError(multierror.Prefix(err, "failed to unmarshal:"))
+	}
+
+	binaryData, err := message.Marshal()
+	if err != nil {
+		return s.sendError(multierror.Prefix(err, "failed to marshal:"))
 	}
 
 	// send the response
-	if err := stream.SendMsg(response.Body); err != nil {
-		return status.Errorf(codes.Internal, "failed to send message: %s", err)
+	if err := stream.SendMsg(interact.NewBytesMessage(binaryData)); err != nil {
+		return s.sendError(status.Errorf(codes.Internal, "failed to send message: %s", err))
 	}
 	return nil
+}
+
+func (s *mockServer) sendError(err error) error {
+	s.Error(nil, "%v", err)
+	return err
 }
 
 // getAuthorityFromMetadata is used to get authority from metadata
