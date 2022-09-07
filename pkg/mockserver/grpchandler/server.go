@@ -86,6 +86,7 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 		return s.sendError(err)
 	}
 
+	s.Debug(nil, "mock [%v] request successful", fullMethodName)
 	stream.SetTrailer(metadata.New(response.Trailer))
 	if len(response.Header) > 0 {
 		if err := stream.SetHeader(getMetadataFromHeaderMap(response.Header)); err != nil {
