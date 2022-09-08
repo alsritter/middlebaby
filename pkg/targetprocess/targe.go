@@ -32,6 +32,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("the target application cannot be empty")
 	}
 
+	// Check if your app file exists
+	if _, err := os.Stat(c.AppPath); err != nil {
+		return fmt.Errorf("check if your target application file exists [%s], error: [%v]", c.AppPath, err)
+	}
+
 	return nil
 }
 

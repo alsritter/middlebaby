@@ -6,6 +6,14 @@ debug-http:
 debug-grpc:
 	$(call debug_template, examples/grpc)
 
+.PHONY: run-http 
+run-http:
+	@go build -o middlebaby -gcflags=all="-N -l" main.go
+	@cp ./middlebaby ./examples/http/middlebaby
+	@cd ./examples/http && go build -o "${BIN_FILE}" main.go
+	./middlebaby serve --config.file=".middlebaby.yaml" --log.level=$(LEVEL) --target.path="./${BIN_FILE}"
+	@${RM} "${BIN_FILE}"
+
 .PHONY: proto
 proto:
 	$(call build_proto_files, $(PROTO_FILES))
@@ -24,7 +32,7 @@ CP = cp
 RM = rm -rf
 endif
 
-LEVEL=debug
+LEVEL=trace
 BIN_FILE=testmb
 
 # PROTO_FILES=$(shell find . -name *.proto)

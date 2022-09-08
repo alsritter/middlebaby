@@ -25,7 +25,6 @@ import (
 )
 
 func CommandServe(fn func(context.Context), config util.RegistrableConfig) *cobra.Command {
-
 	command := &cobra.Command{
 		Use:   "serve",
 		Short: "start the mock server",

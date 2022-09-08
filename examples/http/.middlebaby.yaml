@@ -7,6 +7,7 @@ mock:
   enableDirect: true
   mockPort: 9090
 task:
+  targetServeAdder: "127.0.0.1:8011"
   closeTearDown: false
   taskServicePort: 6060
 storage:
@@ -36,9 +37,7 @@ case:
   watcherMock: true
 proto:
   protoimportpaths: []
-  protodir: ""
   sync:
     enable: false
     storagedir: ""
     repository: []
-plugin: {}
