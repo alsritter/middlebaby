@@ -11,6 +11,7 @@ import (
 	envmysql "github.com/alsritter/middlebaby/pkg/pluginregistry/envprovid/mysql"
 	envredis "github.com/alsritter/middlebaby/pkg/pluginregistry/envprovid/redis"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
+	"github.com/alsritter/middlebaby/web"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/mockserver"
@@ -53,13 +54,15 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, cfg *Config, lo
 	taskServer := taskserver.New(log, cfg.TaskService, caseProvider, protoProvider, apiManager, pluginRegistry)
 	targetProcess := targetprocess.New(log, cfg.TargetProcess, mockServer)
 
+	webService := web.New(log, cfg.WebService, apiManager, caseProvider, protoProvider, taskServer, targetProcess)
+
 	log.Info(nil, "* start to start mockServer")
 	if err = mockServer.Start(ctx, cancelFunc, &wg); err != nil {
 		return err
 	}
 
-	log.Info(nil, "* start to start taskServer")
-	if err = taskServer.Start(ctx, cancelFunc, &wg); err != nil {
+	log.Info(nil, "* start to start webService")
+	if err = webService.Start(ctx, cancelFunc, &wg); err != nil {
 		return err
 	}
 

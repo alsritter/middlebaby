@@ -9,7 +9,6 @@ mock:
 task:
   targetServeAdder: "127.0.0.1:8011"
   closeTearDown: false
-  taskServicePort: 6060
 storage:
   enabledocker: false
   mysql:
@@ -41,3 +40,5 @@ proto:
     enable: false
     storagedir: ""
     repository: []
+web:
+  port: 6060

@@ -11,6 +11,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/web"
 	"github.com/spf13/pflag"
 )
 
@@ -24,6 +25,7 @@ type Config struct {
 	CaseProvider   *caseprovider.Config    `yaml:"case"`
 	ProtoManager   *protomanager.Config    `yaml:"proto"`
 	PluginRegistry *pluginregistry.Config  `yaml:"plugin"`
+	WebService     *web.Config             `yaml:"web"`
 }
 
 func NewConfig() *Config {
@@ -37,6 +39,7 @@ func NewConfig() *Config {
 		ProtoManager:   protomanager.NewConfig(),
 		TaskService:    taskserver.NewConfig(),
 		PluginRegistry: pluginregistry.NewConfig(),
+		WebService:     web.NewConfig(),
 	}
 }
 
@@ -51,6 +54,7 @@ func (c *Config) Validate() error {
 		c.CaseProvider,
 		c.TargetProcess,
 		c.PluginRegistry,
+		c.WebService,
 	)
 }
 
@@ -64,4 +68,5 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 	c.ProtoManager.RegisterFlagsWithPrefix(prefix, f)
 	c.TargetProcess.RegisterFlagsWithPrefix(prefix, f)
 	c.PluginRegistry.RegisterFlagsWithPrefix(prefix, f)
+	c.WebService.RegisterFlagsWithPrefix(prefix, f)
 }

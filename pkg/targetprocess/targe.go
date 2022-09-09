@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/alsritter/middlebaby/pkg/mockserver"
 
@@ -17,6 +18,16 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
+
+// RuntimeInfo contains runtime information about MB.
+type RuntimeInfo struct {
+	StartTime      time.Time `json:"startTime"`
+	CWD            string    `json:"CWD"`
+	GoroutineCount int       `json:"goroutineCount"`
+	GOMAXPROCS     int       `json:"GOMAXPROCS"`
+	GOGC           string    `json:"GOGC"`
+	GODEBUG        string    `json:"GODEBUG"`
+}
 
 type Config struct {
 	AppPath  string `yaml:"appPath"`
@@ -48,12 +59,15 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 // Provider defines the target process interface
 type Provider interface {
 	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	GetRuntimeInfo() *RuntimeInfo
 }
 
 type TargetProcess struct {
 	cfg     *Config
 	command *exec.Cmd
 	log     logger.Logger
+	cwd     string    // current working directory
+	birth   time.Time // service start time
 }
 
 func New(log logger.Logger, cfg *Config, mock mockserver.Provider) Provider {
@@ -64,6 +78,18 @@ func New(log logger.Logger, cfg *Config, mock mockserver.Provider) Provider {
 	}
 }
 
+// GetRuntimeInfo implements Provider
+func (t *TargetProcess) GetRuntimeInfo() *RuntimeInfo {
+	return &RuntimeInfo{
+		StartTime:      t.birth,
+		CWD:            t.cwd,
+		GoroutineCount: runtime.NumGoroutine(),
+		GOMAXPROCS:     runtime.GOMAXPROCS(0),
+		GOGC:           os.Getenv("GOGC"),
+		GODEBUG:        os.Getenv("GODEBUG"),
+	}
+}
+
 // Start the service to be tested
 func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
 	util.StartServiceAsync(ctx, t.log, cancelFunc, wg, func() error {
@@ -71,8 +97,16 @@ func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc
 			return fmt.Errorf("target app err: %v", err)
 		}
 
-		t.command = exec.Command(t.cfg.AppPath)
+		// record runtime info
+		t.birth = time.Now()
+		cwd, err := os.Getwd()
+		if err != nil {
+			cwd = "<error retrieving current working directory>"
+		}
+		t.cwd = cwd
 
+		// preparing to start service
+		t.command = exec.Command(t.cfg.AppPath)
 		port := t.cfg.mockPort
 		parentEnv := os.Environ()
 		// set target application proxy path.

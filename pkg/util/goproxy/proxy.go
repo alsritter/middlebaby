@@ -413,6 +413,7 @@ func (p *Proxy) tunnelProxy(ctx *Context, rw http.ResponseWriter) {
 		tlsReq.RemoteAddr = ctx.Req.RemoteAddr
 		tlsReq.URL.Scheme = "https"
 		tlsReq.URL.Host = tlsReq.Host
+		tlsReq = tlsReq.WithContext(ctx.Req.Context())
 		ctx.Req = tlsReq
 	}
 

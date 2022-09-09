@@ -1,3 +1,12 @@
+
+.PHONY: install
+install:
+	sudo cp mitm-proxy.crt /usr/local/share/ca-certificates
+	sudo update-ca-certificates
+	go install
+
+
+
 .PHONY: debug-http
 debug-http:
 	$(call debug_template, ./examples/http)

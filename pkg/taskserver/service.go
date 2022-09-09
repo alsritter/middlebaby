@@ -3,14 +3,9 @@ package taskserver
 import (
 	"context"
 	"fmt"
-	"net"
-	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
-	"github.com/alsritter/middlebaby/pkg/util"
-	taskproto "github.com/alsritter/middlebaby/proto/task"
-	"google.golang.org/grpc"
 
 	"github.com/spf13/pflag"
 
@@ -19,9 +14,13 @@ import (
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
+type RunTaskReply struct {
+	Status       int32
+	FailedReason string
+}
+
 type Config struct {
 	CloseTearDown    bool   `yaml:"closeTearDown"`
-	TaskServicePort  int    `yaml:"taskServicePort"`
 	TargetServeAdder string `yaml:"targetServeAdder"`
 }
 
@@ -32,10 +31,6 @@ func NewConfig() *Config {
 }
 
 func (c *Config) Validate() error {
-	if c.TaskServicePort == 0 {
-		return fmt.Errorf("task service port is required")
-	}
-
 	if c.TargetServeAdder == "" {
 		return fmt.Errorf("target Serve Adder cannot be empty")
 	}
@@ -47,12 +42,12 @@ func (c *Config) Validate() error {
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
-	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	GetAllTaskCases(context.Context) ([]*caseprovider.InterfaceTask, error)
+	RunSingleTaskCase(ctx context.Context, itfName, caseName string) (RunTaskReply, error)
 }
 
 type taskService struct {
 	logger.Logger
-	taskproto.TaskServer // implements grpc server interface task.TaskServer
 
 	cfg            *Config
 	caseProvider   caseprovider.Provider
@@ -79,50 +74,30 @@ func New(log logger.Logger, cfg *Config,
 }
 
 // GetAllTaskCases implements task.TaskServer
-func (t *taskService) GetAllTaskCases(context.Context, *taskproto.CommonRequest) (*taskproto.GetAllTaskCasesReply, error) {
-	all := t.caseProvider.GetAllItf()
-	return t.toGetAllTaskCasesReply(all), nil
+func (t *taskService) GetAllTaskCases(context.Context) ([]*caseprovider.InterfaceTask, error) {
+	return t.caseProvider.GetAllItf(), nil
 }
 
 // RunSingleTaskCase implements task.TaskServer
-func (t *taskService) RunSingleTaskCase(ctx context.Context, req *taskproto.RunTaskRequest) (*taskproto.RunTaskReply, error) {
-	if err := t.Run(ctx, req.ItfName, req.CaseName); err != nil {
+func (t *taskService) RunSingleTaskCase(ctx context.Context, itfName, caseName string) (RunTaskReply, error) {
+	if err := t.Run(ctx, itfName, caseName); err != nil {
 		t.Error(map[string]interface{}{
-			"InterfaceName": req.ItfName,
-			"CaseName":      req.CaseName,
+			"InterfaceName": itfName,
+			"CaseName":      caseName,
 		}, err.Error())
 
-		return &taskproto.RunTaskReply{
+		return RunTaskReply{
 			Status:       0,
 			FailedReason: err.Error(),
 		}, nil
 	}
 
 	t.Info(map[string]interface{}{
-		"InterfaceName": req.ItfName,
-		"CaseName":      req.CaseName,
+		"InterfaceName": itfName,
+		"CaseName":      caseName,
 	}, "case assert successful")
-	return &taskproto.RunTaskReply{
+	return RunTaskReply{
 		Status:       1,
 		FailedReason: "",
 	}, nil
-}
-
-func (t *taskService) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", t.cfg.TaskServicePort))
-	if err != nil {
-		t.Fatal(nil, "task service failed to listen: %v", err)
-		return err
-	}
-	server := grpc.NewServer()
-	taskproto.RegisterTaskServer(server, t)
-
-	util.StartServiceAsync(ctx, t, cancelFunc, wg, func() error {
-		t.Info(nil, "Task server started, Listen port: %d", t.cfg.TaskServicePort)
-		return server.Serve(listener)
-	}, func() error {
-		server.GracefulStop()
-		return nil
-	})
-	return nil
 }

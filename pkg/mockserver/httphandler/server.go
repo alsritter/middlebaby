@@ -7,6 +7,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/gorilla/handlers"
 )
 
 // Config defines the config structure
@@ -42,5 +43,5 @@ func New(log logger.Logger, cfg *Config, apiManager apimanager.Provider) Provide
 }
 
 func (m *mockServer) GetServer() http.Handler {
-	return m
+	return handlers.CompressHandler(m)
 }
