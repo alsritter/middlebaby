@@ -15,8 +15,8 @@ import (
 )
 
 type RunTaskReply struct {
-	Status       int32
-	FailedReason string
+	Status       int32  `yaml:"status" json:"status"`
+	FailedReason string `yaml:"failedReason" json:"failedReason"`
 }
 
 type Config struct {
@@ -42,7 +42,6 @@ func (c *Config) Validate() error {
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
-	GetAllTaskCases(context.Context) ([]*caseprovider.InterfaceTask, error)
 	RunSingleTaskCase(ctx context.Context, itfName, caseName string) (RunTaskReply, error)
 }
 
@@ -71,11 +70,6 @@ func New(log logger.Logger, cfg *Config,
 		pluginRegistry: pluginRegistry,
 		Logger:         log.NewLogger("task"),
 	}
-}
-
-// GetAllTaskCases implements task.TaskServer
-func (t *taskService) GetAllTaskCases(context.Context) ([]*caseprovider.InterfaceTask, error) {
-	return t.caseProvider.GetAllItf(), nil
 }
 
 // RunSingleTaskCase implements task.TaskServer

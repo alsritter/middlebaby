@@ -82,8 +82,12 @@ func (w *WebService) Start(ctx context.Context, cancelFunc context.CancelFunc, w
 	r := gin.Default()
 	w.api_v1.Register(r)
 	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", w.cfg.WebServicePort),
-		Handler:        handlers.CORS()(r),
+		Addr: fmt.Sprintf(":%d", w.cfg.WebServicePort),
+		Handler: handlers.CORS(
+			handlers.AllowedMethods([]string{"GET", "POST", "PUT"}),
+			handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Type", "Content-Language", "Origin"}),
+			handlers.AllowedOrigins([]string{"*"}),
+		)(r),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,

@@ -29,7 +29,7 @@ storage:
 case:
   taskFileSuffix: .case.json
   caseFiles: 
-      - "./tests/cases/*.case.json"
+      - "./tests/cases/**/*.case.json"
   watcherCases: true
   mockFiles:
       - ./tests/http.mock.json

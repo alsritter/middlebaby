@@ -135,12 +135,12 @@ func (a *API) Register(r *gin.Engine) {
 	v1 := r.Group("/v1")
 	{
 		v1.GET("/getCaseList", wrap(a.getCaseList))
-		v1.GET("/runSingleCase", wrap(a.runSingleCase))
+		v1.POST("/runSingleCase", wrap(a.runSingleCase))
 	}
 }
 
 func (a *API) getCaseList(r *http.Request) (result apiFuncResult) {
-	allCase, _ := a.taskService.GetAllTaskCases(r.Context())
+	allCase := a.caseProvider.GetAllItfWithFileInfo()
 	return apiFuncResult{allCase, nil, nil}
 }
 
