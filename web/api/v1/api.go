@@ -132,9 +132,11 @@ func (a *API) Register(r *gin.Engine) {
 			handlers.CompressHandler(hf).ServeHTTP(c.Writer, c.Request)
 		}
 	}
-
-	r.GET("/getCaseList", wrap(a.getCaseList))
-	r.GET("/runSingleCase", wrap(a.getCaseList))
+	v1 := r.Group("/v1")
+	{
+		v1.GET("/getCaseList", wrap(a.getCaseList))
+		v1.GET("/runSingleCase", wrap(a.runSingleCase))
+	}
 }
 
 func (a *API) getCaseList(r *http.Request) (result apiFuncResult) {

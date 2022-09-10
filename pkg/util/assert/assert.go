@@ -135,9 +135,9 @@ func (a *Assert) so(fieldName string, actual interface{}, expected interface{}) 
 	}
 
 	if IsRegExpPattern(expected) {
-		a.log.Debug(nil, "Starts matching the regular expression, pattern: %s, actual: %v \n", expected.(string), actual)
+		a.log.Debug(nil, "starts matching the regular expression, pattern: %s, actual: %v \n", expected.(string), actual)
 		if err := Match(expected.(string), actual); err != nil {
-			a.log.Debug(nil, "Error matching regular expression, pattern: %s, actual: %v, err: %v \n", expected.(string), actual, err)
+			a.log.Debug(nil, "error matching regular expression, pattern: %s, actual: %v, err: %v \n", expected.(string), actual, err)
 			return retErrFun(err)
 		}
 		return nil
