@@ -22,11 +22,11 @@
       "setup": [],
       "mocks": [],
       "request": {
-        "Header": {},
-        "Query": {}
+        "header": {},
+        "query": {}
       },
       "assert": {
-        "Response": {},
+        "response": {},
         "otherAsserts": [
           {
             "typeName": "redis",

@@ -1,0 +1,222 @@
+{
+  "protocol": "http",
+  "serviceMethod": "GET",
+  "serviceName": "Test access to the Mock's external service",
+  "serviceDescription": "This is the first test service",
+  "servicePath": "http://localhost:8011/example",
+  "serviceProtoFile": "",
+  "setup": [
+    {
+      "typeName": "",
+      "commands": []
+    }
+  ],
+  "mocks": [
+    {
+      "request": {
+        "protocol": "http",
+        "method": "GET",
+        "host": "example.org",
+        "path": "/get",
+        "query": {
+          "name": ["John"],
+          "age": ["55"]
+        }
+      },
+      "response": {
+        "status": 200,
+        "header": {
+          "Content-Type": ["application/json"]
+        },
+        "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":88}",
+        "trailer": {},
+        "delay": {
+          "delay": 300,
+          "offset": 50
+        }
+      }
+    }
+  ],
+  "teardown": [
+    {
+      "typeName": "",
+      "commands": []
+    }
+  ],
+  "cases": [
+    {
+      "name": "first case-fail",
+      "description": "",
+      "setup": [],
+      "mocks": [],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "John",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    },
+    {
+      "name": "first case-success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/get",
+            "query": {
+              "name": ["John"],
+              "age": ["55"]
+            }
+          },
+          "response": {
+            "status": 200,
+            "header": {
+              "Content-Type": ["application/json"]
+            },
+            "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+            "trailer": {},
+            "delay": {
+              "delay": 300,
+              "offset": 50
+            }
+          }
+        }
+      ],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "John",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    },
+    {
+      "name": "first case-regex-success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/get",
+            "query": {
+              "name": ["John"],
+              "age": ["55"]
+            }
+          },
+          "response": {
+            "status": 200,
+            "header": {
+              "Content-Type": ["application/json"]
+            },
+            "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+            "trailer": {},
+            "delay": {
+              "delay": 300,
+              "offset": 50
+            }
+          }
+        }
+      ],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "@regExp:^J.*",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    },
+    {
+      "name": "first case-js-success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/get",
+            "query": {
+              "name": ["John"],
+              "age": ["55"]
+            }
+          },
+          "response": {
+            "status": 200,
+            "header": {
+              "Content-Type": ["application/json"]
+            },
+            "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+            "trailer": {},
+            "delay": {
+              "delay": 300,
+              "offset": 50
+            }
+          }
+        }
+      ],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "@regExp:^J.*",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": [
+          {
+            "typeName": "js",
+            "actual": "assert.data.statusCode == 200",
+            "expected": true
+          },
+          {
+            "typeName": "js",
+            "actual": "assert.data.data.color == 'Purples'",
+            "expected": true
+          }
+        ]
+      },
+      "teardown": []
+    }
+  ]
+}

@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package targetprocess
 
 import (
@@ -18,16 +35,6 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
-
-// RuntimeInfo contains runtime information about MB.
-type RuntimeInfo struct {
-	StartTime      time.Time `json:"startTime"`
-	CWD            string    `json:"CWD"`
-	GoroutineCount int       `json:"goroutineCount"`
-	GOMAXPROCS     int       `json:"GOMAXPROCS"`
-	GOGC           string    `json:"GOGC"`
-	GODEBUG        string    `json:"GODEBUG"`
-}
 
 type Config struct {
 	AppPath  string `yaml:"appPath"`

@@ -1,10 +1,26 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package httphandler
 
 import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -44,6 +60,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		Path:     ctx.Req.URL.Path,
 		Header:   ctx.Req.Header,
 		Body:     body,
+		Query:    ctx.Req.URL.Query(),
 	})
 
 	if err != nil {
@@ -63,11 +80,10 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		return
 	}
 
-	var b io.ReadCloser
-	if resp.Body != nil {
-		b = ioutil.NopCloser(bytes.NewReader([]byte(resp.GetBodyString())))
-	} else {
-		b = ioutil.NopCloser(bytes.NewReader([]byte("")))
+	bd, err := resp.GetByteData()
+	if err != nil {
+		e.Error(nil, "read response body error: [%v]", err)
+		bd = []byte("")
 	}
 
 	e.Debug(nil, "mock [%v] request successful", ctx.Req.URL)
@@ -79,7 +95,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		ProtoMajor: ctx.Req.ProtoMajor,
 		ProtoMinor: ctx.Req.ProtoMinor,
 		Header:     resp.Header,
-		Body:       b,
+		Body:       ioutil.NopCloser(bytes.NewReader(bd)),
 	}
 }
 

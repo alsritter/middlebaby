@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package caseprovider
 
 import (
@@ -49,8 +66,10 @@ type basicProvider struct {
 	cfg *Config
 	logger.Logger
 	// key: serviceName
-	taskInterface map[string]*InterfaceTask
+	taskInterface map[string]*ItfTask
 	mockCases     map[string][]*interact.ImposterCase
+
+	taskWithFileInfo map[string]*ItfTaskWithFileInfo // serviceName relative file info.
 
 	// all test case files. (file absolute path)
 	taskFiles []string
@@ -62,20 +81,33 @@ type basicProvider struct {
 
 func New(log logger.Logger, cfg *Config) (Provider, error) {
 	b := &basicProvider{
-		cfg:           cfg,
-		Logger:        log.NewLogger("case"),
-		taskInterface: make(map[string]*InterfaceTask),
-		mockCases:     make(map[string][]*interact.ImposterCase),
+		cfg:              cfg,
+		Logger:           log.NewLogger("case"),
+		taskInterface:    make(map[string]*ItfTask),
+		taskWithFileInfo: make(map[string]*ItfTaskWithFileInfo),
+		mockCases:        make(map[string][]*interact.ImposterCase),
 	}
 
 	return b, b.init()
 }
 
-// GetAllItf implements Provider
-func (b *basicProvider) GetAllItf() []*InterfaceTask {
+// GetAllItfWithFileInfo implements Provider
+func (b *basicProvider) GetAllItfWithFileInfo() []*ItfTaskWithFileInfo {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
-	all := make([]*InterfaceTask, 0, len(b.taskInterface))
+
+	all := make([]*ItfTaskWithFileInfo, 0, len(b.taskWithFileInfo))
+	for _, v := range b.taskWithFileInfo {
+		all = append(all, v)
+	}
+	return all
+}
+
+// GetAllItf implements Provider
+func (b *basicProvider) GetAllItf() []*ItfTask {
+	b.mux.RLock()
+	defer b.mux.RUnlock()
+	all := make([]*ItfTask, 0, len(b.taskInterface))
 	for _, v := range b.taskInterface {
 		all = append(all, v)
 	}

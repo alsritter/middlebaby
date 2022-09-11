@@ -49,7 +49,7 @@ var initCmd = &cobra.Command{
 		}
 
 		if initCase {
-			t := &caseprovider.InterfaceTask{
+			t := &caseprovider.ItfTask{
 				TaskInfo: &caseprovider.TaskInfo{
 					Protocol:           "",
 					ServiceName:        "",

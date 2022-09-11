@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package startup
 
 import (
@@ -6,6 +23,7 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
+	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/javascript"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/mysql"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/redis"
 	envmysql "github.com/alsritter/middlebaby/pkg/pluginregistry/envprovid/mysql"
@@ -32,7 +50,10 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, cfg *Config, lo
 
 	storageProvider := storageprovider.New(log, cfg.Storage)
 	pluginRegistry.RegisterEnvPlugin(envmysql.New(storageProvider, log), envredis.New(storageProvider, log))
-	pluginRegistry.RegisterAssertPlugin(mysql.New(storageProvider, log), redis.New(storageProvider, log))
+	pluginRegistry.RegisterAssertPlugin(
+		mysql.New(storageProvider, log),
+		redis.New(storageProvider, log),
+		javascript.New(log))
 
 	log.Info(nil, "start loading case...")
 	caseProvider, err := caseprovider.New(log, cfg.CaseProvider)

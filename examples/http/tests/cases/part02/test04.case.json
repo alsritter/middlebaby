@@ -22,14 +22,14 @@
       "setup": [],
       "mocks": [],
       "request": {
-        "Header": {},
-        "Query": {
+        "header": {},
+        "query": {
           "a": ["1"],
           "b": ["3"]
         }
       },
       "assert": {
-        "Response": {
+        "response": {
           "data" : "sum: 4"
         }
       },

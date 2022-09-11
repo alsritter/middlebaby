@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package apimanager
 
 import (
@@ -27,8 +44,8 @@ func TestManager_match(t *testing.T) {
 					Header: map[string][]string{
 						"Accept-Encoding:": {"gzip, deflate"},
 					},
-					Params: map[string]string{},
-					Body:   nil,
+					Query: map[string][]string{},
+					Body:  nil,
 				},
 				target: &interact.Request{
 					Method: "POST",
@@ -37,8 +54,8 @@ func TestManager_match(t *testing.T) {
 					Header: map[string][]string{
 						"Accept-Encoding:": {"gzip, deflate"},
 					},
-					Params: map[string]string{},
-					Body:   nil,
+					Query: map[string][]string{},
+					Body:  nil,
 				},
 			},
 			want: true,
@@ -91,6 +108,51 @@ func TestManager_match(t *testing.T) {
 					Header: map[string][]string{
 						"Accept-Encoding:": {"gzip, deflate"},
 					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Query 断言失败",
+			args: args{
+				req: &interact.Request{
+					Method: "GET",
+					Host:   "localhost",
+					Path:   "/path",
+					Query: map[string][]string{
+						"username": {"张三"},
+					},
+				},
+				target: &interact.Request{
+					Method: "GET",
+					Host:   "localhost",
+					Path:   "/path",
+					Query: map[string][]string{
+						"username": {"李四"},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "断言 FormUrlEncode 成功",
+			args: args{
+				req: &interact.Request{
+					Method: "POST",
+					Host:   "localhost",
+					Header: map[string][]string{
+						"Content-Type": {"application/x-www-form-urlencoded"},
+					},
+					Path:  "/path",
+					Query: map[string][]string{},
+					Body:  "field1=value1&field2=value2",
+				},
+				target: &interact.Request{
+					Method: "POST",
+					Host:   "localhost",
+					Path:   "/path",
+					Query:  map[string][]string{},
+					Body:   "field2=value2&field1=value1",
 				},
 			},
 			want: true,

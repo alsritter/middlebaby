@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package grpchandler
 
 import (
@@ -103,7 +120,12 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 		return s.sendError(fmt.Errorf("unable to find descriptor: %s", fullMethodName))
 	}
 
-	respBody := []byte(response.GetBodyString())
+	respBody, err := response.GetByteData()
+	if err != nil {
+		s.Error(nil, "read response body error: [%v]", err)
+		respBody = []byte("")
+	}
+
 	message := dynamic.NewMessage(mds.GetOutputType())
 	if err := message.UnmarshalJSONPB(&jsonpb.Unmarshaler{}, respBody); err != nil {
 		return s.sendError(multierror.Prefix(err, "failed to unmarshal:"))

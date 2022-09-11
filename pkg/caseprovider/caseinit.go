@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package caseprovider
 
 import (
@@ -6,6 +23,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -111,7 +129,7 @@ func (b *basicProvider) loadCaseFiles() error {
 			continue
 		}
 
-		var t InterfaceTask
+		var t ItfTask
 		if err := json5.Unmarshal(fb, &t); err != nil {
 			return fmt.Errorf("serialization %s file error: %v", file, err)
 		}
@@ -125,29 +143,23 @@ func (b *basicProvider) loadCaseFiles() error {
 			if err := b.checkCaseInfo(e, *t.TaskInfo); err != nil {
 				return err
 			}
-
 			b.mockCases[e.Name] = append(b.mockCases[e.Name], e.Mocks...)
 		}
 
 		total += len(t.Cases)
-		// if exist, add case to here..
-		if old, ok := b.taskInterface[t.ServiceName]; ok {
-			// Check that the use case is duplicated
-			hash := make(map[string]bool)
-			for _, e := range old.Cases {
-				hash[e.Name] = true
-			}
-
-			for _, e := range t.Cases {
-				if hash[e.Name] {
-					return fmt.Errorf("case name is duplicated %s", e.Name)
-				}
-			}
-
-			// add case
-			old.Cases = append(old.Cases, t.Cases...)
+		if _, ok := b.taskInterface[t.ServiceName]; ok {
+			return fmt.Errorf("the serviceName is exists in multiple files, duplicated service name: [%s]", t.ServiceName)
 		} else {
 			b.taskInterface[t.ServiceName] = &t
+		}
+
+		fileInfo, _ := os.Stat(file)
+
+		b.taskWithFileInfo[t.ServiceName] = &ItfTaskWithFileInfo{
+			Dirpath:      path.Dir(file),
+			Filename:     fileInfo.Name(),
+			ModifiedTime: fileInfo.ModTime(),
+			ItfTask:      b.taskInterface[t.ServiceName],
 		}
 
 		// add interface mocks case
@@ -292,8 +304,9 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 func (b *basicProvider) clearAllData() {
 	b.mux.Lock()
 	defer b.mux.Unlock()
-	b.taskInterface = make(map[string]*InterfaceTask)
+	b.taskInterface = make(map[string]*ItfTask)
 	b.mockCases = make(map[string][]*interact.ImposterCase)
+	b.taskWithFileInfo = make(map[string]*ItfTaskWithFileInfo)
 }
 
 func (b *basicProvider) clearGlobalMock() {

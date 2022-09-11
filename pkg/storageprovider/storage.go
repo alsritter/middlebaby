@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package storageprovider
 
 import (
@@ -17,25 +34,6 @@ type Config struct {
 	EnableDocker bool  `json:"enableDocker"`
 	Mysql        Mysql `yaml:"mysql"`
 	Redis        Redis `yaml:"redis"`
-}
-
-type Mysql struct {
-	Enabled  bool   `yaml:"enabled"`
-	Port     string `yaml:"port"`
-	Host     string `yaml:"host"`
-	Database string `yaml:"database"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Local    string `yaml:"local"`
-	Charset  string `yaml:"charset"`
-}
-
-type Redis struct {
-	Enabled bool   `yaml:"enabled"`
-	Port    string `yaml:"port"`
-	Host    string `yaml:"host"`
-	Auth    string `yaml:"auth"`
-	DB      int    `yaml:"db"`
 }
 
 func NewConfig() *Config {

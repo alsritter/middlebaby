@@ -49,6 +49,7 @@ func RunServer() error {
 	http.HandleFunc("/sql", ExtensionSQL)
 	http.HandleFunc("/redis", ExtensionRedis)
 	http.HandleFunc("/add", ExtensionAdd)
+	http.HandleFunc("/single-file", ExtensionGetFile)
 	return http.ListenAndServe(":8011", nil) //TODO: add flag...
 }
 
@@ -92,4 +93,23 @@ func ExtensionAdd(w http.ResponseWriter, r *http.Request) {
 	a, _ := strconv.Atoi(query.Get("a"))
 	b, _ := strconv.Atoi(query.Get("b"))
 	w.Write([]byte(fmt.Sprint("sum: ", a+b)))
+}
+
+func ExtensionGetFile(w http.ResponseWriter, r *http.Request) {
+	// get file
+	resp, err := http.Get("https://example.org/getfile?filename=test.txt") // the url need mock.
+	if err != nil {
+		fmt.Println("err01: ", err)
+		return
+	}
+
+	bd, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("err02: ", err)
+		return
+	}
+
+	fmt.Printf("%s\n", bd)
+
+	w.Write(bd)
 }

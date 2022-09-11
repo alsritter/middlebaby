@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package web
 
 import (
@@ -82,8 +99,12 @@ func (w *WebService) Start(ctx context.Context, cancelFunc context.CancelFunc, w
 	r := gin.Default()
 	w.api_v1.Register(r)
 	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", w.cfg.WebServicePort),
-		Handler:        handlers.CORS()(r),
+		Addr: fmt.Sprintf(":%d", w.cfg.WebServicePort),
+		Handler: handlers.CORS(
+			handlers.AllowedMethods([]string{"GET", "POST", "PUT"}),
+			handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Type", "Content-Language", "Origin"}),
+			handlers.AllowedOrigins([]string{"*"}),
+		)(r),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,

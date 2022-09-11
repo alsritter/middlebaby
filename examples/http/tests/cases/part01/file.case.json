@@ -1,0 +1,48 @@
+{
+  "protocol": "http",
+  "serviceMethod": "GET",
+  "serviceName": "single file",
+  "serviceDescription": "Test download single file",
+  "servicePath": "http://localhost:8011/single-file",
+  "serviceProtoFile": "",
+  "setup": [],
+  "mocks": [],
+  "teardown": [],
+  "cases": [
+    {
+      "name": "download single file success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/getfile",
+            "query": {
+              "filename": ["test.txt"]
+            },
+            "header": {},
+            "data": ""
+          },
+          "response": {
+            "body": "@file:./tests/testdata/test.txt"
+          }
+        }
+      ],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": "The is test file content~"
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    }
+  ]
+}

@@ -1,3 +1,20 @@
+/*
+ Copyright (C) 2022 alsritter
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package taskserver
 
 import (
@@ -5,18 +22,18 @@ import (
 	"fmt"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 
 	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
-	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
 type RunTaskReply struct {
-	Status       int32
-	FailedReason string
+	Status       int32  `yaml:"status" json:"status"`
+	FailedReason string `yaml:"failedReason" json:"failedReason"`
 }
 
 type Config struct {
@@ -42,7 +59,6 @@ func (c *Config) Validate() error {
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
-	GetAllTaskCases(context.Context) ([]*caseprovider.InterfaceTask, error)
 	RunSingleTaskCase(ctx context.Context, itfName, caseName string) (RunTaskReply, error)
 }
 
@@ -71,11 +87,6 @@ func New(log logger.Logger, cfg *Config,
 		pluginRegistry: pluginRegistry,
 		Logger:         log.NewLogger("task"),
 	}
-}
-
-// GetAllTaskCases implements task.TaskServer
-func (t *taskService) GetAllTaskCases(context.Context) ([]*caseprovider.InterfaceTask, error) {
-	return t.caseProvider.GetAllItf(), nil
 }
 
 // RunSingleTaskCase implements task.TaskServer
