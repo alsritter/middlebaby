@@ -1,4 +1,9 @@
-export interface InterfaceTask {
+export interface ItfTaskWithFileInfo extends ItfTask  {
+  dirpath: string;
+  filename: string;
+}
+
+export interface ItfTask {
   protocol: string
   serviceName: string
   serviceMethod: string
@@ -63,6 +68,7 @@ export interface Case {
   request: Request
   assert: Assert
   teardown: Teardown[]
+  runStatus: any
 }
 
 export interface Query {
@@ -71,7 +77,7 @@ export interface Query {
 }
 
 export interface Assert {
-  Response: AssertResponse
+  response: AssertResponse
   otherAsserts?: OtherAssert[]
 }
 
