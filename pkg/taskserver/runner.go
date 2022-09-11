@@ -206,15 +206,15 @@ func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 
 func (t *taskService) imposterAssert(a *caseprovider.Assert, headerKeyVal map[string]string, statusCode int, responseBody string) error {
 	if a.Response.StatusCode != 0 {
-		if err := assert.So(t, "response status code data assertion", statusCode, a.Response.StatusCode); err != nil {
+		if err := assert.So(t, "response status code data assert", statusCode, a.Response.StatusCode); err != nil {
 			return err
 		}
 	}
 
-	if err := assert.So(t, "response header data assertion", headerKeyVal, a.Response.Header); err != nil {
+	if err := assert.So(t, "response header data assert", headerKeyVal, a.Response.Header); err != nil {
 		return err
 	}
-	if err := assert.So(t, "response body data assertion", responseBody, a.Response.Data); err != nil {
+	if err := assert.So(t, "response body data assert", responseBody, a.Response.Data); err != nil {
 		return err
 	}
 	return nil

@@ -20,9 +20,13 @@ package interact
 import (
 	"encoding/json"
 	"math/rand"
+	"net/textproto"
 	"reflect"
+	"strings"
 	"time"
 
+	"github.com/alsritter/middlebaby/pkg/util"
+	"github.com/alsritter/middlebaby/pkg/util/common"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -54,7 +58,7 @@ type Request struct {
 	Host     string              `json:"host" yaml:"host"`
 	Path     string              `json:"path" yaml:"path"`
 	Header   map[string][]string `json:"header" yaml:"header"`
-	Params   map[string]string   `json:"params" yaml:"params"`
+	Query    map[string][]string `json:"query" yaml:"query"`
 	Body     interface{}         `json:"body" yaml:"body"`
 }
 
@@ -84,21 +88,31 @@ type Response struct {
 	Delay   *ResponseDelay      `json:"delay" yaml:"delay"`
 }
 
-func (r *Response) GetBodyString() string {
-	if r.Body != nil {
-		if reflect.TypeOf(r.Body).Kind() == reflect.String {
-			return r.Body.(string)
+func (r *Response) GetByteData() ([]byte, error) {
+	strData, ok := r.Body.(string)
+	if ok {
+		// If it is a string in the form of "@file:filePath",
+		// read the contents of the file and send it as a binary stream application/octet-stream
+		if strings.HasPrefix(strData, common.StreamFilePrefix) {
+			return util.ReadStreamFile(strings.ReplaceAll(strData, common.StreamFilePrefix, ""))
 		}
 
-		if _, ok := r.Body.([]byte); ok {
-			return string(r.Body.([]byte))
-		}
+		// If it is a string in the form of "@multiFile:field:fieldName;文件名1:文件1所在地址;......文件名N:文件N所在地址",
+		// read the contents of the file and send it as a multipart/form-data
+		if strings.HasPrefix(strData, common.MultiFilePrefix) {
+			ct := textproto.MIMEHeader(r.Header).Get("Content-Type")
+			if ct != "" && ct == "multipart/form-data" {
+			} else {
+				textproto.MIMEHeader(r.Header).Set("Content-Type", "multipart/form-data")
+			}
 
-		str, _ := json.Marshal(r.Body)
-		return string(str)
+			return util.ReadMultiFile(strings.ReplaceAll(strData, common.MultiFilePrefix, ""))
+		}
+		return []byte(strData), nil
 	}
 
-	return "{}"
+	byteData, _ := json.Marshal(r.Body)
+	return byteData, nil
 }
 
 // ResponseDelay represent time delay before server responds.

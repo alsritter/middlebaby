@@ -18,10 +18,14 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"strings"
 
+	"github.com/alsritter/middlebaby/pkg/util/common"
 	"github.com/spf13/pflag"
 )
 
@@ -75,4 +79,56 @@ func SliceMapToStringMap(m map[string][]string) map[string]string {
 		out[k] = b.String()
 	}
 	return out
+}
+
+func ReadStreamFile(fileName string) ([]byte, error) {
+	buf, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file, filename: [%s], error: [%v]", fileName, err)
+	}
+	return buf, nil
+}
+
+func ReadMultiFile(fileListStr string) ([]byte, error) {
+	field, fileList, err := getFieldAndFileList(fileListStr)
+	if err != nil {
+		return nil, err
+	}
+	bodyBuf := &bytes.Buffer{}
+	bodyWrite := multipart.NewWriter(bodyBuf)
+	defer bodyWrite.Close()
+	for _, fileInfoStr := range fileList {
+		fileInfo := strings.Split(fileInfoStr, ":")
+		if len(fileInfo) != 2 {
+			return nil, fmt.Errorf("the file format is incorrect, want: [fileName:filePath], got:[%s]", fileInfo)
+		}
+		fileWrite, err := bodyWrite.CreateFormFile(field, fileInfo[0])
+		if err != nil {
+			return nil, fmt.Errorf("create FormFile error, field:[%s], fileName:[%s], error:[%v]", field, fileInfo[0], err)
+		}
+		fileData, err := ioutil.ReadFile(fileInfo[1])
+		if err != nil {
+			return nil, fmt.Errorf("read file error, fileName: [%s], err: [%v]", fileInfo[1], err)
+		}
+		_, err = fileWrite.Write(fileData)
+		if err != nil {
+			return nil, fmt.Errorf("write file to response error, fileName: [%s], err: [%v]", fileInfo[1], err)
+		}
+	}
+	return bodyBuf.Bytes(), nil
+}
+
+func getFieldAndFileList(fileListStr string) (string, []string, error) {
+	fileList := strings.Split(fileListStr, ";")
+	if len(fileList) <= 1 || !strings.HasPrefix(fileList[0], common.FileFieldPrefix) {
+		return "", nil, fmt.Errorf("the file name format is incorrect, "+
+			"want: [field:fieldName;file01:file01Path;......fileN:fileNPath;], got: [%s]", fileListStr)
+	}
+
+	if fileList[len(fileList)-1] == "" {
+		fileList = fileList[:len(fileList)-1]
+	}
+
+	field := strings.ReplaceAll(fileList[0], common.FileFieldPrefix, "")
+	return field, fileList[1:], nil
 }

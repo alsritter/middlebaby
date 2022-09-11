@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -61,6 +60,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		Path:     ctx.Req.URL.Path,
 		Header:   ctx.Req.Header,
 		Body:     body,
+		Query:    ctx.Req.URL.Query(),
 	})
 
 	if err != nil {
@@ -80,11 +80,10 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		return
 	}
 
-	var b io.ReadCloser
-	if resp.Body != nil {
-		b = ioutil.NopCloser(bytes.NewReader([]byte(resp.GetBodyString())))
-	} else {
-		b = ioutil.NopCloser(bytes.NewReader([]byte("")))
+	bd, err := resp.GetByteData()
+	if err != nil {
+		e.Error(nil, "read response body error: [%v]", err)
+		bd = []byte("")
 	}
 
 	e.Debug(nil, "mock [%v] request successful", ctx.Req.URL)
@@ -96,7 +95,7 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		ProtoMajor: ctx.Req.ProtoMajor,
 		ProtoMinor: ctx.Req.ProtoMinor,
 		Header:     resp.Header,
-		Body:       b,
+		Body:       ioutil.NopCloser(bytes.NewReader(bd)),
 	}
 }
 

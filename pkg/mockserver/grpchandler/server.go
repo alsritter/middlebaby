@@ -120,7 +120,12 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 		return s.sendError(fmt.Errorf("unable to find descriptor: %s", fullMethodName))
 	}
 
-	respBody := []byte(response.GetBodyString())
+	respBody, err := response.GetByteData()
+	if err != nil {
+		s.Error(nil, "read response body error: [%v]", err)
+		respBody = []byte("")
+	}
+
 	message := dynamic.NewMessage(mds.GetOutputType())
 	if err := message.UnmarshalJSONPB(&jsonpb.Unmarshaler{}, respBody); err != nil {
 		return s.sendError(multierror.Prefix(err, "failed to unmarshal:"))

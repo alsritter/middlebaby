@@ -17,7 +17,7 @@
         "protocol": "grpc",
         "method": "POST",
         "host": "localhost:56789",
-        "path": "/proto.OutsideService/PutData"
+        "path": "/proto.OutsideService/Putdata"
       },
       "response": {
         "header": {},
@@ -56,9 +56,9 @@
       "setup": [],
       "mocks": [],
       "request": {
-        "Header": {},
-        "Query": {},
-        "Data": {
+        "header": {},
+        "query": {},
+        "data": {
           "projectId": "00000000",
           "info": {
             "name": "John",
@@ -72,7 +72,7 @@
       },
       "assert": {
         "response": {
-          "Data": {
+          "data": {
             "activityId": "00000000-true"
           }
         },

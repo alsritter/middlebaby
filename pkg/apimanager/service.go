@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"sync"
 	"time"
@@ -32,6 +33,12 @@ import (
 	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/spf13/pflag"
+)
+
+const (
+	FormJson      = "application/json"
+	FormUrlEncode = "application/x-www-form-urlencoded"
+	FormFormData  = "multipart/form-data" //TODO: add implement
 )
 
 type Config struct {
@@ -159,16 +166,46 @@ func (m *Manager) match(req, target *interact.Request) bool {
 		return false
 	}
 
-	if err := assert.So(m, "mock params assert", target.Params, req.Params); err != nil {
-		m.Trace(nil, "mock params cannot hit expected:[%v] actual:[%v]", target.Params, req.Params)
+	if err := assert.So(m, "mock query assert", req.Query, target.Query); err != nil {
+		m.Trace(nil, "mock query cannot hit expected:[%v] actual:[%v]", target.Query, req.Query)
 		return false
 	}
 
 	if req.Body != nil && target.Body != nil {
-		if err := assert.So(m, "mock body assert", target.GetBodyString(), req.GetBodyString()); err != nil {
-			m.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.GetBodyString(), req.GetBodyString())
-			return false
+		ct := textproto.MIMEHeader(req.Header).Get("Content-Type")
+		if ct == "" {
+			ct = FormJson
+		}
+		switch ct {
+		case FormUrlEncode:
+			return m.urlEncodeCompare(target.GetBodyString(), req.GetBodyString())
+		default:
+			if err := assert.So(m, "mock body assert", req.GetBodyString(), target.GetBodyString()); err != nil {
+				m.Trace(nil, "mock body cannot hit expected:[%s] actual:[%s]", target.GetBodyString(), req.GetBodyString())
+				return false
+			}
 		}
 	}
+	return true
+}
+
+func (m *Manager) urlEncodeCompare(targetBody, reqBody string) bool {
+	reqData, err := url.ParseQuery(reqBody)
+	if err != nil {
+		m.Trace(nil, "http mock parse request body error: [%v], body: [%s]", err, reqBody)
+		return false
+	}
+
+	tgData, err := url.ParseQuery(targetBody)
+	if err != nil {
+		m.Trace(nil, "http parse mock body error: [%v], body: [%s]", err, targetBody)
+		return false
+	}
+
+	if err := assert.So(m, "http mock url encode type body assert", reqData, tgData); err != nil {
+		m.Trace(nil, "mock body cannot hit expected:[%v] actual:[%v]", tgData, reqData)
+		return false
+	}
+
 	return true
 }

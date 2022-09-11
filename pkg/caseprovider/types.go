@@ -73,9 +73,9 @@ type CaseTask struct {
 
 // CaseRequest case request data.
 type CaseRequest struct {
-	Header map[string]string
-	Query  url.Values
-	Data   interface{}
+	Header map[string]string `json:"header" yaml:"header"`
+	Query  url.Values        `json:"query" yaml:"query"`
+	Data   interface{}       `json:"data" yaml:"data"`
 }
 
 func (c *CaseRequest) BodyString() (string, error) {

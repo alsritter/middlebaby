@@ -22,8 +22,8 @@
       "setup": [],
       "mocks": [],
       "request": {
-        "Header": {},
-        "Query": {}
+        "header": {},
+        "query": {}
       },
       "assert": {
         "response": {},

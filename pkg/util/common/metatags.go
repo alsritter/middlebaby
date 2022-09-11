@@ -18,5 +18,8 @@
 package common
 
 const (
-	RegExpPrefix = "@regExp:"
+	RegExpPrefix     = "@regExp:"
+	StreamFilePrefix = "@file:"
+	MultiFilePrefix  = "@multiFile:"
+	FileFieldPrefix  = "field:"
 )
