@@ -15,15 +15,8 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package pluginregistry
+package common
 
-import "github.com/alsritter/middlebaby/pkg/caseprovider"
-
-type AssertPlugin interface {
-	Plugin
-	// GetTypeName the plugin type
-	GetTypeName() string
-
-	// Assert response and other assert commands
-	Assert(*caseprovider.Response, []caseprovider.CommonAssert) error
-}
+const (
+	RegExpPrefix = "@regExp:"
+)

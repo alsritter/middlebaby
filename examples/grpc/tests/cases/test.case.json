@@ -71,7 +71,7 @@
         }
       },
       "assert": {
-        "Response": {
+        "response": {
           "Data": {
             "activityId": "00000000-true"
           }

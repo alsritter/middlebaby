@@ -92,8 +92,8 @@ func (c *CaseRequest) BodyString() (string, error) {
 }
 
 type Command struct {
-	TypeName string   `json:"typeName"` // mysql, redis..
-	Commands []string `json:"commands"`
+	TypeName string   `json:"typeName" yaml:"typeName"` // mysql, redis..
+	Commands []string `json:"commands" yaml:"commands"`
 }
 
 type CommonAssert struct {
@@ -107,13 +107,15 @@ func (c *CommonAssert) ExpectedString() string {
 	return string(b)
 }
 
+type Response struct {
+	Header     map[string]string `json:"header" yaml:"header"`
+	Data       interface{}       `json:"data" yaml:"data"`
+	StatusCode int               `json:"statusCode" yaml:"statusCode"`
+}
+
 type Assert struct {
-	Response struct {
-		Header     map[string]string `json:"header" yaml:"header"`
-		Data       interface{}       `json:"data" yaml:"data"`
-		StatusCode int               `json:"statusCode" yaml:"statusCode"`
-	}
-	OtherAsserts []CommonAssert `json:"otherAsserts"`
+	Response     Response       `json:"response" yaml:"response"`
+	OtherAsserts []CommonAssert `json:"otherAsserts" yaml:"otherAsserts"`
 }
 
 func (a *Assert) ResponseDataString() string {

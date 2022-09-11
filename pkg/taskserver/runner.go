@@ -74,7 +74,6 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 	}
 
 	// before run command
-
 	for _, e := range envs {
 		if err := e.Run(setupCmdType[e.GetTypeName()]); err != nil {
 			return fmt.Errorf("setup command failed: %v", err)
@@ -92,7 +91,8 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 		}
 	}()
 
-	if err = t.runRequest(info, runCase); err != nil {
+	ar, err := t.runRequest(info, runCase)
+	if err != nil {
 		return err
 	}
 
@@ -102,14 +102,14 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 
 	// other assert
 	for _, a := range ass {
-		if err = a.Assert(assertCmdType[a.GetTypeName()]); err != nil {
+		if err = a.Assert(ar, assertCmdType[a.GetTypeName()]); err != nil {
 			return err
 		}
 	}
 	return
 }
 
-func (t *taskService) runRequest(info *caseprovider.TaskInfo, runCase *caseprovider.CaseTask) error {
+func (t *taskService) runRequest(info *caseprovider.TaskInfo, runCase *caseprovider.CaseTask) (*caseprovider.Response, error) {
 	// request assert
 	if info.Protocol == caseprovider.ProtocolHTTP {
 		return t.httpRequest(info, runCase)
@@ -118,7 +118,7 @@ func (t *taskService) runRequest(info *caseprovider.TaskInfo, runCase *caseprovi
 	}
 }
 
-func (t *taskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (err error) {
+func (t *taskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (*caseprovider.Response, error) {
 	// request
 	responseHeader, statusCode, responseBody, err := t.httpClient(
 		info.ServicePath,
@@ -127,7 +127,7 @@ func (t *taskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 		ct.Request.Header,
 		ct.Request.Data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// assert
@@ -144,13 +144,17 @@ func (t *taskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 	}
 
 	if err := t.imposterAssert(ct.Assert, responseKeyVal, statusCode, responseBody); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &caseprovider.Response{
+		Header:     responseKeyVal,
+		Data:       responseBody,
+		StatusCode: statusCode,
+	}, nil
 }
 
-func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (err error) {
+func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (*caseprovider.Response, error) {
 	var addHeaders []string
 	for k, v := range ct.Request.Header {
 		addHeaders = append(addHeaders, k+":"+v)
@@ -158,7 +162,7 @@ func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 
 	reqBodyStr, err := ct.Request.BodyString()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	dto := ggrpcurl.GGrpCurlDTO{
@@ -190,10 +194,14 @@ func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 	}
 
 	if err := t.imposterAssert(ct.Assert, responseKeyVal, http.StatusOK, responseBody); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &caseprovider.Response{
+		Header:     responseKeyVal,
+		Data:       responseBody,
+		StatusCode: http.StatusOK,
+	}, nil
 }
 
 func (t *taskService) imposterAssert(a *caseprovider.Assert, headerKeyVal map[string]string, statusCode int, responseBody string) error {

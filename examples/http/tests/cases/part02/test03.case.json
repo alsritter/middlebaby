@@ -26,7 +26,7 @@
         "Query": {}
       },
       "assert": {
-        "Response": {},
+        "response": {},
         "otherAsserts": [
           {
             "typeName": "redis",

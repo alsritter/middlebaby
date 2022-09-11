@@ -57,7 +57,7 @@ func (m *mysqlAssertPlugin) GetTypeName() string {
 }
 
 // Assert run mysql assertprovid.
-func (m *mysqlAssertPlugin) Assert(asserts []caseprovider.CommonAssert) error {
+func (m *mysqlAssertPlugin) Assert(_ *caseprovider.Response, asserts []caseprovider.CommonAssert) error {
 	for _, commonAssert := range asserts {
 		if result, err := m.run(commonAssert.Actual); err != nil {
 			return err

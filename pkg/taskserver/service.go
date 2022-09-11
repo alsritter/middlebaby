@@ -22,12 +22,12 @@ import (
 	"fmt"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 
 	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
-	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 

@@ -36,16 +36,6 @@ import (
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
-// RuntimeInfo contains runtime information about MB.
-type RuntimeInfo struct {
-	StartTime      time.Time `json:"startTime"`
-	CWD            string    `json:"CWD"`
-	GoroutineCount int       `json:"goroutineCount"`
-	GOMAXPROCS     int       `json:"GOMAXPROCS"`
-	GOGC           string    `json:"GOGC"`
-	GODEBUG        string    `json:"GODEBUG"`
-}
-
 type Config struct {
 	AppPath  string `yaml:"appPath"`
 	mockPort int    `yaml:"-" json:"-"`

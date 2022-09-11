@@ -52,7 +52,7 @@ func (r *redisAssertPlugin) GetTypeName() string {
 }
 
 // Assert run mysql assertprovid.
-func (r *redisAssertPlugin) Assert(asserts []caseprovider.CommonAssert) error {
+func (r *redisAssertPlugin) Assert(_ *caseprovider.Response, asserts []caseprovider.CommonAssert) error {
 	for _, commonAssert := range asserts {
 		if result, err := r.run(commonAssert.Actual); err != nil {
 			return err

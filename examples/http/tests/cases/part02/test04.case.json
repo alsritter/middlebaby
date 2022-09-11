@@ -29,7 +29,7 @@
         }
       },
       "assert": {
-        "Response": {
+        "response": {
           "data" : "sum: 4"
         }
       },

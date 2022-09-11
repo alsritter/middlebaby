@@ -23,9 +23,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-)
 
-const regExpPrefix = "@regExp:"
+	"github.com/alsritter/middlebaby/pkg/util/common"
+)
 
 func IsRegExpPattern(pattern interface{}) bool {
 	if pattern == nil {
@@ -34,7 +34,7 @@ func IsRegExpPattern(pattern interface{}) bool {
 	if reflect.TypeOf(pattern).Kind() != reflect.String {
 		return false
 	}
-	return strings.HasPrefix(pattern.(string), regExpPrefix)
+	return strings.HasPrefix(pattern.(string), common.RegExpPrefix)
 }
 
 func removeRegExpPrefix(str string) string {

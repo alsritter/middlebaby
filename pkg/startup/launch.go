@@ -23,6 +23,7 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
+	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/javascript"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/mysql"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/redis"
 	envmysql "github.com/alsritter/middlebaby/pkg/pluginregistry/envprovid/mysql"
@@ -49,7 +50,10 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, cfg *Config, lo
 
 	storageProvider := storageprovider.New(log, cfg.Storage)
 	pluginRegistry.RegisterEnvPlugin(envmysql.New(storageProvider, log), envredis.New(storageProvider, log))
-	pluginRegistry.RegisterAssertPlugin(mysql.New(storageProvider, log), redis.New(storageProvider, log))
+	pluginRegistry.RegisterAssertPlugin(
+		mysql.New(storageProvider, log),
+		redis.New(storageProvider, log),
+		javascript.New(log))
 
 	log.Info(nil, "start loading case...")
 	caseProvider, err := caseprovider.New(log, cfg.CaseProvider)
