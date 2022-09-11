@@ -43,7 +43,7 @@ type Provider interface {
 	GetCaseSetupCommand(serviceName, caseName string) []*Command
 	GetCaseTearDownCommand(serviceName, caseName string) []*Command
 
-	GetMockCasesFromGlobals() []*interact.ImposterCase
-	GetMockCasesFromItf(serviceName string) []*interact.ImposterCase
-	GetMockCasesFromCase(serviceName, caseName string) []*interact.ImposterCase
+	GetMockCasesFromGlobals() []*interact.ImposterMockCase
+	GetMockCasesFromItf(serviceName string) []*interact.ImposterMockCase
+	GetMockCasesFromCase(serviceName, caseName string) []*interact.ImposterMockCase
 }

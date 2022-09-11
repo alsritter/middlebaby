@@ -64,7 +64,7 @@ var initCmd = &cobra.Command{
 						Commands: []string{},
 					},
 				},
-				Mocks: []*interact.ImposterCase{
+				Mocks: []*interact.ImposterMockCase{
 					{
 						Request:  interact.Request{},
 						Response: interact.Response{},
@@ -81,7 +81,7 @@ var initCmd = &cobra.Command{
 						Name:        "",
 						Description: "",
 						SetUp:       []*caseprovider.Command{},
-						Mocks:       []*interact.ImposterCase{},
+						Mocks:       []*interact.ImposterMockCase{},
 						Request:     &caseprovider.CaseRequest{},
 						Assert:      &caseprovider.Assert{},
 						TearDown:    []*caseprovider.Command{},

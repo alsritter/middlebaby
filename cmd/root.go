@@ -19,9 +19,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/startup"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"github.com/spf13/cobra"
 )
 
@@ -67,21 +69,21 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
-func Setup(ctx context.Context) {
+func Setup(c context.Context) {
 	log, err := logger.New(config.Log, "main")
 	if err != nil {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	stop := util.RegisterExitHandlers(log, cancel)
-	defer cancel()
+	ctx := mbcontext.NewContext(c)
+	stop := util.RegisterExitHandlers(log, ctx.GetCancelFunc())
+	defer ctx.CancelFunc()
 
 	if err := config.Validate(); err != nil {
 		log.Fatal(nil, "failed to validate config: %s", err)
 	}
 
-	if err := startup.Startup(ctx, cancel, config, log); err != nil {
+	if err := startup.Startup(ctx, config, log, &caseprovider.BasicLoader{}); err != nil {
 		log.Fatal(nil, "serve startup fail: %s", err)
 	}
 

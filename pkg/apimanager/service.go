@@ -65,9 +65,9 @@ type Provider interface {
 }
 
 type Manager struct {
-	caseApis   []*interact.ImposterCase
-	itfApis    []*interact.ImposterCase
-	globalApis []*interact.ImposterCase
+	caseApis   []*interact.ImposterMockCase
+	itfApis    []*interact.ImposterMockCase
+	globalApis []*interact.ImposterMockCase
 	cfg        *Config
 	logger.Logger
 	lock         sync.RWMutex
@@ -79,9 +79,9 @@ func New(log logger.Logger, cfg *Config, caseProvider caseprovider.Provider) Pro
 		cfg:          cfg,
 		caseProvider: caseProvider,
 		Logger:       log.NewLogger("proto"),
-		caseApis:     make([]*interact.ImposterCase, 0),
-		itfApis:      make([]*interact.ImposterCase, 0),
-		globalApis:   make([]*interact.ImposterCase, 0),
+		caseApis:     make([]*interact.ImposterMockCase, 0),
+		itfApis:      make([]*interact.ImposterMockCase, 0),
+		globalApis:   make([]*interact.ImposterMockCase, 0),
 	}
 }
 
@@ -100,7 +100,7 @@ func (m *Manager) MockResponse(ctx context.Context, request *interact.Request) (
 }
 
 // MatchAPI is used to match MockAPI
-func (m *Manager) MatchAPI(req *interact.Request) (*interact.ImposterCase, bool) {
+func (m *Manager) MatchAPI(req *interact.Request) (*interact.ImposterMockCase, bool) {
 	m.lock.RLock()
 	caseApis := m.caseApis
 	itfApis := m.itfApis
@@ -140,9 +140,9 @@ func (m *Manager) LoadCaseEnv(itfName, caseName string) {
 func (m *Manager) ClearCaseEnv() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	m.globalApis = make([]*interact.ImposterCase, 0)
-	m.caseApis = make([]*interact.ImposterCase, 0)
-	m.itfApis = make([]*interact.ImposterCase, 0)
+	m.globalApis = make([]*interact.ImposterMockCase, 0)
+	m.caseApis = make([]*interact.ImposterMockCase, 0)
+	m.itfApis = make([]*interact.ImposterMockCase, 0)
 }
 
 func (m *Manager) match(req, target *interact.Request) bool {

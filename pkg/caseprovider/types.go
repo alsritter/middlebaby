@@ -54,21 +54,21 @@ type TaskInfo struct {
 // ItfTask interface level.
 type ItfTask struct {
 	*TaskInfo
-	SetUp    []*Command               `json:"setup" yaml:"setUp"`
-	Mocks    []*interact.ImposterCase `json:"mocks" yaml:"mocks"`
-	TearDown []*Command               `json:"teardown" yaml:"teardown"`
-	Cases    []*CaseTask              `json:"cases" yaml:"cases"`
+	SetUp    []*Command                   `json:"setup" yaml:"setUp"`
+	Mocks    []*interact.ImposterMockCase `json:"mocks" yaml:"mocks"`
+	TearDown []*Command                   `json:"teardown" yaml:"teardown"`
+	Cases    []*CaseTask                  `json:"cases" yaml:"cases"`
 }
 
 // CaseTask case level
 type CaseTask struct {
-	Name        string                   `json:"name" yaml:"name"`
-	Description string                   `json:"description" yaml:"description"`
-	SetUp       []*Command               `json:"setup" yaml:"setup"`
-	Mocks       []*interact.ImposterCase `json:"mocks" yaml:"mocks"`
-	Request     *CaseRequest             `json:"request" yaml:"request"`
-	Assert      *Assert                  `json:"assert" yaml:"assert"`
-	TearDown    []*Command               `json:"teardown" yaml:"teardown"`
+	Name        string                       `json:"name" yaml:"name"`
+	Description string                       `json:"description" yaml:"description"`
+	SetUp       []*Command                   `json:"setup" yaml:"setup"`
+	Mocks       []*interact.ImposterMockCase `json:"mocks" yaml:"mocks"`
+	Request     *CaseRequest                 `json:"request" yaml:"request"`
+	Assert      *Assert                      `json:"assert" yaml:"assert"`
+	TearDown    []*Command                   `json:"teardown" yaml:"teardown"`
 }
 
 // CaseRequest case request data.

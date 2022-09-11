@@ -24,7 +24,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/mockserver/grpchandler"
@@ -34,6 +33,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -62,7 +62,7 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 // Provider defines the mock server interface
 type Provider interface {
 	GetPort() int
-	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	Start(ctx *mbcontext.Context) error
 }
 
 type MockServe struct {
@@ -94,15 +94,15 @@ func (m *MockServe) GetPort() int {
 	return m.cfg.MockPort
 }
 
-func (m *MockServe) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
-	if err := m.grpcProvider.Init(ctx, cancelFunc, wg); err != nil {
+func (m *MockServe) Start(ctx *mbcontext.Context) error {
+	if err := m.grpcProvider.Init(ctx); err != nil {
 		return err
 	}
 
 	m.grpcServer = m.grpcProvider.GetServer()
 	m.httpServer = m.httpProvider.GetServer()
 
-	util.StartServiceAsync(ctx, m, cancelFunc, wg, func() error {
+	util.StartServiceAsync(ctx, m, func() error {
 		return m.start()
 	}, func() error {
 		return m.close()

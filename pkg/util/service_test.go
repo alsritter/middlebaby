@@ -19,18 +19,17 @@ package util
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 )
 
 func TestStartServiceAsync(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := mbcontext.NewContext(context.Background())
 	clog := logger.NewDefault("test")
-	var wg sync.WaitGroup
-	StartServiceAsync(ctx, clog, cancel, &wg, func() error {
+	StartServiceAsync(ctx, clog, func() error {
 		// Here is the initialization project
 		clog.Info(nil, "TestServer Starting...")
 		return nil
@@ -43,8 +42,7 @@ func TestStartServiceAsync(t *testing.T) {
 	time.Sleep(time.Second * 1)
 
 	// close.
-	cancel()
-
+	ctx.CancelFunc()
 	time.Sleep(time.Second * 2)
 }
 

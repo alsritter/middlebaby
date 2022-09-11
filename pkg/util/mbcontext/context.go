@@ -15,36 +15,48 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package context
+package mbcontext
 
 import (
 	"context"
 	"sync"
-	"time"
 )
 
 type Context struct {
-	wg *sync.WaitGroup
+	context.Context
+	wg     *sync.WaitGroup
+	cancel context.CancelFunc
 }
 
-func New(wg *sync.WaitGroup) context.Context { return &Context{wg: wg} }
-
-// Deadline implements context.Context
-func (*Context) Deadline() (deadline time.Time, ok bool) {
-	panic("unimplemented")
+type contextOptions struct {
 }
 
-// Done implements context.Context
-func (*Context) Done() <-chan struct{} {
-	panic("unimplemented")
+// ContextOption sets options such as Isolate and Global Template to the NewContext
+type ContextOption interface {
+	apply(*contextOptions)
 }
 
-// Err implements context.Context
-func (*Context) Err() error {
-	panic("unimplemented")
+func NewContext(ctx context.Context) *Context {
+	c, cancel := context.WithCancel(ctx)
+	return &Context{wg: &sync.WaitGroup{}, Context: c, cancel: cancel}
 }
 
-// Value implements context.Context
-func (*Context) Value(key interface{}) interface{} {
-	panic("unimplemented")
+func (c *Context) GetCancelFunc() context.CancelFunc {
+	return c.cancel
+}
+
+func (c *Context) CancelFunc() {
+	c.cancel()
+}
+
+func (c *Context) AddService(n int) {
+	c.wg.Add(n)
+}
+
+func (c *Context) DoneService() {
+	c.wg.Done()
+}
+
+func (c *Context) Wait() {
+	c.wg.Wait()
 }

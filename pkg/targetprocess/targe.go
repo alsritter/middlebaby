@@ -18,13 +18,11 @@
 package targetprocess
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 
@@ -34,10 +32,12 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 )
 
 type Config struct {
 	AppPath  string `yaml:"appPath"`
+	Env      []Env  `json:"env"`
 	mockPort int    `yaml:"-" json:"-"`
 }
 
@@ -65,23 +65,23 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 
 // Provider defines the target process interface
 type Provider interface {
-	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	Start(ctx *mbcontext.Context) error
 	GetRuntimeInfo() *RuntimeInfo
 }
 
 type TargetProcess struct {
 	cfg     *Config
 	command *exec.Cmd
-	log     logger.Logger
-	cwd     string    // current working directory
-	birth   time.Time // service start time
+	logger.Logger
+	cwd   string    // current working directory
+	birth time.Time // service start time
 }
 
 func New(log logger.Logger, cfg *Config, mock mockserver.Provider) Provider {
 	cfg.mockPort = mock.GetPort()
 	return &TargetProcess{
-		cfg: cfg,
-		log: log.NewLogger("target"),
+		cfg:    cfg,
+		Logger: log.NewLogger("target"),
 	}
 }
 
@@ -98,8 +98,8 @@ func (t *TargetProcess) GetRuntimeInfo() *RuntimeInfo {
 }
 
 // Start the service to be tested
-func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
-	util.StartServiceAsync(ctx, t.log, cancelFunc, wg, func() error {
+func (t *TargetProcess) Start(ctx *mbcontext.Context) error {
+	util.StartServiceAsync(ctx, t, func() error {
 		if _, err := os.Stat(t.cfg.AppPath); err != nil {
 			return fmt.Errorf("target app err: %v", err)
 		}
@@ -111,6 +111,13 @@ func (t *TargetProcess) Start(ctx context.Context, cancelFunc context.CancelFunc
 			cwd = "<error retrieving current working directory>"
 		}
 		t.cwd = cwd
+
+		for _, env := range t.cfg.Env {
+			t.Debug(nil, "setting environment variables [%+v]", env)
+			if err := os.Setenv(env.Name, env.Value); err != nil {
+				t.Error(nil, "setting environment variable: [%+v] error: [%v]", env, err)
+			}
+		}
 
 		// preparing to start service
 		t.command = exec.Command(t.cfg.AppPath)

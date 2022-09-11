@@ -65,9 +65,11 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 type basicProvider struct {
 	cfg *Config
 	logger.Logger
+	caseloader CaseLoader
+
 	// key: serviceName
 	taskInterface map[string]*ItfTask
-	mockCases     map[string][]*interact.ImposterCase
+	mockCases     map[string][]*interact.ImposterMockCase
 
 	taskWithFileInfo map[string]*ItfTaskWithFileInfo // serviceName relative file info.
 
@@ -79,13 +81,14 @@ type basicProvider struct {
 	mux sync.RWMutex
 }
 
-func New(log logger.Logger, cfg *Config) (Provider, error) {
+func New(log logger.Logger, cfg *Config, caseloader CaseLoader) (Provider, error) {
 	b := &basicProvider{
 		cfg:              cfg,
 		Logger:           log.NewLogger("case"),
+		caseloader:       caseloader,
 		taskInterface:    make(map[string]*ItfTask),
 		taskWithFileInfo: make(map[string]*ItfTaskWithFileInfo),
-		mockCases:        make(map[string][]*interact.ImposterCase),
+		mockCases:        make(map[string][]*interact.ImposterMockCase),
 	}
 
 	return b, b.init()
@@ -210,7 +213,7 @@ func (b *basicProvider) GetCaseTearDownCommand(serviceName, caseName string) (cm
 }
 
 // GetMockCasesFromCase implements Provider
-func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms []*interact.ImposterCase) {
+func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms []*interact.ImposterMockCase) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if itf, ok := b.taskInterface[serviceName]; ok {
@@ -227,7 +230,7 @@ func (b *basicProvider) GetMockCasesFromCase(serviceName, caseName string) (ms [
 }
 
 // GetMockCasesFromItf implements Provider
-func (b *basicProvider) GetMockCasesFromItf(serviceName string) (ms []*interact.ImposterCase) {
+func (b *basicProvider) GetMockCasesFromItf(serviceName string) (ms []*interact.ImposterMockCase) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if itf, ok := b.taskInterface[serviceName]; ok {
@@ -236,7 +239,7 @@ func (b *basicProvider) GetMockCasesFromItf(serviceName string) (ms []*interact.
 	return
 }
 
-func (b *basicProvider) GetMockCasesFromGlobals() []*interact.ImposterCase {
+func (b *basicProvider) GetMockCasesFromGlobals() []*interact.ImposterMockCase {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	return b.mockCases[globalCaseID]
