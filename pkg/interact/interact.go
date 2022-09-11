@@ -41,7 +41,6 @@ const (
 
 // ImposterMockCase define an imposter structure (a mock case)
 type ImposterMockCase struct {
-	Id       string   `json:"-"`
 	Request  Request  `json:"request" yaml:"request"`
 	Response Response `json:"response" yaml:"response"`
 }
