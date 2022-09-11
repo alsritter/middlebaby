@@ -8,6 +8,7 @@
         <!-- 这层显示全部的接口-->
         <el-table
           :data="props.row.itfs"
+          table-layout="auto"
           style="background-color: rgb(232, 228, 175)"
           :header-cell-style="{
             background: 'rgb(169 203 162)',
@@ -17,14 +18,13 @@
             background: 'rgb(225 237 235)'
           }"
         >
-          <el-table-column prop="protocol" label="协议类型" width="120" />
-          <el-table-column prop="serviceMethod" label="请求类型" width="120" />
-          <el-table-column prop="serviceName" label="接口/服务名" width="320" />
-          <el-table-column prop="servicePath" label="接口路径" width="320" />
+          <el-table-column prop="protocol" label="协议类型"/>
+          <el-table-column prop="serviceMethod" label="请求类型"/>
+          <el-table-column prop="serviceName" label="接口/服务名"/>
+          <el-table-column prop="servicePath" label="接口路径"/>
           <el-table-column
             prop="serviceDescription"
             label="接口描述"
-            width="300"
           />
           <!-- 显示接口下面的全部用例 -->
           <el-table-column type="expand" class="itf-case-type">
@@ -40,20 +40,19 @@
                   background: 'rgb(253 235 251)'
                 }"
               >
-                <el-table-column prop="name" label="用例名称" width="320" />
+                <el-table-column prop="name" label="用例名称" />
                 <el-table-column
                   prop="description"
                   label="用例描述"
-                  width="200"
                 />
                 <!-- 运行状态 -->
-                <el-table-column label="执行状态" width="420">
+                <el-table-column label="执行状态">
                   <template #default="scope">
                     <span v-text="getRunStatus(scope.row)"></span>
                   </template>
                 </el-table-column>
                 <!-- 操作 -->
-                <el-table-column label="Operations">
+                <el-table-column label="Operations"  width="220">
                   <template #default="scope">
                     <el-button size="small" @click="showDetails(scope.row)"
                       >显示详情</el-button
@@ -84,9 +83,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { ItfTaskWithFileInfo, Case } from '@/types/InterfaceTask'
-import ArrayUtils from '@/utils/array'
+import bus from '@/libs/bus'
 import ResponseData from '@/types/ResponseData'
 import CaseTaskDataService from '@/services/CaseTaskDataService'
 
@@ -100,11 +99,17 @@ type RunTaskReply = {
   failedReason: string
 }
 
+const receiver = defineProps({
+  tableData: {
+    default: [] as TbType[]
+  }
+})
+
 const runStatusMap = ref(new Map<string, RunTaskReply>())
 const search = ref('')
-const tableData = ref([] as TbType[])
+// const tableData = ref([] as TbType[])
 const filterTableData = computed(() => {
-  return tableData.value.filter((data) => {
+  return receiver.tableData.filter((data) => {
     if (!search.value) {
       return true
     }
@@ -120,13 +125,8 @@ const filterTableData = computed(() => {
         }
       }
     }
-
     return false
   })
-})
-
-onMounted(() => {
-  refersList()
 })
 
 function getRunStatus(row: Case) {
@@ -142,29 +142,8 @@ function getRunStatus(row: Case) {
   }
 }
 
-function refersList() {
-  CaseTaskDataService.getAll()
-    .then((response: ResponseData) => {
-      let arr: ItfTaskWithFileInfo[] = response.data
-      let tbData = [] as TbType[]
-
-      ArrayUtils.groupMapBy(arr, (item) => item.dirpath)?.forEach((v, k) => {
-        tbData.push({
-          // dir: k.substring(k.lastIndexOf('/') + 1),
-          dir: k,
-          itfs: v
-        })
-      })
-
-      tableData.value.push(...tbData)
-    })
-    .catch((e: Error) => {
-      console.error(e)
-    })
-}
-
-function showDetails(row: ItfTaskWithFileInfo) {
-  console.log(row)
+function showDetails(row: Case) {
+  bus.emit('caseDetail', JSON.stringify(row, null, 2))
 }
 
 function refreshRunStatus(c: {
