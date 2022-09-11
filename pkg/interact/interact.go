@@ -39,15 +39,15 @@ const (
 	ProtocolGRPC Protocol = "GRPC"
 )
 
-// ImposterCase define an imposter structure (a mock case)
-type ImposterCase struct {
+// ImposterMockCase define an imposter structure (a mock case)
+type ImposterMockCase struct {
 	Id       string   `json:"-"`
 	Request  Request  `json:"request" yaml:"request"`
 	Response Response `json:"response" yaml:"response"`
 }
 
 // Delay returns delay for response that user can specify in imposter config
-func (i *ImposterCase) Delay() time.Duration {
+func (i *ImposterMockCase) Delay() time.Duration {
 	return i.Response.Delay.GetDelay()
 }
 

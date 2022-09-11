@@ -18,31 +18,27 @@
 package util
 
 import (
-	"context"
-	"sync"
-
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 )
 
 // StartServiceAsync is used to start service async
-func StartServiceAsync(ctx context.Context, log logger.Logger, cancelFunc context.CancelFunc, wg *sync.WaitGroup,
+func StartServiceAsync(ctx *mbcontext.Context, log logger.Logger,
 	serveFn func() error, stopFn func() error) {
 	if serveFn == nil {
 		return
 	}
 
-	wg.Add(1)
+	ctx.AddService(1)
 	go func() {
-		defer wg.Done()
+		defer ctx.DoneService()
 
 		log.Info(nil, "starting service")
 		go func() {
 			if err := serveFn(); err != nil {
 				log.Error(nil, "error serving service: %s", err)
 			}
-			if cancelFunc != nil {
-				cancelFunc()
-			}
+			ctx.CancelFunc()
 		}()
 
 		<-ctx.Done()

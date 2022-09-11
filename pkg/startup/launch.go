@@ -18,9 +18,6 @@
 package startup
 
 import (
-	"context"
-	"sync"
-
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/javascript"
@@ -37,26 +34,26 @@ import (
 	"github.com/alsritter/middlebaby/pkg/targetprocess"
 	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 )
 
-func Startup(ctx context.Context, cancelFunc context.CancelFunc, cfg *Config, log logger.Logger) error {
-	// TODO: remove this wg, wrap it in context.
-	var wg sync.WaitGroup
-
+func Startup(ctx *mbcontext.Context, cfg *Config, log logger.Logger, loader caseprovider.CaseLoader) error {
 	pluginRegistry, err := pluginregistry.New(log, cfg.PluginRegistry)
 	if err != nil {
 		return err
 	}
 
 	storageProvider := storageprovider.New(log, cfg.Storage)
-	pluginRegistry.RegisterEnvPlugin(envmysql.New(storageProvider, log), envredis.New(storageProvider, log))
+	pluginRegistry.RegisterEnvPlugin(
+		envmysql.New(storageProvider, log),
+		envredis.New(storageProvider, log))
 	pluginRegistry.RegisterAssertPlugin(
 		mysql.New(storageProvider, log),
 		redis.New(storageProvider, log),
 		javascript.New(log))
 
 	log.Info(nil, "start loading case...")
-	caseProvider, err := caseprovider.New(log, cfg.CaseProvider)
+	caseProvider, err := caseprovider.New(log, cfg.CaseProvider, loader)
 	if err != nil {
 		return err
 	}
@@ -70,7 +67,6 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, cfg *Config, lo
 	log.Info(nil, "loaded proto file successfully")
 
 	apiManager := apimanager.New(log, cfg.ApiManager, caseProvider)
-
 	mockServer := mockserver.New(log, cfg.MockServer, apiManager, protoProvider)
 	taskServer := taskserver.New(log, cfg.TaskService, caseProvider, protoProvider, apiManager, pluginRegistry)
 	targetProcess := targetprocess.New(log, cfg.TargetProcess, mockServer)
@@ -78,20 +74,20 @@ func Startup(ctx context.Context, cancelFunc context.CancelFunc, cfg *Config, lo
 	webService := web.New(log, cfg.WebService, apiManager, caseProvider, protoProvider, taskServer, targetProcess)
 
 	log.Info(nil, "* start to start mockServer")
-	if err = mockServer.Start(ctx, cancelFunc, &wg); err != nil {
+	if err = mockServer.Start(ctx); err != nil {
 		return err
 	}
 
 	log.Info(nil, "* start to start webService")
-	if err = webService.Start(ctx, cancelFunc, &wg); err != nil {
+	if err = webService.Start(ctx); err != nil {
 		return err
 	}
 
 	log.Info(nil, "* start to start targetProcess")
-	if err = targetProcess.Start(ctx, cancelFunc, &wg); err != nil {
+	if err = targetProcess.Start(ctx); err != nil {
 		return err
 	}
 
-	wg.Wait()
+	ctx.Wait()
 	return nil
 }

@@ -46,7 +46,7 @@
   "cases": [
     {
       "name": "first case-fail",
-      "description": "",
+      "description": "Test cases that will fail~",
       "setup": [],
       "mocks": [],
       "request": {

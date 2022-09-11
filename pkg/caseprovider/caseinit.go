@@ -18,10 +18,7 @@
 package caseprovider
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -29,7 +26,6 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/util/file"
-	"github.com/flynn/json5"
 	"github.com/radovskyb/watcher"
 )
 
@@ -115,26 +111,12 @@ func (b *basicProvider) loadCaseFiles() error {
 	defer b.mux.Unlock()
 
 	for _, file := range b.taskFiles {
-		fb, err := ioutil.ReadFile(file)
-		if errors.Is(err, os.ErrNotExist) {
+		t, err := b.caseloader.LoadItf(file)
+		if err != nil {
+			b.Error(nil, "[%s] loading failed, err: [%v]", file, err)
 			continue
 		}
-
-		if err != nil {
-			return fmt.Errorf("read file: %s error: %v", file, err)
-		}
-
-		if err != nil {
-			b.Error(nil, "gets the taskserver file %s service type error: %v \n", file, err)
-			continue
-		}
-
-		var t ItfTask
-		if err := json5.Unmarshal(fb, &t); err != nil {
-			return fmt.Errorf("serialization %s file error: %v", file, err)
-		}
-
-		if err := b.checkItfInfo(*t.TaskInfo); err != nil {
+		if err := b.checkItfInfo(t.TaskInfo); err != nil {
 			return err
 		}
 
@@ -150,7 +132,7 @@ func (b *basicProvider) loadCaseFiles() error {
 		if _, ok := b.taskInterface[t.ServiceName]; ok {
 			return fmt.Errorf("the serviceName is exists in multiple files, duplicated service name: [%s]", t.ServiceName)
 		} else {
-			b.taskInterface[t.ServiceName] = &t
+			b.taskInterface[t.ServiceName] = t
 		}
 
 		fileInfo, _ := os.Stat(file)
@@ -171,7 +153,7 @@ func (b *basicProvider) loadCaseFiles() error {
 }
 
 // Check whether the file is correct.
-func (b *basicProvider) checkItfInfo(info TaskInfo) error {
+func (b *basicProvider) checkItfInfo(info *TaskInfo) error {
 	if info.ServiceName == globalCaseID {
 		return fmt.Errorf("interface name cannot be %s", globalCaseID)
 	}
@@ -276,26 +258,9 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 	b.mux.Lock()
 	defer b.mux.Unlock()
 
-	if !filepath.IsAbs(filePath) {
-		if fp, err := filepath.Abs(filePath); err != nil {
-			b.Error(nil, "to absolute representation path err: %s", err)
-			return
-		} else {
-			filePath = fp
-		}
-	}
-
-	file, err := os.Open(filePath)
+	imposter, err := b.caseloader.LoadGlobalMockCase(filePath)
 	if err != nil {
-		b.Error(nil, "%v: error trying to read config file: %s", err, filePath)
-	}
-
-	defer file.Close()
-	bytes, _ := ioutil.ReadAll(file)
-
-	var imposter []*interact.ImposterCase
-	if err := json.Unmarshal(bytes, &imposter); err != nil {
-		b.Error(nil, "%v: error while unmarshal configFile file %s", err, filePath)
+		b.Error(nil, "[%s]: load failed, err: [%v]", filePath, err)
 	}
 
 	b.mockCases[globalCaseID] = append(b.mockCases[globalCaseID], imposter...)
@@ -305,7 +270,7 @@ func (b *basicProvider) clearAllData() {
 	b.mux.Lock()
 	defer b.mux.Unlock()
 	b.taskInterface = make(map[string]*ItfTask)
-	b.mockCases = make(map[string][]*interact.ImposterCase)
+	b.mockCases = make(map[string][]*interact.ImposterMockCase)
 	b.taskWithFileInfo = make(map[string]*ItfTaskWithFileInfo)
 }
 

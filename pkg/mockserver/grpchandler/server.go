@@ -21,12 +21,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jhump/protoreflect/dynamic"
@@ -46,7 +46,7 @@ type mockServer struct {
 }
 
 type Provider interface {
-	Init(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	Init(ctx *mbcontext.Context) error
 	GetServer() *grpc.Server
 }
 
@@ -58,9 +58,9 @@ func New(log logger.Logger, apiManager apimanager.Provider, protoManager protoma
 	}
 }
 
-func (s *mockServer) Init(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
+func (s *mockServer) Init(ctx *mbcontext.Context) error {
 	s.Info(nil, "stating proto manager")
-	if err := s.protoManager.Start(ctx, cancelFunc, wg); err != nil {
+	if err := s.protoManager.Start(ctx); err != nil {
 		return err
 	}
 	return nil

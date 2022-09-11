@@ -18,11 +18,9 @@
 package web
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
@@ -32,6 +30,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/taskserver"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	v1 "github.com/alsritter/middlebaby/web/api/v1"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/handlers"
@@ -54,7 +53,7 @@ func (c *Config) Validate() error {
 }
 
 type Provider interface {
-	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	Start(ctx *mbcontext.Context) error
 }
 
 // RegisterFlagsWithPrefix is used to register flags
@@ -95,7 +94,7 @@ func New(log logger.Logger,
 }
 
 // Start implements Provider
-func (w *WebService) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
+func (w *WebService) Start(ctx *mbcontext.Context) error {
 	r := gin.Default()
 	w.api_v1.Register(r)
 	s := &http.Server{
@@ -111,7 +110,7 @@ func (w *WebService) Start(ctx context.Context, cancelFunc context.CancelFunc, w
 	}
 
 	w.Info(nil, "Web server started, Listen port: %d", w.cfg.WebServicePort)
-	util.StartServiceAsync(ctx, w, cancelFunc, wg, func() error {
+	util.StartServiceAsync(ctx, w, func() error {
 		if err := s.ListenAndServe(); err != http.ErrServerClosed {
 			return err
 		}

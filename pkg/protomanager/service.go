@@ -28,6 +28,7 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"github.com/alsritter/middlebaby/pkg/util/synchronization"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
@@ -57,7 +58,7 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 
 // Provider is used to read, parse and manage Proto files
 type Provider interface {
-	Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error
+	Start(ctx *mbcontext.Context) error
 	// GetMethod is used to get descriptor of specified grpc path
 	GetMethod(name string) (*desc.MethodDescriptor, bool)
 	// get proto importPaths
@@ -117,18 +118,18 @@ func (s *Manager) GetMethod(name string) (*desc.MethodDescriptor, bool) {
 	return val.(*desc.MethodDescriptor), true
 }
 
-func (s *Manager) Start(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
-	if err := s.startSynchronization(ctx, cancelFunc, wg); err != nil {
+func (s *Manager) Start(ctx *mbcontext.Context) error {
+	if err := s.startSynchronization(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Manager) startSynchronization(ctx context.Context, cancelFunc context.CancelFunc, wg *sync.WaitGroup) error {
+func (s *Manager) startSynchronization(ctx *mbcontext.Context) error {
 	if !s.cfg.SyncGitManger.Enable {
 		return nil
 	}
-	util.StartServiceAsync(ctx, s.Logger, cancelFunc, wg, func() error {
+	util.StartServiceAsync(ctx, s.Logger, func() error {
 		ticker := time.NewTicker(time.Minute * 5)
 		defer ticker.Stop()
 		for {

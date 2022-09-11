@@ -11,3 +11,8 @@ type RuntimeInfo struct {
 	GOGC           string    `json:"GOGC"`
 	GODEBUG        string    `json:"GODEBUG"`
 }
+
+type Env struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}

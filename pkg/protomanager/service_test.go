@@ -18,19 +18,18 @@
 package protomanager
 
 import (
-	"sync"
+	"context"
 	"testing"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
+	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"github.com/alsritter/middlebaby/pkg/util/synchronization"
-	"golang.org/x/net/context"
 )
 
 func TestManager_GetMethod(t *testing.T) {
 	var (
-		wg          sync.WaitGroup
-		ctx, cancel = context.WithCancel(context.Background())
-		clog        = logger.NewDefault("test")
+		ctx  = mbcontext.NewContext(context.Background())
+		clog = logger.NewDefault("test")
 	)
 
 	pms, err := New(clog, &Config{
@@ -45,7 +44,7 @@ func TestManager_GetMethod(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = pms.Start(ctx, cancel, &wg)
+	err = pms.Start(ctx)
 	if err != nil {
 		t.Error(err)
 	}
