@@ -18,30 +18,31 @@
 package caseprovider
 
 import (
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 )
 
 type Provider interface {
 	// GetAllCaseFromItfName Get all cases form the interface serviceName.
-	GetAllCaseFromItfName(serviceName string) []*CaseTask
-	GetAllCaseFromCaseName(serviceName, caseName string) *CaseTask
+	GetAllCaseFromItfName(serviceName string) []*mbcase.CaseTask
+	GetAllCaseFromCaseName(serviceName, caseName string) *mbcase.CaseTask
 
-	GetItfInfoFromItfName(serviceName string) *TaskInfo
+	GetItfInfoFromItfName(serviceName string) *mbcase.TaskInfo
 	// GetAllItfInfo Get all interface info.
-	GetAllItfInfo() []*TaskInfo
+	GetAllItfInfo() []*mbcase.TaskInfo
 	// GetAllItf Get all interface.
-	GetAllItf() []*ItfTask
+	GetAllItf() []*mbcase.ItfTask
 
 	// GetAllItfWithFileInfo  the interface that carries the file information
-	GetAllItfWithFileInfo() []*ItfTaskWithFileInfo
+	GetAllItfWithFileInfo() []*mbcase.ItfTaskWithFileInfo
 
 	// GetItfSetupCommand Get the Setup Commands of a type under the interface.
-	GetItfSetupCommand(serviceName string) []*Command
+	GetItfSetupCommand(serviceName string) []*mbcase.Command
 	// GetItfTearDownCommand Get the TearDown Commands of a type under the interface.
-	GetItfTearDownCommand(serviceName string) []*Command
+	GetItfTearDownCommand(serviceName string) []*mbcase.Command
 
-	GetCaseSetupCommand(serviceName, caseName string) []*Command
-	GetCaseTearDownCommand(serviceName, caseName string) []*Command
+	GetCaseSetupCommand(serviceName, caseName string) []*mbcase.Command
+	GetCaseTearDownCommand(serviceName, caseName string) []*mbcase.Command
 
 	GetMockCasesFromGlobals() []*interact.ImposterMockCase
 	GetMockCasesFromItf(serviceName string) []*interact.ImposterMockCase

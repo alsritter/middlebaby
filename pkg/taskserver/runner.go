@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alsritter/middlebaby/pkg/caseprovider"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/grpcurl/ext/ggrpcurl"
 )
@@ -50,7 +50,7 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 
 		setupCmdType    = make(map[string][]string)
 		teardownCmdType = make(map[string][]string)
-		assertCmdType   = make(map[string][]caseprovider.CommonAssert)
+		assertCmdType   = make(map[string][]mbcase.CommonAssert)
 	)
 
 	if info == nil || runCase == nil {
@@ -109,16 +109,16 @@ func (t *taskService) Run(ctx context.Context, itfName string, caseName string) 
 	return
 }
 
-func (t *taskService) runRequest(info *caseprovider.TaskInfo, runCase *caseprovider.CaseTask) (*caseprovider.Response, error) {
+func (t *taskService) runRequest(info *mbcase.TaskInfo, runCase *mbcase.CaseTask) (*mbcase.Response, error) {
 	// request assert
-	if info.Protocol == caseprovider.ProtocolHTTP {
+	if info.Protocol == mbcase.ProtocolHTTP {
 		return t.httpRequest(info, runCase)
 	} else {
 		return t.grpcRequest(info, runCase)
 	}
 }
 
-func (t *taskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (*caseprovider.Response, error) {
+func (t *taskService) httpRequest(info *mbcase.TaskInfo, ct *mbcase.CaseTask) (*mbcase.Response, error) {
 	// request
 	responseHeader, statusCode, responseBody, err := t.httpClient(
 		info.ServicePath,
@@ -147,14 +147,14 @@ func (t *taskService) httpRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 		return nil, err
 	}
 
-	return &caseprovider.Response{
+	return &mbcase.Response{
 		Header:     responseKeyVal,
 		Data:       responseBody,
 		StatusCode: statusCode,
 	}, nil
 }
 
-func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.CaseTask) (*caseprovider.Response, error) {
+func (t *taskService) grpcRequest(info *mbcase.TaskInfo, ct *mbcase.CaseTask) (*mbcase.Response, error) {
 	var addHeaders []string
 	for k, v := range ct.Request.Header {
 		addHeaders = append(addHeaders, k+":"+v)
@@ -197,14 +197,14 @@ func (t *taskService) grpcRequest(info *caseprovider.TaskInfo, ct *caseprovider.
 		return nil, err
 	}
 
-	return &caseprovider.Response{
+	return &mbcase.Response{
 		Header:     responseKeyVal,
 		Data:       responseBody,
 		StatusCode: http.StatusOK,
 	}, nil
 }
 
-func (t *taskService) imposterAssert(a *caseprovider.Assert, headerKeyVal map[string]string, statusCode int, responseBody string) error {
+func (t *taskService) imposterAssert(a *mbcase.Assert, headerKeyVal map[string]string, statusCode int, responseBody string) error {
 	if a.Response.StatusCode != 0 {
 		if err := assert.So(t, "response status code data assert", statusCode, a.Response.StatusCode); err != nil {
 			return err

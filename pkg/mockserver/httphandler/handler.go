@@ -27,7 +27,7 @@ import (
 	"sync"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"

@@ -20,9 +20,9 @@ package mysql
 import (
 	"fmt"
 
-	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/storageprovider"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"gorm.io/gorm"
@@ -57,7 +57,7 @@ func (m *mysqlAssertPlugin) GetTypeName() string {
 }
 
 // Assert run mysql assertprovid.
-func (m *mysqlAssertPlugin) Assert(_ *caseprovider.Response, asserts []caseprovider.CommonAssert) error {
+func (m *mysqlAssertPlugin) Assert(_ *mbcase.Response, asserts []mbcase.CommonAssert) error {
 	for _, commonAssert := range asserts {
 		if result, err := m.run(commonAssert.Actual); err != nil {
 			return err

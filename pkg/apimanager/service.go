@@ -30,7 +30,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/gorilla/mux"
 
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/spf13/pflag"
 )

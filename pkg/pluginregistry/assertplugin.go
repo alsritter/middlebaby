@@ -17,7 +17,9 @@
 
 package pluginregistry
 
-import "github.com/alsritter/middlebaby/pkg/caseprovider"
+import (
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
+)
 
 type AssertPlugin interface {
 	Plugin
@@ -25,5 +27,5 @@ type AssertPlugin interface {
 	GetTypeName() string
 
 	// Assert response and other assert commands
-	Assert(*caseprovider.Response, []caseprovider.CommonAssert) error
+	Assert(*mbcase.Response, []mbcase.CommonAssert) error
 }

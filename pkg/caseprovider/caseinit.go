@@ -24,7 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/alsritter/middlebaby/pkg/util/file"
 	"github.com/radovskyb/watcher"
 )
@@ -137,7 +138,7 @@ func (b *basicProvider) loadCaseFiles() error {
 
 		fileInfo, _ := os.Stat(file)
 
-		b.taskWithFileInfo[t.ServiceName] = &ItfTaskWithFileInfo{
+		b.taskWithFileInfo[t.ServiceName] = &mbcase.ItfTaskWithFileInfo{
 			Dirpath:      path.Dir(file),
 			Filename:     fileInfo.Name(),
 			ModifiedTime: fileInfo.ModTime(),
@@ -153,19 +154,19 @@ func (b *basicProvider) loadCaseFiles() error {
 }
 
 // Check whether the file is correct.
-func (b *basicProvider) checkItfInfo(info *TaskInfo) error {
+func (b *basicProvider) checkItfInfo(info *mbcase.TaskInfo) error {
 	if info.ServiceName == globalCaseID {
 		return fmt.Errorf("interface name cannot be %s", globalCaseID)
 	}
 
-	if info.Protocol == ProtocolGRPC && info.ServiceProtoFile == "" {
+	if info.Protocol == mbcase.ProtocolGRPC && info.ServiceProtoFile == "" {
 		return fmt.Errorf("grpc request proto file path cannot be empty")
 	}
 
 	return nil
 }
 
-func (b *basicProvider) checkCaseInfo(e *CaseTask, info TaskInfo) error {
+func (b *basicProvider) checkCaseInfo(e *mbcase.CaseTask, info mbcase.TaskInfo) error {
 	if e.Name == info.ServiceName {
 		return fmt.Errorf("case name cannot be the same as interface name %s", e.Name)
 	}
@@ -269,9 +270,9 @@ func (b *basicProvider) loadSingleImposter(filePath string) {
 func (b *basicProvider) clearAllData() {
 	b.mux.Lock()
 	defer b.mux.Unlock()
-	b.taskInterface = make(map[string]*ItfTask)
+	b.taskInterface = make(map[string]*mbcase.ItfTask)
 	b.mockCases = make(map[string][]*interact.ImposterMockCase)
-	b.taskWithFileInfo = make(map[string]*ItfTaskWithFileInfo)
+	b.taskWithFileInfo = make(map[string]*mbcase.ItfTaskWithFileInfo)
 }
 
 func (b *basicProvider) clearGlobalMock() {

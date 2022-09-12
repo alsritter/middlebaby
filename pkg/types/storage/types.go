@@ -1,4 +1,4 @@
-package storageprovider
+package storage
 
 type Mysql struct {
 	Enabled  bool   `yaml:"enabled"`

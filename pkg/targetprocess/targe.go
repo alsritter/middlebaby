@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/alsritter/middlebaby/pkg/mockserver"
+	"github.com/alsritter/middlebaby/pkg/types/target"
 
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/spf13/pflag"
@@ -36,9 +37,9 @@ import (
 )
 
 type Config struct {
-	AppPath  string `yaml:"appPath"`
-	Env      []Env  `json:"env"`
-	mockPort int    `yaml:"-" json:"-"`
+	AppPath  string       `yaml:"appPath"`
+	Env      []target.Env `json:"env"`
+	mockPort int          `yaml:"-" json:"-"`
 }
 
 func NewConfig() *Config {
@@ -66,7 +67,7 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 // Provider defines the target process interface
 type Provider interface {
 	Start(ctx *mbcontext.Context) error
-	GetRuntimeInfo() *RuntimeInfo
+	GetRuntimeInfo() *target.RuntimeInfo
 }
 
 type TargetProcess struct {
@@ -86,8 +87,8 @@ func New(log logger.Logger, cfg *Config, mock mockserver.Provider) Provider {
 }
 
 // GetRuntimeInfo implements Provider
-func (t *TargetProcess) GetRuntimeInfo() *RuntimeInfo {
-	return &RuntimeInfo{
+func (t *TargetProcess) GetRuntimeInfo() *target.RuntimeInfo {
+	return &target.RuntimeInfo{
 		StartTime:      t.birth,
 		CWD:            t.cwd,
 		GoroutineCount: runtime.NumGoroutine(),

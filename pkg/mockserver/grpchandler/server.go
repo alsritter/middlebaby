@@ -23,8 +23,8 @@ import (
 	"net/http"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"github.com/golang/protobuf/jsonpb"

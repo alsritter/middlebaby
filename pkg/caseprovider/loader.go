@@ -8,13 +8,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/flynn/json5"
 )
 
 type CaseLoader interface {
 	LoadGlobalMockCase(filePath string) ([]*interact.ImposterMockCase, error)
-	LoadItf(filePath string) (*ItfTask, error)
+	LoadItf(filePath string) (*mbcase.ItfTask, error)
 }
 
 type BasicLoader struct{}
@@ -44,7 +45,7 @@ func (l *BasicLoader) LoadGlobalMockCase(filePath string) ([]*interact.ImposterM
 	return imposter, nil
 }
 
-func (l *BasicLoader) LoadItf(filePath string) (*ItfTask, error) {
+func (l *BasicLoader) LoadItf(filePath string) (*mbcase.ItfTask, error) {
 	fb, err := ioutil.ReadFile(filePath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, err
@@ -58,7 +59,7 @@ func (l *BasicLoader) LoadItf(filePath string) (*ItfTask, error) {
 		return nil, fmt.Errorf("gets the taskserver file %s service type error: [%v]", filePath, err)
 	}
 
-	var t ItfTask
+	var t mbcase.ItfTask
 	if err := json5.Unmarshal(fb, &t); err != nil {
 		return nil, fmt.Errorf("serialization %s file error: %v", filePath, err)
 	}

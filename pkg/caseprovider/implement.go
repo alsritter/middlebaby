@@ -21,7 +21,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/spf13/pflag"
 )
@@ -68,10 +69,10 @@ type basicProvider struct {
 	caseloader CaseLoader
 
 	// key: serviceName
-	taskInterface map[string]*ItfTask
+	taskInterface map[string]*mbcase.ItfTask
 	mockCases     map[string][]*interact.ImposterMockCase
 
-	taskWithFileInfo map[string]*ItfTaskWithFileInfo // serviceName relative file info.
+	taskWithFileInfo map[string]*mbcase.ItfTaskWithFileInfo // serviceName relative file info.
 
 	// all test case files. (file absolute path)
 	taskFiles []string
@@ -86,8 +87,8 @@ func New(log logger.Logger, cfg *Config, caseloader CaseLoader) (Provider, error
 		cfg:              cfg,
 		Logger:           log.NewLogger("case"),
 		caseloader:       caseloader,
-		taskInterface:    make(map[string]*ItfTask),
-		taskWithFileInfo: make(map[string]*ItfTaskWithFileInfo),
+		taskInterface:    make(map[string]*mbcase.ItfTask),
+		taskWithFileInfo: make(map[string]*mbcase.ItfTaskWithFileInfo),
 		mockCases:        make(map[string][]*interact.ImposterMockCase),
 	}
 
@@ -95,11 +96,11 @@ func New(log logger.Logger, cfg *Config, caseloader CaseLoader) (Provider, error
 }
 
 // GetAllItfWithFileInfo implements Provider
-func (b *basicProvider) GetAllItfWithFileInfo() []*ItfTaskWithFileInfo {
+func (b *basicProvider) GetAllItfWithFileInfo() []*mbcase.ItfTaskWithFileInfo {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 
-	all := make([]*ItfTaskWithFileInfo, 0, len(b.taskWithFileInfo))
+	all := make([]*mbcase.ItfTaskWithFileInfo, 0, len(b.taskWithFileInfo))
 	for _, v := range b.taskWithFileInfo {
 		all = append(all, v)
 	}
@@ -107,10 +108,10 @@ func (b *basicProvider) GetAllItfWithFileInfo() []*ItfTaskWithFileInfo {
 }
 
 // GetAllItf implements Provider
-func (b *basicProvider) GetAllItf() []*ItfTask {
+func (b *basicProvider) GetAllItf() []*mbcase.ItfTask {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
-	all := make([]*ItfTask, 0, len(b.taskInterface))
+	all := make([]*mbcase.ItfTask, 0, len(b.taskInterface))
 	for _, v := range b.taskInterface {
 		all = append(all, v)
 	}
@@ -119,7 +120,7 @@ func (b *basicProvider) GetAllItf() []*ItfTask {
 }
 
 // GetItfInfoFromItfName implements Provider
-func (b *basicProvider) GetItfInfoFromItfName(serviceName string) *TaskInfo {
+func (b *basicProvider) GetItfInfoFromItfName(serviceName string) *mbcase.TaskInfo {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if ti, ok := b.taskInterface[serviceName]; ok {
@@ -129,7 +130,7 @@ func (b *basicProvider) GetItfInfoFromItfName(serviceName string) *TaskInfo {
 }
 
 // GetAllCaseFromCaseName implements Provider
-func (b *basicProvider) GetAllCaseFromCaseName(serviceName, caseName string) *CaseTask {
+func (b *basicProvider) GetAllCaseFromCaseName(serviceName, caseName string) *mbcase.CaseTask {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if ti, ok := b.taskInterface[serviceName]; ok {
@@ -143,7 +144,7 @@ func (b *basicProvider) GetAllCaseFromCaseName(serviceName, caseName string) *Ca
 }
 
 // GetAllCaseFromItfName implements Provider
-func (b *basicProvider) GetAllCaseFromItfName(serviceName string) []*CaseTask {
+func (b *basicProvider) GetAllCaseFromItfName(serviceName string) []*mbcase.CaseTask {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if ti, ok := b.taskInterface[serviceName]; ok {
@@ -153,7 +154,7 @@ func (b *basicProvider) GetAllCaseFromItfName(serviceName string) []*CaseTask {
 }
 
 // GetAllItfInfo implements Provider
-func (b *basicProvider) GetAllItfInfo() (infos []*TaskInfo) {
+func (b *basicProvider) GetAllItfInfo() (infos []*mbcase.TaskInfo) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	for _, t := range b.taskInterface {
@@ -163,7 +164,7 @@ func (b *basicProvider) GetAllItfInfo() (infos []*TaskInfo) {
 }
 
 // GetItfSetupCommand implements Provider
-func (b *basicProvider) GetItfSetupCommand(serviceName string) (cms []*Command) {
+func (b *basicProvider) GetItfSetupCommand(serviceName string) (cms []*mbcase.Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if itf, ok := b.taskInterface[serviceName]; ok {
@@ -173,7 +174,7 @@ func (b *basicProvider) GetItfSetupCommand(serviceName string) (cms []*Command) 
 }
 
 // GetItfTearDownCommand implements Provider
-func (b *basicProvider) GetItfTearDownCommand(serviceName string) (cms []*Command) {
+func (b *basicProvider) GetItfTearDownCommand(serviceName string) (cms []*mbcase.Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if itf, ok := b.taskInterface[serviceName]; ok {
@@ -183,7 +184,7 @@ func (b *basicProvider) GetItfTearDownCommand(serviceName string) (cms []*Comman
 }
 
 // GetCaseSetupCommand implements Provider
-func (b *basicProvider) GetCaseSetupCommand(serviceName, caseName string) (cms []*Command) {
+func (b *basicProvider) GetCaseSetupCommand(serviceName, caseName string) (cms []*mbcase.Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if itf, ok := b.taskInterface[serviceName]; ok {
@@ -198,7 +199,7 @@ func (b *basicProvider) GetCaseSetupCommand(serviceName, caseName string) (cms [
 }
 
 // GetCaseTearDownCommand implements Provider
-func (b *basicProvider) GetCaseTearDownCommand(serviceName, caseName string) (cms []*Command) {
+func (b *basicProvider) GetCaseTearDownCommand(serviceName, caseName string) (cms []*mbcase.Command) {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
 	if itf, ok := b.taskInterface[serviceName]; ok {

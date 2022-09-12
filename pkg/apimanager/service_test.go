@@ -20,7 +20,7 @@ package apimanager
 import (
 	"testing"
 
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
