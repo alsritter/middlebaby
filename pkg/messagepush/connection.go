@@ -1,13 +1,17 @@
 package messagepush
 
 import (
-	"errors"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/gorilla/websocket"
 )
+
+// reference:
+// * https://github.dev/owenliang/go-push
+// * https://www.jianshu.com/p/47876da84627
 
 type WsMessage struct {
 	messageType int
@@ -16,18 +20,17 @@ type WsMessage struct {
 
 // PushMessage 推送消息内容
 type PushMessage struct {
-	ID          int    `json:"id"`           // 编号
-	ReadFlag    int    `json:"read_flag"`    // 已读标记
-	Extra       string `json:"extra"`        // 额外信息
-	MessageType int    `json:"message_type"` // 消息类型
-	Content     string `json:"content"`      // 消息内容
-	Count       int    `json:"count"`        // 总数
+	ID          int    `json:"id" yaml:"id"`                   // 编号
+	Extra       string `json:"extra" yaml:"extra"`             // 额外信息
+	MessageType int    `json:"messageType" yaml:"messageType"` // 消息类型
+	Content     string `json:"content" yaml:"content"`         // 消息内容
 }
 
 // WsConnection 连接对象
 type WsConnection struct {
 	logger.Logger
 
+	ConnId    uint64
 	WsSocket  *websocket.Conn
 	InChan    chan *WsMessage   // 读队列
 	OutChan   chan *PushMessage // 写队列
@@ -36,11 +39,20 @@ type WsConnection struct {
 	CloseChan chan byte         // 关闭通知
 }
 
+var (
+	upGrader = websocket.Upgrader{
+		//Allow cross domain
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+)
+
 func (wsConn *WsConnection) WsReadLoop() {
 	for {
 		msgType, data, err := wsConn.WsSocket.ReadMessage()
 		if err != nil {
-			goto toError
+			goto ERR
 		}
 		req := &WsMessage{
 			msgType,
@@ -53,13 +65,13 @@ func (wsConn *WsConnection) WsReadLoop() {
 		case wsConn.InChan <- req:
 		case <-wsConn.CloseChan:
 			wsConn.Info(nil, "wsReadLoop close websocket")
-			goto toClosed
+			goto CLOSED
 		}
 	}
 
-toError:
+ERR:
 	wsConn.wsClose()
-toClosed:
+CLOSED:
 }
 
 func (wsConn *WsConnection) WsWriteLoop() {
@@ -68,34 +80,16 @@ func (wsConn *WsConnection) WsWriteLoop() {
 		//取一个应答
 		case msg := <-wsConn.OutChan:
 			if err := wsConn.WsSocket.WriteJSON(msg); err != nil {
-				goto toError
+				goto ERR
 			}
 		case <-wsConn.CloseChan:
-			goto toClosed
+			goto CLOSED
 		}
 	}
 
-toError:
+ERR:
 	wsConn.wsClose()
-toClosed:
-}
-
-func (wsConn *WsConnection) WsWrite(message PushMessage) error {
-	select {
-	case wsConn.OutChan <- &message:
-	case <-wsConn.CloseChan:
-		return errors.New("websocket closed")
-	}
-	return nil
-}
-
-func (wsConn *WsConnection) WsRead() (*WsMessage, error) {
-	select {
-	case msg := <-wsConn.InChan:
-		return msg, nil
-	case <-wsConn.CloseChan:
-	}
-	return nil, errors.New("websocket closed")
+CLOSED:
 }
 
 // ProcLoop 心跳检测
