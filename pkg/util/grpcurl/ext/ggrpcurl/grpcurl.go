@@ -116,7 +116,12 @@ func NewInvokeGRpc(dto *GGrpCurlDTO) *InvokeGRpc {
 }
 
 // Invoke 运行GGrpCurl 方法 直接发送请求
-func (i *InvokeGRpc) Invoke() (metadata.MD, string, *status.Status, error) {
+// returns
+// * header
+// * trailer
+// * outWrite
+// * Status
+func (i *InvokeGRpc) Invoke() (metadata.MD, metadata.MD, string, *status.Status, error) {
 
 	target := i.serviceAddr
 	symbol := i.serviceMethod
@@ -142,7 +147,7 @@ func (i *InvokeGRpc) Invoke() (metadata.MD, string, *status.Status, error) {
 
 	fileSource, err := grpcurl.DescriptorSourceFromProtoFiles(i.importPaths, i.protoFiles...)
 	if err != nil {
-		return nil, "", nil, fail(err, "Failed to process proto source files.")
+		return nil, nil, "", nil, fail(err, "Failed to process proto source files.")
 	}
 
 	return i.invoke(dial, verbosityLevel, fileSource, ctx, symbol, printFormattedStatus)
@@ -222,10 +227,10 @@ func (i *InvokeGRpc) invoke(
 	ctx context.Context,
 	symbol string,
 	printFormattedStatus func(w io.Writer, stat *status.Status, formatter grpcurl.Formatter),
-) (metadata.MD, string, *status.Status, error) {
+) (metadata.MD, metadata.MD, string, *status.Status, error) {
 	cc, err := dial()
 	if err != nil {
-		return nil, "", nil, err
+		return nil, nil, "", nil, err
 	}
 	defer cc.Close()
 	var in = strings.NewReader(i.data)
@@ -240,7 +245,7 @@ func (i *InvokeGRpc) invoke(
 	}
 	rf, formatter, err := grpcurl.RequestParserAndFormatter(grpcurl.Format(i.format), descSource, in, options)
 	if err != nil {
-		return nil, "", nil, fail(err, "Failed to construct request parser and formatter for %q", i.format)
+		return nil, nil, "", nil, fail(err, "Failed to construct request parser and formatter for %q", i.format)
 	}
 
 	var outWrite bytes.Buffer
@@ -253,12 +258,13 @@ func (i *InvokeGRpc) invoke(
 			VerbosityLevel: verbosityLevel,
 		},
 	}
+
 	err = grpcurl.InvokeRPC(ctx, descSource, cc, symbol, append(i.addlHeaders, i.rpcHeaders...), h, rf.Next)
 	if err != nil {
 		if errStatus, ok := status.FromError(err); ok && i.formatError {
 			h.Status = errStatus
 		} else {
-			return nil, "", nil, fail(err, "Error invoking method %q", symbol)
+			return nil, nil, "", nil, fail(err, "Error invoking method %q", symbol)
 		}
 	}
 	reqSuffix := ""
@@ -276,9 +282,9 @@ func (i *InvokeGRpc) invoke(
 	if h.Status.Code() != codes.OK {
 		var errWrite bytes.Buffer
 		printFormattedStatus(&errWrite, h.Status, formatter)
-		return h.ResponseMd, errWrite.String(), h.Status, nil
+		return h.ResponseMd, h.TrailersMd, errWrite.String(), h.Status, nil
 	}
-	return h.ResponseMd, outWrite.String(), h.Status, nil
+	return h.ResponseMd, h.TrailersMd, outWrite.String(), h.Status, nil
 }
 
 func warn(msg string, args ...interface{}) {

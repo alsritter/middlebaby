@@ -19,6 +19,7 @@ package startup
 
 import (
 	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/captureserver"
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/mockserver"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
@@ -43,6 +44,7 @@ type Config struct {
 	ProtoManager   *protomanager.Config    `yaml:"proto"`
 	PluginRegistry *pluginregistry.Config  `yaml:"plugin"`
 	WebService     *web.Config             `yaml:"web"`
+	CaptureServer  *captureserver.Config   `yaml:"capture"`
 }
 
 func NewConfig() *Config {
@@ -57,6 +59,7 @@ func NewConfig() *Config {
 		TaskService:    taskserver.NewConfig(),
 		PluginRegistry: pluginregistry.NewConfig(),
 		WebService:     web.NewConfig(),
+		CaptureServer:  captureserver.NewConfig(),
 	}
 }
 
@@ -72,6 +75,7 @@ func (c *Config) Validate() error {
 		c.TargetProcess,
 		c.PluginRegistry,
 		c.WebService,
+		c.CaptureServer,
 	)
 }
 
@@ -86,4 +90,5 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 	c.TargetProcess.RegisterFlagsWithPrefix(prefix, f)
 	c.PluginRegistry.RegisterFlagsWithPrefix(prefix, f)
 	c.WebService.RegisterFlagsWithPrefix(prefix, f)
+	c.CaptureServer.RegisterFlagsWithPrefix(prefix, f)
 }

@@ -67,6 +67,7 @@ func DescriptorSourceFromProtoFiles(importPaths []string, fileNames ...string) (
 		ImportPaths:           importPaths,
 		InferImportPaths:      len(importPaths) == 0,
 		IncludeSourceCodeInfo: true,
+		Accessor:              Accessor,
 	}
 	fds, err := p.ParseFiles(fileNames...)
 	if err != nil {

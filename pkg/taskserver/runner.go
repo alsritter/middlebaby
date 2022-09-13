@@ -177,7 +177,7 @@ func (t *taskService) grpcRequest(info *mbcase.TaskInfo, ct *mbcase.CaseTask) (*
 		ServiceMethod: info.ServicePath,
 	}
 
-	responseMD, responseBody, _, err := ggrpcurl.NewInvokeGRpc(&dto).Invoke()
+	responseMD, trailerMD, responseBody, _, err := ggrpcurl.NewInvokeGRpc(&dto).Invoke()
 	if err != nil {
 		t.Error(nil, "grpc request failed, casename: [%s], error:[%v]", ct.Name, err)
 	}
@@ -185,6 +185,7 @@ func (t *taskService) grpcRequest(info *mbcase.TaskInfo, ct *mbcase.CaseTask) (*
 	// assert
 	t.Trace(map[string]interface{}{
 		"responseMD:":     responseMD,
+		"trailerMD:":      trailerMD,
 		"responseBody:":   responseBody,
 		"Assert.Response": ct.Assert.Response,
 	}, "response message: ")

@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/alsritter/middlebaby/pkg/util"
+	"github.com/alsritter/middlebaby/pkg/util/grpcurl"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"github.com/alsritter/middlebaby/pkg/util/synchronization"
@@ -205,6 +206,7 @@ func (s *Manager) loadProto() error {
 				ImportPaths:           importPaths,
 				InferImportPaths:      len(importPaths) == 0,
 				IncludeSourceCodeInfo: true,
+				Accessor:              grpcurl.Accessor,
 			}
 			fds, err := parser.ParseFiles(relPath)
 			if err != nil {
@@ -220,7 +222,7 @@ func (s *Manager) loadProto() error {
 						}, "proto loaded")
 						_, loaded := methods.LoadOrStore(name, method)
 						if loaded {
-							s.Warn(map[string]interface{}{
+							s.Trace(map[string]interface{}{
 								"name":  name,
 								"error": "method already exists",
 							}, "failed to load method")

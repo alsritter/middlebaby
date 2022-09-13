@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alsritter/middlebaby/pkg/util/grpcurl"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
 )
@@ -70,6 +71,7 @@ func resolveFileNames(importProtoPaths []string, fileNames ...string) ([]*desc.F
 		ImportPaths:           importProtoPaths,
 		InferImportPaths:      len(importProtoPaths) == 0,
 		IncludeSourceCodeInfo: true,
+		Accessor:              grpcurl.Accessor,
 	}
 
 	var fds []*desc.FileDescriptor
@@ -101,4 +103,32 @@ func (f *fileDescriptor) FindSymbol(symbol string) (desc.Descriptor, error) {
 		}
 	}
 	return nil, fmt.Errorf("cannot find symbol: %s", symbol)
+}
+
+func FindMethod(descriptor Descriptor, svcAndMethod string) (*desc.ServiceDescriptor, string, error) {
+	svc, mth := parseSymbol(svcAndMethod)
+	dsc, err := descriptor.FindSymbol(svc)
+	if err != nil {
+		err = fmt.Errorf("cannot find grpc method: [%v]", err)
+		return nil, "", err
+	}
+
+	sd, ok := dsc.(*desc.ServiceDescriptor)
+	if !ok {
+		err = fmt.Errorf("find gRpc method: [%s] but not a method type:desc.ServiceDescriptor", svc)
+		return nil, "", err
+	}
+	return sd, mth, nil
+}
+
+func parseSymbol(svcAndMethod string) (string, string) {
+	svcAndMethod = strings.TrimPrefix(svcAndMethod, "/")
+	pos := strings.LastIndex(svcAndMethod, "/")
+	if pos < 0 {
+		pos = strings.LastIndex(svcAndMethod, ".")
+		if pos < 0 {
+			return "", ""
+		}
+	}
+	return svcAndMethod[:pos], svcAndMethod[pos+1:]
 }

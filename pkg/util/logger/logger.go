@@ -18,11 +18,10 @@
 package logger
 
 import (
-	"fmt"
+	"context"
 	"os"
-	"path"
-	"runtime"
 	"strings"
+	"time"
 
 	"github.com/spf13/pflag"
 
@@ -69,6 +68,22 @@ type Logger interface {
 	// Fatal print a message with fatal level.
 	Fatal(fields map[string]interface{}, format string, args ...interface{})
 
+	// Trace print a message with trace level.
+	TraceWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{})
+	// Debug print a message with debug level.
+	DebugWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{})
+	// Info print a message with info level.
+	InfoWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{})
+	// Warn print a message with warn level.
+	WarnWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{})
+	// Error print a message with error level.
+	ErrorWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{})
+	// Fatal print a message with fatal level.
+	FatalWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{})
+
+	// WithContext trade log.
+	WithContext(ctx context.Context) TraceLogger
+
 	// NewLogger is used to derive a new child Logger
 	NewLogger(component string) Logger
 	// SetLogLevel is used to set log level
@@ -107,6 +122,14 @@ type BasicLogger struct {
 	logger    zerolog.Logger
 }
 
+// WithContext implements Logger
+func (b *BasicLogger) WithContext(ctx context.Context) TraceLogger {
+	return &basicTraceLogger{
+		log: b,
+		ctx: ctx,
+	}
+}
+
 // NewLogger is used to derive a new child Logger
 func (b *BasicLogger) NewLogger(component string) Logger {
 	name := strings.Join([]string{b.component, component}, ".")
@@ -137,9 +160,19 @@ func (b *BasicLogger) Trace(fields map[string]interface{}, format string, args .
 	b.logger.Trace().Fields(fields).Msgf(format, args...)
 }
 
+// TraceWithTime implements Logger
+func (b *BasicLogger) TraceWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{}) {
+	b.logger.Trace().Time("log-time", logTime).Fields(fields).Msgf(format, args...)
+}
+
 // Debug Log print a message with debug level.
 func (b *BasicLogger) Debug(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Debug().Fields(fields).Msgf(format, args...)
+}
+
+// DebugWithTime implements Logger
+func (b *BasicLogger) DebugWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{}) {
+	b.logger.Debug().Time("log-time", logTime).Fields(fields).Msgf(format, args...)
 }
 
 // Info Log print a message with info level.
@@ -147,9 +180,19 @@ func (b *BasicLogger) Info(fields map[string]interface{}, format string, args ..
 	b.logger.Info().Fields(fields).Msgf(format, args...)
 }
 
+// InfoWithTime implements Logger
+func (b *BasicLogger) InfoWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{}) {
+	b.logger.Info().Time("log-time", logTime).Fields(fields).Msgf(format, args...)
+}
+
 // Warn Log print a message with warn level.
 func (b *BasicLogger) Warn(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Warn().Fields(fields).Msgf(format, args...)
+}
+
+// WarnWithTime implements Logger
+func (b *BasicLogger) WarnWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{}) {
+	b.logger.Warn().Time("log-time", logTime).Fields(fields).Msgf(format, args...)
 }
 
 // Error Log print a message with error level.
@@ -157,9 +200,19 @@ func (b *BasicLogger) Error(fields map[string]interface{}, format string, args .
 	b.logger.Error().Fields(fields).Msgf(format, args...)
 }
 
+// ErrorWithTime implements Logger
+func (b *BasicLogger) ErrorWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{}) {
+	b.logger.Error().Time("log-time", logTime).Fields(fields).Msgf(format, args...)
+}
+
 // Fatal Log print a message with fatal level.
 func (b *BasicLogger) Fatal(fields map[string]interface{}, format string, args ...interface{}) {
 	b.logger.Fatal().Fields(fields).Msgf(format, args...)
+}
+
+// FatalWithTime implements Logger
+func (b *BasicLogger) FatalWithTime(logTime time.Time, fields map[string]interface{}, format string, args ...interface{}) {
+	b.logger.Fatal().Time("log-time", logTime).Fields(fields).Msgf(format, args...)
 }
 
 // SetLogLevel is used to set log level
@@ -186,16 +239,4 @@ func (b *BasicLogger) SetLogLevel(verbosity string) {
 
 func (b *BasicLogger) GetCurrentLevel() string {
 	return b.cfg.Level
-}
-
-// CallerHook implements zerolog.Hook interface.
-type CallerHook struct{}
-
-// Run adds additional context
-func (h CallerHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-	if level > zerolog.InfoLevel {
-		if _, file, line, ok := runtime.Caller(4); ok {
-			e.Str("file", fmt.Sprintf("%s:%d", path.Base(file), line))
-		}
-	}
 }
