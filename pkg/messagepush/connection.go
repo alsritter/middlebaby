@@ -13,19 +13,6 @@ import (
 // * https://github.dev/owenliang/go-push
 // * https://www.jianshu.com/p/47876da84627
 
-type WsMessage struct {
-	messageType int
-	data        []byte
-}
-
-// PushMessage 推送消息内容
-type PushMessage struct {
-	ID          int    `json:"id" yaml:"id"`                   // 编号
-	Extra       string `json:"extra" yaml:"extra"`             // 额外信息
-	MessageType int    `json:"messageType" yaml:"messageType"` // 消息类型
-	Content     string `json:"content" yaml:"content"`         // 消息内容
-}
-
 // WsConnection 连接对象
 type WsConnection struct {
 	logger.Logger
@@ -79,7 +66,7 @@ func (wsConn *WsConnection) WsWriteLoop() {
 		select {
 		//取一个应答
 		case msg := <-wsConn.OutChan:
-			if err := wsConn.WsSocket.WriteJSON(msg); err != nil {
+			if err := wsConn.WsSocket.WriteMessage(msg.MessageType, []byte(msg.Content)); err != nil {
 				goto ERR
 			}
 		case <-wsConn.CloseChan:
