@@ -17,13 +17,15 @@ import (
 type WsConnection struct {
 	logger.Logger
 
-	ConnId    uint64
-	WsSocket  *websocket.Conn
-	InChan    chan *WsMessage   // 读队列
-	OutChan   chan *PushMessage // 写队列
-	Mutex     sync.Mutex        // 避免重复关闭通道
-	IsClosed  bool              // 是否关闭
-	CloseChan chan byte         // 关闭通知
+	ConnId            uint64
+	WsSocket          *websocket.Conn
+	InChan            chan *WsMessage   // 读队列
+	OutChan           chan *PushMessage // 写队列
+	mutex             sync.Mutex        // 避免重复关闭通道
+	IsClosed          bool              // 是否关闭
+	CloseChan         chan byte         // 关闭通知
+	isClosed          bool
+	lastHeartbeatTime time.Time // 最近一次心跳时间
 }
 
 var (
@@ -57,7 +59,7 @@ func (wsConn *WsConnection) WsReadLoop() {
 	}
 
 ERR:
-	wsConn.wsClose()
+	wsConn.Close()
 CLOSED:
 }
 
@@ -75,29 +77,41 @@ func (wsConn *WsConnection) WsWriteLoop() {
 	}
 
 ERR:
-	wsConn.wsClose()
+	wsConn.Close()
 CLOSED:
 }
 
-// ProcLoop 心跳检测
-func (wsConn *WsConnection) ProcLoop() {
-	// 启动一个goroutine 发送心跳
-	go func() {
-		for {
-			time.Sleep(50 * time.Second)
-			if err := wsConn.WsSocket.WriteMessage(websocket.PingMessage, []byte("heartbeat")); err != nil {
-				wsConn.Info(nil, "heartbeat fail [%v]", err)
-				wsConn.wsClose()
-				break
-			}
-		}
-	}()
+// 检查心跳（不需要太频繁）
+func (wsConn *WsConnection) IsAlive() bool {
+	var (
+		now = time.Now()
+	)
+
+	wsConn.mutex.Lock()
+	defer wsConn.mutex.Unlock()
+
+	// 连接已关闭 或者 太久没有心跳
+	if wsConn.isClosed || now.Sub(wsConn.lastHeartbeatTime) > 50*time.Second {
+		return false
+	}
+	return true
 }
 
-func (wsConn *WsConnection) wsClose() {
+// 更新心跳
+func (wsConn *WsConnection) KeepAlive() {
+	var (
+		now = time.Now()
+	)
+	wsConn.mutex.Lock()
+	defer wsConn.mutex.Unlock()
+	wsConn.lastHeartbeatTime = now
+}
+
+func (wsConn *WsConnection) Close() {
 	wsConn.WsSocket.Close()
-	wsConn.Mutex.Lock()
-	defer wsConn.Mutex.Unlock()
+	wsConn.mutex.Lock()
+	defer wsConn.mutex.Unlock()
+
 	if !wsConn.IsClosed {
 		wsConn.IsClosed = true
 		close(wsConn.CloseChan)

@@ -1,0 +1,11 @@
+package messagepush
+
+import "errors"
+
+var (
+	ERR_CONNECTION_CLOSED = errors.New("ERR_CONNECTION_CLOSED")
+
+	ERR_SEND_MESSAGE_FULL = errors.New("ERR_SEND_MESSAGE_FULL")
+
+	ERR_RECEIVE_MESSAGE_FULL = errors.New("ERR_RECEIVE_MESSAGE_FULL")
+)
