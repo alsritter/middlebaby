@@ -20,6 +20,7 @@ package httphandler
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -49,12 +50,13 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 		return
 	}
 
-	messagepush.SendMessage(ctx.Req)
+	messagepush.SendMessage(fmt.Sprintf("%+v", ctx.Req))
 	e.WithContext(ctx.Req.Context()).Debug(nil, "capture [%s] request [%+v]", ctx.Req.URL, ctx.Req)
 }
 
 func (e *delegateHandler) BeforeResponse(ctx *goproxy.Context, resp *http.Response, err error) {
-	messagepush.SendMessage(resp)
+
+	messagepush.SendMessage(fmt.Sprintf("%+v", resp))
 	e.WithContext(ctx.Req.Context()).Debug(nil, "capture [%v] response [%+v]", ctx.Req.URL, resp)
 }
 

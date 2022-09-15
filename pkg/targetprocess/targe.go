@@ -138,6 +138,9 @@ func (t *TargetProcess) Start(ctx *mbcontext.Context) error {
 		t.command.Stderr = os.Stderr
 		t.command.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 
+		// Remove here.
+		time.Sleep(3 * time.Second) // wait for mock server running.
+
 		if err := t.command.Run(); err != nil {
 			if _, isExist := err.(*exec.ExitError); !isExist {
 				return fmt.Errorf("failed to start the program to be tested, err: %v", err)

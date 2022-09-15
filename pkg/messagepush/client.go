@@ -1,7 +1,5 @@
 package messagepush
 
-import "encoding/json"
-
 func InitMessagePush() error {
 	if err := initWSServer(); err != nil {
 		return err
@@ -14,15 +12,10 @@ func InitMessagePush() error {
 	return nil
 }
 
-func SendMessage(val interface{}) error {
-	data, err := json.Marshal(val)
-	if err != nil {
-		return err
-	}
-
+func SendMessage(val string) error {
 	if err := g_connMgr.PushAll(&BizMessage{
 		Type: "PUSH",
-		Data: data,
+		Data: []byte(val),
 	}); err != nil {
 		return err
 	}

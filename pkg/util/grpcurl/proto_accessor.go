@@ -10,7 +10,7 @@ import (
 // TODO: support custom
 func Accessor(filename string) (io.ReadCloser, error) {
 	// 解析包内部直接引用仓库公共文件路径
-	if strings.HasPrefix(filename, "alsritter.icu") {
+	if strings.HasPrefix(filename, "git.myscrm.cn") {
 		f, err := os.Open(filename)
 		// 文件不存在尝试一级一级查找
 		if errors.Is(err, os.ErrNotExist) {

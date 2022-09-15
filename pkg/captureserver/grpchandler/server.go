@@ -110,8 +110,6 @@ func (s *captureServer) handleStream(srv interface{}, stream grpc.ServerStream) 
 		return s.sendError(stream.Context(), err)
 	}
 
-	messagepush.SendMessage(dto)
-
 	s.WithContext(stream.Context()).Debug(nil, "capture [%s] request [%+v]", fullMethodName, dto)
 	mds, trailer, responseStr, respStatus, err := ggrpcurl.NewInvokeGRpc(&dto).Invoke()
 	if err != nil {
