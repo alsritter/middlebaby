@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	G_wsServer *WsServer
+	g_wsServer *WsServer
 
 	wsUpgrader = websocket.Upgrader{
 		// 允许所有CORS跨域请求
@@ -32,11 +32,7 @@ type WsServer struct {
 	curConnId uint64
 }
 
-func (s *WsServer) Start() {
-
-}
-
-func InitWSServer() (err error) {
+func initWSServer() (err error) {
 	var (
 		mux      *http.ServeMux
 		server   *http.Server
@@ -60,7 +56,7 @@ func InitWSServer() (err error) {
 	}
 
 	// 赋值全局变量
-	G_wsServer = &WsServer{
+	g_wsServer = &WsServer{
 		server:    server,
 		curConnId: uint64(time.Now().Unix()),
 	}
@@ -84,7 +80,7 @@ func handleConnect(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// 连接唯一标识
-	connId = atomic.AddUint64(&G_wsServer.curConnId, 1)
+	connId = atomic.AddUint64(&g_wsServer.curConnId, 1)
 
 	// 初始化WebSocket的读写协程
 	wsConn = initWSConnection(logger.NewDefault("websocket"), connId, wsSocket)

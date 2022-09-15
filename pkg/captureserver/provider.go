@@ -88,8 +88,7 @@ func (m *captrueServer) Start(ctx *mbcontext.Context) error {
 }
 
 func (m *captrueServer) start() error {
-	messagepush.InitWSServer()
-	messagepush.InitConnMgr()
+	messagepush.InitMessagePush()
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", m.cfg.CapturePort))
 	if err != nil {

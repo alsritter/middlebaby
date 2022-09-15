@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 	"github.com/alsritter/middlebaby/pkg/types/interact"
 	"github.com/alsritter/middlebaby/pkg/util/grpcurl/ext/ggrpcurl"
@@ -109,6 +110,8 @@ func (s *captureServer) handleStream(srv interface{}, stream grpc.ServerStream) 
 		return s.sendError(stream.Context(), err)
 	}
 
+	messagepush.SendMessage(dto)
+
 	s.WithContext(stream.Context()).Debug(nil, "capture [%s] request [%+v]", fullMethodName, dto)
 	mds, trailer, responseStr, respStatus, err := ggrpcurl.NewInvokeGRpc(&dto).Invoke()
 	if err != nil {
@@ -131,6 +134,8 @@ func (s *captureServer) handleStream(srv interface{}, stream grpc.ServerStream) 
 	if !ok {
 		return s.sendError(stream.Context(), fmt.Errorf("unable to find descriptor: %s", fullMethodName))
 	}
+
+	messagepush.SendMessage(responseStr)
 
 	message := dynamic.NewMessage(method.GetOutputType())
 	if err := message.UnmarshalJSONPB(&jsonpb.Unmarshaler{}, []byte(responseStr)); err != nil {

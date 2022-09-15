@@ -18,7 +18,7 @@ func (wsConn *WsConnection) WSHandle() {
 	)
 
 	// 连接加入管理器, 可以推送端查找到
-	G_connMgr.AddConn(wsConn)
+	g_connMgr.AddConn(wsConn)
 
 	// 心跳检测线程
 	go wsConn.heartbeatChecker()
@@ -69,7 +69,7 @@ ERR:
 	// 确保连接关闭
 	wsConn.Close()
 	// 从连接池中移除
-	G_connMgr.DelConn(wsConn)
+	g_connMgr.DelConn(wsConn)
 	return
 }
 

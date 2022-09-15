@@ -1,7 +1,7 @@
 package messagepush
 
 var (
-	G_connMgr *ConnMgr
+	g_connMgr *ConnMgr
 )
 
 // 推送类型
@@ -43,7 +43,7 @@ type ConnMgr struct {
 	dispatchChan chan *PushJob // 待分发消息队列
 }
 
-func InitConnMgr() (err error) {
+func initConnMgr() (err error) {
 	var (
 		bucketIdx         int
 		jobWorkerIdx      int
@@ -70,7 +70,7 @@ func InitConnMgr() (err error) {
 		go connMgr.dispatchWorkerMain(dispatchWorkerIdx)
 	}
 
-	G_connMgr = connMgr
+	g_connMgr = connMgr
 	return
 }
 
