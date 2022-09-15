@@ -8,19 +8,12 @@ import (
 )
 
 // DoConnection websocket
-func InitWSConnection(log logger.Logger, connId uint64, wsSocket *websocket.Conn) (wsConnection *WsConnection) {
-	// // protocol upgrade.
-	// wsSocket, err := upGrader.Upgrade(ctx.Writer, ctx.Request, nil)
-	// if err != nil {
-	// 	log.Error(nil, "upgrade websocket fail")
-	// 	return
-	// }
-
+func initWSConnection(log logger.Logger, connId uint64, wsSocket *websocket.Conn) (wsConnection *WsConnection) {
 	wsConnection = &WsConnection{
 		Logger:            log,
 		WsSocket:          wsSocket,
 		InChan:            make(chan *WsMessage, 1000),
-		OutChan:           make(chan *PushMessage, 1000),
+		OutChan:           make(chan *WsMessage, 1000),
 		CloseChan:         make(chan byte),
 		lastHeartbeatTime: time.Now(),
 		IsClosed:          false,
@@ -31,9 +24,9 @@ func InitWSConnection(log logger.Logger, connId uint64, wsSocket *websocket.Conn
 	return
 }
 
-func (wsConn *WsConnection) SendMessage(message PushMessage) error {
+func (wsConn *WsConnection) SendMessage(message *WsMessage) error {
 	select {
-	case wsConn.OutChan <- &message:
+	case wsConn.OutChan <- message:
 	case <-wsConn.CloseChan:
 		return ERR_CONNECTION_CLOSED
 	default:

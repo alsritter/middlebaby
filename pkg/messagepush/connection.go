@@ -19,11 +19,11 @@ type WsConnection struct {
 
 	ConnId            uint64
 	WsSocket          *websocket.Conn
-	InChan            chan *WsMessage   // 读队列
-	OutChan           chan *PushMessage // 写队列
-	mutex             sync.Mutex        // 避免重复关闭通道
-	IsClosed          bool              // 是否关闭
-	CloseChan         chan byte         // 关闭通知
+	InChan            chan *WsMessage // 读队列
+	OutChan           chan *WsMessage // 写队列
+	mutex             sync.Mutex      // 避免重复关闭通道
+	IsClosed          bool            // 是否关闭
+	CloseChan         chan byte       // 关闭通知
 	isClosed          bool
 	lastHeartbeatTime time.Time // 最近一次心跳时间
 }
@@ -68,7 +68,7 @@ func (wsConn *WsConnection) WsWriteLoop() {
 		select {
 		//取一个应答
 		case msg := <-wsConn.OutChan:
-			if err := wsConn.WsSocket.WriteMessage(msg.MessageType, []byte(msg.Content)); err != nil {
+			if err := wsConn.WsSocket.WriteMessage(msg.messageType, msg.data); err != nil {
 				goto ERR
 			}
 		case <-wsConn.CloseChan:
