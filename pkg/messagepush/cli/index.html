@@ -4,13 +4,16 @@
     <meta charset="utf-8">
     <script>
         window.addEventListener("load", function(evt) {
-            var output = document.getElementById("output");
-            var input = document.getElementById("input");
-            var ws;
-            var print = function(message) {
-                var d = document.createElement("div");
+            let output = document.getElementById("output");
+            let input = document.getElementById("input");
+            let ws;
+
+            const print = function(message) {
+                let d = document.createElement("div");
                 d.innerHTML = message;
                 output.appendChild(d);
+                let line = document.createElement("br");
+                output.appendChild(line);
             };
             document.getElementById("open").onclick = function(evt) {
                 if (ws) {
@@ -25,7 +28,8 @@
                     ws = null;
                 }
                 ws.onmessage = function(evt) {
-                    print("RESPONSE: " + evt.data);
+                    let obj = JSON.parse(evt.data)
+                    print(obj.content);
                 }
                 ws.onerror = function(evt) {
                     print("ERROR: " + evt.data);
