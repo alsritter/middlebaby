@@ -10,7 +10,6 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/captureserver/grpchandler"
 	"github.com/alsritter/middlebaby/pkg/captureserver/httphandler"
-	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
@@ -88,8 +87,6 @@ func (m *captrueServer) Start(ctx *mbcontext.Context) error {
 }
 
 func (m *captrueServer) start() error {
-	messagepush.InitMessagePush()
-
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", m.cfg.CapturePort))
 	if err != nil {
 		return fmt.Errorf("failed to listen the port: %d, err: %v", m.cfg.CapturePort, err)

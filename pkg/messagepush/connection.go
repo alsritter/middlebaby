@@ -1,91 +1,59 @@
 package messagepush
 
 import (
-	"net/http"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/alsritter/middlebaby/pkg/types/msgpush"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/gorilla/websocket"
 )
-
-// reference:
-// * https://github.dev/owenliang/go-push
-// * https://www.jianshu.com/p/47876da84627
 
 // WsConnection 连接对象
 type WsConnection struct {
 	logger.Logger
 
-	ConnId            uint64
-	WsSocket          *websocket.Conn
-	InChan            chan *WsMessage // 读队列
-	OutChan           chan *WsMessage // 写队列
-	mutex             sync.Mutex      // 避免重复关闭通道
-	IsClosed          bool            // 是否关闭
-	CloseChan         chan byte       // 关闭通知
-	isClosed          bool
-	lastHeartbeatTime time.Time // 最近一次心跳时间
+	ConnId    uint64
+	WsSocket  *websocket.Conn
+	InChan    chan *msgpush.WsMessage   // 读队列
+	OutChan   chan *msgpush.PushMessage // 写队列
+	Mutex     sync.Mutex                // 避免重复关闭通道
+	IsClosed  bool                      // 是否关闭
+	CloseChan chan byte                 // 关闭通知
 }
-
-var (
-	upGrader = websocket.Upgrader{
-		//Allow cross domain
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-)
 
 // DoConnection websocket
 func initWSConnection(log logger.Logger, connId uint64, wsSocket *websocket.Conn) (wsConnection *WsConnection) {
 	wsConnection = &WsConnection{
-		Logger:            log,
-		WsSocket:          wsSocket,
-		InChan:            make(chan *WsMessage, 1000),
-		OutChan:           make(chan *WsMessage, 1000),
-		CloseChan:         make(chan byte),
-		lastHeartbeatTime: time.Now(),
-		IsClosed:          false,
+		Logger:    log,
+		ConnId:    connId,
+		WsSocket:  wsSocket,
+		InChan:    make(chan *msgpush.WsMessage, 1000),
+		OutChan:   make(chan *msgpush.PushMessage, 1000),
+		CloseChan: make(chan byte),
+		IsClosed:  false,
 	}
 
 	go wsConnection.WsWriteLoop()
 	go wsConnection.WsReadLoop()
+	go wsConnection.ProcLoop()
 	return
 }
 
-func (wsConn *WsConnection) SendMessage(message *WsMessage) error {
-	select {
-	case wsConn.OutChan <- message:
-	case <-wsConn.CloseChan:
-		return ERR_CONNECTION_CLOSED
-	default:
-		return ERR_SEND_MESSAGE_FULL
-	}
-	return nil
-}
-
-func (wsConn *WsConnection) ReadMessage() (*WsMessage, error) {
-	select {
-	case msg := <-wsConn.InChan:
-		return msg, nil
-	case <-wsConn.CloseChan:
-	}
-	return nil, ERR_CONNECTION_CLOSED
-}
-
+// WsReadLoop ...
 func (wsConn *WsConnection) WsReadLoop() {
 	for {
 		msgType, data, err := wsConn.WsSocket.ReadMessage()
 		if err != nil {
-			goto ERR
+			goto ERROR
 		}
-		req := &WsMessage{
-			msgType,
-			data,
+		req := &msgpush.WsMessage{
+			MessageType: msgType,
+			Data:        data,
 		}
-		wsConn.Info(nil, "websocket receive request: [%v]", req)
-
+		fmt.Println(req)
 		// 放入请求队列
 		select {
 		case wsConn.InChan <- req:
@@ -94,61 +62,71 @@ func (wsConn *WsConnection) WsReadLoop() {
 			goto CLOSED
 		}
 	}
-
-ERR:
-	wsConn.Close()
+ERROR:
+	wsConn.wsClose()
 CLOSED:
 }
 
+// WsWriteLoop ...
 func (wsConn *WsConnection) WsWriteLoop() {
 	for {
 		select {
 		//取一个应答
 		case msg := <-wsConn.OutChan:
-			if err := wsConn.WsSocket.WriteMessage(msg.messageType, msg.data); err != nil {
-				goto ERR
+			if err := wsConn.WsSocket.WriteJSON(msg); err != nil {
+				goto ERROR
 			}
 		case <-wsConn.CloseChan:
 			goto CLOSED
 		}
 	}
 
-ERR:
-	wsConn.Close()
+ERROR:
+	wsConn.wsClose()
 CLOSED:
 }
 
-// 检查心跳（不需要太频繁）
-func (wsConn *WsConnection) IsAlive() bool {
-	var (
-		now = time.Now()
-	)
-
-	wsConn.mutex.Lock()
-	defer wsConn.mutex.Unlock()
-
-	// 连接已关闭 或者 太久没有心跳
-	if wsConn.isClosed || now.Sub(wsConn.lastHeartbeatTime) > 50*time.Second {
-		return false
+// WsWrite ...
+func (wsConn *WsConnection) WsWrite(message msgpush.PushMessage) error {
+	select {
+	case wsConn.OutChan <- &message:
+	case <-wsConn.CloseChan:
+		return errors.New("websocket closed")
 	}
-	return true
+	return nil
 }
 
-// 更新心跳
-func (wsConn *WsConnection) KeepAlive() {
-	var (
-		now = time.Now()
-	)
-	wsConn.mutex.Lock()
-	defer wsConn.mutex.Unlock()
-	wsConn.lastHeartbeatTime = now
+// WsRead ...
+func (wsConn *WsConnection) WsRead() (*msgpush.WsMessage, error) {
+	select {
+	case msg := <-wsConn.InChan:
+		return msg, nil
+	case <-wsConn.CloseChan:
+	}
+	return nil, errors.New("websocket closed")
 }
 
-func (wsConn *WsConnection) Close() {
-	wsConn.WsSocket.Close()
-	wsConn.mutex.Lock()
-	defer wsConn.mutex.Unlock()
+// ProcLoop 心跳检测
+func (wsConn *WsConnection) ProcLoop() {
+	// 启动一个goroutine 发送心跳
+	go func() {
+		for {
+			time.Sleep(50 * time.Second)
+			if err := wsConn.WsSocket.WriteMessage(websocket.PingMessage, []byte("heartbeat")); err != nil {
+				wsConn.Error(nil, "heartbeat fail %v", err.Error())
+				wsConn.wsClose()
+				break
+			}
+		}
+	}()
+}
 
+func (wsConn *WsConnection) wsClose() {
+	if err := wsConn.WsSocket.Close(); err != nil {
+		wsConn.Error(nil, "websocket close fail [%v]", err)
+	}
+	wsConn.Mutex.Lock()
+	defer wsConn.Mutex.Unlock()
 	if !wsConn.IsClosed {
 		wsConn.IsClosed = true
 		close(wsConn.CloseChan)
