@@ -12,8 +12,8 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("./views/casemanager/CaseManager.vue"),
       },
       {
-        path: "/datamanager",
-        component: () => import("./views/datamanager/DataList.vue")
+        path: "/capturemanager",
+        component: () => import("./views/capturemanager/DataList.vue")
       },
       {
         path: "/setting",

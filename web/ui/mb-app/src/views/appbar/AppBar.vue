@@ -4,9 +4,9 @@
       <el-icon><Grid /></el-icon>
       <template #title>测试用例</template>
     </el-menu-item>
-    <el-menu-item index="/datamanager">
+    <el-menu-item index="/capturemanager">
       <el-icon><document /></el-icon>
-      <template #title>Mock 服务</template>
+      <template #title>抓包服务</template>
     </el-menu-item>
     <el-menu-item index="/setting">
       <el-icon><setting /></el-icon>
