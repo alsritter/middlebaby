@@ -27,7 +27,7 @@ func TestResponse_GetByteData(t *testing.T) {
 		Status  int
 		Header  map[string][]string
 		Body    interface{}
-		Trailer map[string]string
+		Trailer map[string][]string
 		Delay   *ResponseDelay
 	}
 	tests := []struct {
@@ -42,7 +42,7 @@ func TestResponse_GetByteData(t *testing.T) {
 				Status:  0,
 				Header:  map[string][]string{},
 				Body:    "@file:./testdata/test01.txt",
-				Trailer: map[string]string{},
+				Trailer: map[string][]string{},
 				Delay:   &ResponseDelay{},
 			},
 			want:    []string{"🐺 here is test 01 file~"},
@@ -54,7 +54,7 @@ func TestResponse_GetByteData(t *testing.T) {
 				Status:  0,
 				Header:  map[string][]string{},
 				Body:    "@multiFile:field:fieldName;file01.txt:./testdata/test01.txt;file02.txt:./testdata/test02.txt;",
-				Trailer: map[string]string{},
+				Trailer: map[string][]string{},
 				Delay:   &ResponseDelay{},
 			},
 			want:    []string{"🐷 here is test 02", "🐺 here is test 01"},

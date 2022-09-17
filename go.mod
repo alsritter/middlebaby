@@ -12,8 +12,10 @@ require (
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.1.2
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jhump/protoreflect v1.12.0
 	github.com/json-iterator/go v1.1.12

@@ -18,7 +18,9 @@
 package startup
 
 import (
+	"github.com/alsritter/middlebaby/pkg/captureserver"
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
+	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/javascript"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry/assertprovid/mysql"
@@ -29,7 +31,6 @@ import (
 	"github.com/alsritter/middlebaby/web"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/mockserver"
 	"github.com/alsritter/middlebaby/pkg/storageprovider"
 	"github.com/alsritter/middlebaby/pkg/targetprocess"
 	"github.com/alsritter/middlebaby/pkg/taskserver"
@@ -67,14 +68,23 @@ func Startup(ctx *mbcontext.Context, cfg *Config, log logger.Logger, loader case
 	log.Info(nil, "loaded proto file successfully")
 
 	apiManager := apimanager.New(log, cfg.ApiManager, caseProvider)
-	mockServer := mockserver.New(log, cfg.MockServer, apiManager, protoProvider)
+	// mockServer := mockserver.New(log, cfg.MockServer, apiManager, protoProvider)
+
+	msgPush := messagepush.New(log, cfg.MessagePush)
+
+	log.Info(nil, "* start to start messagepush server")
+	if err = msgPush.Start(ctx); err != nil {
+		return err
+	}
+
+	captureServer := captureserver.New(log, cfg.CaptureServer, protoProvider, msgPush)
 	taskServer := taskserver.New(log, cfg.TaskService, caseProvider, protoProvider, apiManager, pluginRegistry)
-	targetProcess := targetprocess.New(log, cfg.TargetProcess, mockServer)
+	targetProcess := targetprocess.New(log, cfg.TargetProcess, captureServer)
 
 	webService := web.New(log, cfg.WebService, apiManager, caseProvider, protoProvider, taskServer, targetProcess)
 
-	log.Info(nil, "* start to start mockServer")
-	if err = mockServer.Start(ctx); err != nil {
+	log.Info(nil, "* start to start captureServer")
+	if err = captureServer.Start(ctx); err != nil {
 		return err
 	}
 

@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/alsritter/middlebaby/pkg/types/storage"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
 	"github.com/go-sql-driver/mysql"
@@ -31,15 +32,15 @@ import (
 )
 
 type Config struct {
-	EnableDocker bool  `json:"enableDocker"`
-	Mysql        Mysql `yaml:"mysql"`
-	Redis        Redis `yaml:"redis"`
+	EnableDocker bool          `json:"enableDocker"`
+	Mysql        storage.Mysql `yaml:"mysql"`
+	Redis        storage.Redis `yaml:"redis"`
 }
 
 func NewConfig() *Config {
 	return &Config{
 		EnableDocker: false,
-		Mysql: Mysql{
+		Mysql: storage.Mysql{
 			Enabled:  true,
 			Port:     "3306",
 			Host:     "127.0.0.1",
@@ -49,7 +50,7 @@ func NewConfig() *Config {
 			Local:    "",
 			Charset:  "",
 		},
-		Redis: Redis{
+		Redis: storage.Redis{
 			Enabled: true,
 			Port:    "6379",
 			Host:    "127.0.0.1",

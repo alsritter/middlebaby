@@ -22,9 +22,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/storageprovider"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/go-redis/redis"
@@ -52,7 +52,7 @@ func (r *redisAssertPlugin) GetTypeName() string {
 }
 
 // Assert run mysql assertprovid.
-func (r *redisAssertPlugin) Assert(_ *caseprovider.Response, asserts []caseprovider.CommonAssert) error {
+func (r *redisAssertPlugin) Assert(_ *mbcase.Response, asserts []mbcase.CommonAssert) error {
 	for _, commonAssert := range asserts {
 		if result, err := r.run(commonAssert.Actual); err != nil {
 			return err

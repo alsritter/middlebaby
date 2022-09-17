@@ -23,8 +23,9 @@ import (
 	"net/http"
 
 	"github.com/alsritter/middlebaby/pkg/apimanager"
-	"github.com/alsritter/middlebaby/pkg/interact"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
 	"github.com/golang/protobuf/jsonpb"
@@ -104,7 +105,7 @@ func (s *mockServer) handleStream(srv interface{}, stream grpc.ServerStream) err
 	}
 
 	s.Debug(nil, "mock [%v] request successful", fullMethodName)
-	stream.SetTrailer(metadata.New(response.Trailer))
+	stream.SetTrailer(metadata.New(util.SliceMapToStringMap(response.Trailer)))
 	if len(response.Header) > 0 {
 		if err := stream.SetHeader(getMetadataFromHeaderMap(response.Header)); err != nil {
 			return s.sendError(status.Errorf(codes.Unavailable, "failed to set header: %s", err))

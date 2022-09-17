@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/alsritter/middlebaby/pkg/caseprovider"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/alsritter/middlebaby/pkg/util/assert"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	jsoniter "github.com/json-iterator/go"
@@ -46,7 +46,7 @@ func (*jsAssertPlugin) Name() string {
 // Assert CommonAssert e.g.
 // "assert.data.activityList.length==3",
 // "assert.data.activityList[0].activityBase.activityId==1"
-func (j *jsAssertPlugin) Assert(resp *caseprovider.Response, asserts []caseprovider.CommonAssert) error {
+func (j *jsAssertPlugin) Assert(resp *mbcase.Response, asserts []mbcase.CommonAssert) error {
 	ctx := context.Background()
 	vm := v8go.NewContext()
 

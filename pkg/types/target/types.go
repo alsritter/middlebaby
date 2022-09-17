@@ -1,4 +1,4 @@
-package targetprocess
+package target
 
 import "time"
 

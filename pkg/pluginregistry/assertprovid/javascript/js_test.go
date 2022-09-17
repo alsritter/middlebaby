@@ -20,7 +20,7 @@ package javascript
 import (
 	"testing"
 
-	"github.com/alsritter/middlebaby/pkg/caseprovider"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
 
@@ -42,8 +42,8 @@ func Test_jsAssertPlugin_Assert(t *testing.T) {
 		Logger logger.Logger
 	}
 	type args struct {
-		resp    *caseprovider.Response
-		asserts []caseprovider.CommonAssert
+		resp    *mbcase.Response
+		asserts []mbcase.CommonAssert
 	}
 	tests := []struct {
 		name    string
@@ -57,7 +57,7 @@ func Test_jsAssertPlugin_Assert(t *testing.T) {
 				Logger: logger.NewDefault("test"),
 			},
 			args: args{
-				resp: &caseprovider.Response{
+				resp: &mbcase.Response{
 					Header: map[string]string{
 						"Date":           "Sun, 11 Sep 2022 01:42:38 GMT",
 						"Content-Length": "42",
@@ -66,7 +66,7 @@ func Test_jsAssertPlugin_Assert(t *testing.T) {
 					Data:       "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
 					StatusCode: 200,
 				},
-				asserts: []caseprovider.CommonAssert{
+				asserts: []mbcase.CommonAssert{
 					{
 						TypeName: "js",
 						Actual:   "assert.data.statusCode == 200",

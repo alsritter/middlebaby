@@ -28,13 +28,9 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
+	"github.com/alsritter/middlebaby/pkg/types/task"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 )
-
-type RunTaskReply struct {
-	Status       int32  `yaml:"status" json:"status"`
-	FailedReason string `yaml:"failedReason" json:"failedReason"`
-}
 
 type Config struct {
 	CloseTearDown    bool   `yaml:"closeTearDown"`
@@ -59,7 +55,7 @@ func (c *Config) Validate() error {
 func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {}
 
 type Provider interface {
-	RunSingleTaskCase(ctx context.Context, itfName, caseName string) (RunTaskReply, error)
+	RunSingleTaskCase(ctx context.Context, itfName, caseName string) (task.RunTaskReply, error)
 }
 
 type taskService struct {
@@ -90,14 +86,14 @@ func New(log logger.Logger, cfg *Config,
 }
 
 // RunSingleTaskCase implements task.TaskServer
-func (t *taskService) RunSingleTaskCase(ctx context.Context, itfName, caseName string) (RunTaskReply, error) {
+func (t *taskService) RunSingleTaskCase(ctx context.Context, itfName, caseName string) (task.RunTaskReply, error) {
 	if err := t.Run(ctx, itfName, caseName); err != nil {
 		t.Error(map[string]interface{}{
 			"InterfaceName": itfName,
 			"CaseName":      caseName,
 		}, err.Error())
 
-		return RunTaskReply{
+		return task.RunTaskReply{
 			Status:       0,
 			FailedReason: err.Error(),
 		}, nil
@@ -107,7 +103,7 @@ func (t *taskService) RunSingleTaskCase(ctx context.Context, itfName, caseName s
 		"InterfaceName": itfName,
 		"CaseName":      caseName,
 	}, "case assert successful")
-	return RunTaskReply{
+	return task.RunTaskReply{
 		Status:       1,
 		FailedReason: "",
 	}, nil

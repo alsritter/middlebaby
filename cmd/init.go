@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/alsritter/middlebaby/pkg/caseprovider"
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/mbcase"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -49,8 +49,8 @@ var initCmd = &cobra.Command{
 		}
 
 		if initCase {
-			t := &caseprovider.ItfTask{
-				TaskInfo: &caseprovider.TaskInfo{
+			t := &mbcase.ItfTask{
+				TaskInfo: &mbcase.TaskInfo{
 					Protocol:           "",
 					ServiceName:        "",
 					ServiceMethod:      "",
@@ -58,7 +58,7 @@ var initCmd = &cobra.Command{
 					ServicePath:        "",
 					ServiceProtoFile:   "",
 				},
-				SetUp: []*caseprovider.Command{
+				SetUp: []*mbcase.Command{
 					{
 						TypeName: "",
 						Commands: []string{},
@@ -70,21 +70,21 @@ var initCmd = &cobra.Command{
 						Response: interact.Response{},
 					},
 				},
-				TearDown: []*caseprovider.Command{
+				TearDown: []*mbcase.Command{
 					{
 						TypeName: "",
 						Commands: []string{},
 					},
 				},
-				Cases: []*caseprovider.CaseTask{
+				Cases: []*mbcase.CaseTask{
 					{
 						Name:        "",
 						Description: "",
-						SetUp:       []*caseprovider.Command{},
+						SetUp:       []*mbcase.Command{},
 						Mocks:       []*interact.ImposterMockCase{},
-						Request:     &caseprovider.CaseRequest{},
-						Assert:      &caseprovider.Assert{},
-						TearDown:    []*caseprovider.Command{},
+						Request:     &mbcase.CaseRequest{},
+						Assert:      &mbcase.Assert{},
+						TearDown:    []*mbcase.Command{},
 					},
 				},
 			}

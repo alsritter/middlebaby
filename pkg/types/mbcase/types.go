@@ -15,14 +15,14 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-package caseprovider
+package mbcase
 
 import (
 	"encoding/json"
 	"net/url"
 	"time"
 
-	"github.com/alsritter/middlebaby/pkg/interact"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
 )
 
 // Protocol defines the protocol of request

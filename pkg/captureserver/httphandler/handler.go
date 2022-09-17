@@ -19,24 +19,27 @@ package httphandler
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sync"
+	"sync/atomic"
+	"time"
 
-	"github.com/alsritter/middlebaby/pkg/apimanager"
+	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/msgpush"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"
 )
 
 type delegateHandler struct {
+	curConnId uint64
 	logger.Logger
-	apiManager   apimanager.Provider
-	enableDirect bool
+	msgPush messagepush.Provider
 }
 
 // Connect check the request type.
@@ -48,58 +51,41 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 	body, err := ioutil.ReadAll(ctx.Req.Body)
 	ctx.Req.Body = ioutil.NopCloser(bytes.NewReader(body))
 	if err != nil {
-		e.Error(nil, "read request body error: %v", err)
+		e.WithContext(ctx.Req.Context()).Error(nil, "read request body error: %v", err)
 		ctx.Abort()
 		return
 	}
 
-	resp, err := e.apiManager.MockResponse(context.TODO(), &interact.Request{
-		Protocol: interact.ProtocolHTTP,
-		Method:   ctx.Req.Method,
-		Host:     ctx.Req.Host,
-		Path:     ctx.Req.URL.Path,
-		Header:   ctx.Req.Header,
-		Body:     body,
-		Query:    ctx.Req.URL.Query(),
-	})
+	e.WithContext(ctx.Req.Context()).Debug(nil, "capture [%s] request [%+v]", ctx.Req.URL, ctx.Req)
+}
 
+func (e *delegateHandler) BeforeResponse(ctx *goproxy.Context, resp *http.Response, err error) {
 	if err != nil {
-		e.Warn(nil, "%v", err)
-		if !e.enableDirect {
-			ctx.Resp = &http.Response{
-				Status:     http.StatusText(http.StatusInternalServerError),
-				StatusCode: http.StatusInternalServerError,
-				Proto:      ctx.Req.Proto,
-				ProtoMajor: ctx.Req.ProtoMajor,
-				ProtoMinor: ctx.Req.ProtoMinor,
-				Header:     http.Header{},
-				Body:       ioutil.NopCloser(bytes.NewReader([]byte(""))),
-			}
-			ctx.IsFailFast()
-		}
+		e.Error(nil, "response error: [%v]", err)
 		return
 	}
 
-	bd, err := resp.GetByteData()
+	dto, err := interact.HttpConverter(ctx.Req, resp)
 	if err != nil {
-		e.Error(nil, "read response body error: [%v]", err)
-		bd = []byte("")
+		e.Error(nil, "request or response converter failed: [%v]", err)
+	} else {
+		jsonData, err := json.Marshal(dto)
+		if err != nil {
+			e.Error(nil, "marshal http request failed: [%v]", err)
+		} else {
+			if err = e.msgPush.SendMessage(msgpush.PushMessage{
+				ID:          atomic.AddUint64(&e.curConnId, 1),
+				Extra:       time.Now().Format("2006-01-02T15:04:05Z07:00"),
+				MessageType: "http",
+				Content:     string(jsonData),
+			}); err != nil {
+				e.Error(nil, "message push failed: [%v]", err)
+			}
+		}
 	}
 
-	e.Debug(nil, "mock [%v] request successful", ctx.Req.URL)
-	ctx.IsNeedMock()
-	ctx.Resp = &http.Response{
-		Status:     http.StatusText(resp.Status),
-		StatusCode: resp.Status,
-		Proto:      ctx.Req.Proto,
-		ProtoMajor: ctx.Req.ProtoMajor,
-		ProtoMinor: ctx.Req.ProtoMinor,
-		Header:     resp.Header,
-		Body:       ioutil.NopCloser(bytes.NewReader(bd)),
-	}
+	e.WithContext(ctx.Req.Context()).Debug(nil, "capture [%v] response [%+v]", ctx.Req.URL, resp)
 }
-
-func (e *delegateHandler) BeforeResponse(ctx *goproxy.Context, resp *http.Response, err error) {}
 
 func (e *delegateHandler) ParentProxy(request *http.Request) (*url.URL, error) {
 	def := goproxy.DefaultDelegate{}
