@@ -10,6 +10,7 @@ import (
 
 	"github.com/alsritter/middlebaby/pkg/captureserver/grpchandler"
 	"github.com/alsritter/middlebaby/pkg/captureserver/httphandler"
+	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 	"github.com/alsritter/middlebaby/pkg/util"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
@@ -55,13 +56,13 @@ type captrueServer struct {
 	httpProvider httphandler.Provider
 }
 
-func New(log logger.Logger, cfg *Config, protoManager protomanager.Provider) Provider {
+func New(log logger.Logger, cfg *Config, protoManager protomanager.Provider, msgPush messagepush.Provider) Provider {
 	return &captrueServer{
 		Logger:       log.NewLogger("capture"),
 		cfg:          cfg,
 		server:       &http.Server{},
-		grpcProvider: grpchandler.New(log, protoManager),
-		httpProvider: httphandler.New(log),
+		grpcProvider: grpchandler.New(log, protoManager, msgPush),
+		httpProvider: httphandler.New(log, msgPush),
 	}
 }
 

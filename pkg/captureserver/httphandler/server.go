@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httptrace"
 
+	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/gorilla/handlers"
@@ -35,12 +36,13 @@ type captureServer struct {
 	logger.Logger
 }
 
-func New(log logger.Logger) Provider {
+func New(log logger.Logger, msgPush messagepush.Provider) Provider {
 	l := log.NewLogger("http-capture")
 	return &captureServer{
 		Logger: l,
 		Proxy: goproxy.New(goproxy.WithDelegate(&delegateHandler{
-			Logger: l,
+			Logger:  l,
+			msgPush: msgPush,
 		}),
 			goproxy.WithDecryptHTTPS(&cache{}),
 			goproxy.WithClientTrace(&httptrace.ClientTrace{

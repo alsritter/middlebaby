@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis"
 	"gorm.io/driver/mysql"
@@ -44,6 +45,14 @@ func main() {
 }
 
 func RunServer() error {
+	// Reference: https://www.bejson.com/knownjson/webInterface/
+	go func() {
+		for {
+			time.Sleep(time.Second * 3)
+			http.Get("http://www.kuaidi100.com/query?type=yuantong&postid=11111111111")
+		}
+	}()
+
 	http.HandleFunc("/test", CallTest)
 	http.HandleFunc("/example", CallExternalRequest)
 	http.HandleFunc("/sql", ExtensionSQL)

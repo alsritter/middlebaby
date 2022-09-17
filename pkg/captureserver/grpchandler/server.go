@@ -19,17 +19,22 @@ package grpchandler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/textproto"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
+	"time"
 
+	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
 	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/msgpush"
 	"github.com/alsritter/middlebaby/pkg/util/grpcurl/ext/ggrpcurl"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 	"github.com/alsritter/middlebaby/pkg/util/mbcontext"
-	"github.com/alsritter/middlebaby/pkg/util/proto"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jhump/protoreflect/dynamic"
@@ -40,20 +45,22 @@ import (
 )
 
 type captureServer struct {
-	descriptor proto.Descriptor
 	logger.Logger
+	curConnId    uint64
 	protoManager protomanager.Provider
+	msgPush      messagepush.Provider
 }
 
 type Provider interface {
 	Init(ctx *mbcontext.Context) error
-	GetServer() *grpc.Server
+	GetServer() http.Handler
 }
 
-func New(log logger.Logger, protoManager protomanager.Provider) Provider {
+func New(log logger.Logger, protoManager protomanager.Provider, msgPush messagepush.Provider) Provider {
 	return &captureServer{
 		Logger:       log.NewLogger("grpc-capture"),
 		protoManager: protoManager,
+		msgPush:      msgPush,
 	}
 }
 
@@ -65,8 +72,12 @@ func (s *captureServer) Init(ctx *mbcontext.Context) error {
 	return nil
 }
 
-func (s *captureServer) GetServer() *grpc.Server {
-	return grpc.NewServer(grpc.UnknownServiceHandler(s.handleStream))
+func (s *captureServer) GetServer() http.Handler {
+	gs := grpc.NewServer(grpc.UnknownServiceHandler(s.handleStream))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: here  do something...
+		gs.ServeHTTP(w, r)
+	})
 }
 
 func (s *captureServer) handleStream(srv interface{}, stream grpc.ServerStream) error {
@@ -140,6 +151,20 @@ func (s *captureServer) handleStream(srv interface{}, stream grpc.ServerStream) 
 	binaryData, err := message.Marshal()
 	if err != nil {
 		return s.sendError(stream.Context(), multierror.Prefix(err, "failed to marshal:"))
+	}
+
+	jsonData, err := json.Marshal(interact.GRPCConvert(md, dto, mds, trailer, responseStr, respStatus))
+	if err != nil {
+		if err = s.msgPush.SendMessage(msgpush.PushMessage{
+			Extra:       time.Now().Format("2006-01-02T15:04:05Z07:00"),
+			ID:          atomic.AddUint64(&s.curConnId, 1),
+			MessageType: "grpc",
+			Content:     string(jsonData),
+		}); err != nil {
+			s.Error(nil, "message push failed: [%v]", err)
+		}
+	} else {
+		s.Error(nil, "marshal grpc request failed: [%v]", err)
 	}
 
 	// send the response

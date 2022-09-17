@@ -20,18 +20,26 @@ package httphandler
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sync"
+	"sync/atomic"
+	"time"
 
+	"github.com/alsritter/middlebaby/pkg/messagepush"
+	"github.com/alsritter/middlebaby/pkg/types/interact"
+	"github.com/alsritter/middlebaby/pkg/types/msgpush"
 	"github.com/alsritter/middlebaby/pkg/util/logger"
 
 	"github.com/alsritter/middlebaby/pkg/util/goproxy"
 )
 
 type delegateHandler struct {
+	curConnId uint64
 	logger.Logger
+	msgPush messagepush.Provider
 }
 
 // Connect check the request type.
@@ -52,6 +60,30 @@ func (e *delegateHandler) BeforeRequest(ctx *goproxy.Context) {
 }
 
 func (e *delegateHandler) BeforeResponse(ctx *goproxy.Context, resp *http.Response, err error) {
+	if err != nil {
+		e.Error(nil, "response error: [%v]", err)
+		return
+	}
+
+	dto, err := interact.HttpConverter(ctx.Req, resp)
+	if err != nil {
+		e.Error(nil, "request or response converter failed: [%v]", err)
+	} else {
+		jsonData, err := json.Marshal(dto)
+		if err != nil {
+			e.Error(nil, "marshal http request failed: [%v]", err)
+		} else {
+			if err = e.msgPush.SendMessage(msgpush.PushMessage{
+				ID:          atomic.AddUint64(&e.curConnId, 1),
+				Extra:       time.Now().Format("2006-01-02T15:04:05Z07:00"),
+				MessageType: "http",
+				Content:     string(jsonData),
+			}); err != nil {
+				e.Error(nil, "message push failed: [%v]", err)
+			}
+		}
+	}
+
 	e.WithContext(ctx.Req.Context()).Debug(nil, "capture [%v] response [%+v]", ctx.Req.URL, resp)
 }
 

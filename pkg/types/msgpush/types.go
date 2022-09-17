@@ -14,7 +14,7 @@ type WsMessage struct {
 
 // PushMessage 推送消息内容
 type PushMessage struct {
-	ID          int     `json:"id"`          // 编号
+	ID          uint64  `json:"id"`          // 编号
 	Extra       string  `json:"extra"`       // 额外信息
 	MessageType MsgType `json:"messageType"` // 消息类型
 	Content     string  `json:"content"`     // 消息内容

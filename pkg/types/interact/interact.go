@@ -83,7 +83,7 @@ type Response struct {
 	Status  int                 `json:"status" yaml:"status"`
 	Header  map[string][]string `json:"header" yaml:"header"`
 	Body    interface{}         `json:"body" yaml:"body"`
-	Trailer map[string]string   `json:"trailer" yaml:"trailer"`
+	Trailer map[string][]string `json:"trailer" yaml:"trailer"`
 	Delay   *ResponseDelay      `json:"delay" yaml:"delay"`
 }
 
@@ -141,7 +141,7 @@ func NewDefaultResponse(request *Request) *Response {
 	return &Response{
 		Status:  code,
 		Header:  map[string][]string{},
-		Trailer: map[string]string{},
+		Trailer: map[string][]string{},
 		Body:    []byte{},
 	}
 }

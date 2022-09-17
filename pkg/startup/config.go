@@ -21,6 +21,7 @@ import (
 	"github.com/alsritter/middlebaby/pkg/apimanager"
 	"github.com/alsritter/middlebaby/pkg/captureserver"
 	"github.com/alsritter/middlebaby/pkg/caseprovider"
+	"github.com/alsritter/middlebaby/pkg/messagepush"
 	"github.com/alsritter/middlebaby/pkg/mockserver"
 	"github.com/alsritter/middlebaby/pkg/pluginregistry"
 	"github.com/alsritter/middlebaby/pkg/protomanager"
@@ -45,6 +46,7 @@ type Config struct {
 	PluginRegistry *pluginregistry.Config  `yaml:"plugin"`
 	WebService     *web.Config             `yaml:"web"`
 	CaptureServer  *captureserver.Config   `yaml:"capture"`
+	MessagePush    *messagepush.Config     `yaml:"msgPush"`
 }
 
 func NewConfig() *Config {
@@ -60,6 +62,7 @@ func NewConfig() *Config {
 		PluginRegistry: pluginregistry.NewConfig(),
 		WebService:     web.NewConfig(),
 		CaptureServer:  captureserver.NewConfig(),
+		MessagePush:    messagepush.NewConfig(),
 	}
 }
 
@@ -76,6 +79,7 @@ func (c *Config) Validate() error {
 		c.PluginRegistry,
 		c.WebService,
 		c.CaptureServer,
+		c.MessagePush,
 	)
 }
 
@@ -91,4 +95,5 @@ func (c *Config) RegisterFlagsWithPrefix(prefix string, f *pflag.FlagSet) {
 	c.PluginRegistry.RegisterFlagsWithPrefix(prefix, f)
 	c.WebService.RegisterFlagsWithPrefix(prefix, f)
 	c.CaptureServer.RegisterFlagsWithPrefix(prefix, f)
+	c.MessagePush.RegisterFlagsWithPrefix(prefix, f)
 }
