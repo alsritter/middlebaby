@@ -79,6 +79,9 @@ func (c *Context) Reset(req *http.Request) {
 	c.Data = make(map[interface{}]interface{})
 	c.abort = false
 	c.TunnelProxy = false
+	c.failFast = false
+	c.needMock = false
+	c.Resp = nil
 }
 
 type Delegate interface {
