@@ -54,10 +54,10 @@ Use "middlebaby [command] --help" for more information about a command.
 
 
 ## Using Middlebaby by config file
-If we want a more permanent configuration, we could use the option --config to specify the location of a configuration file.
+use Makfile.
 
 ```sh
-middlebaby server --log-level="TRACE" --app="./${BIN_FILE}" --config=$WORKSPACE/.middlebaby.yaml
+make run-http
 ```
 
 The config file must be a YAML file with the following structure.
