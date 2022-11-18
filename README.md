@@ -21,10 +21,10 @@ Middlebaby provides:
 
 ## Installing
 
-Since it is built using Golang, so you can easily install it using `go get`
+Since it is built using Golang, so you can easily install it using `go install`
 
 ```sh
-go get github.com/alsritter/middlebaby
+go install github.com/alsritter/middlebaby@latest
 ```
 
 ## Using Middlebaby from the command line
@@ -33,21 +33,21 @@ TODO: ...
 
 ```
 $ middlebaby -h 
-a Mock server tool.
+a auto mock tool.
 
 Usage:
+  middlebaby [flags]
   middlebaby [command]
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
-  server      run Mock serve
+  init        init config file
+  serve       start the mock server
 
 Flags:
-      --app string         Startup app path
-      --config string      config file (default is $WORKSPACE/.middlebaby.yaml)
-  -h, --help               help for middlebaby
-      --log-level string   Log level (default "INFO")
+  -h, --help      help for middlebaby
+  -v, --version   version for middlebaby
 
 Use "middlebaby [command] --help" for more information about a command.
 ```
@@ -64,25 +64,21 @@ The config file must be a YAML file with the following structure.
 
 
 ```yml
-# proxy port
-port: 7689 
-# HTTP requests that need to be mock
-httpFiles:
-  - ./tests/http.mock.json
-# Whether to listen for file changes
-watcher: true
-# whether the missed mock allows real requests
-enableDirect: true
-# Set the suffix name of your Task file
-taskFileSuffix: "case.json" # e.g., test.case.json
-cors: 
-  methods: ["GET"]
-  headers: ["Content-Type"]
-  exposed_headers: ["Cache-Control"]
-  origins: ["*"]
-  allow_credentials: true
-storage: # Configure your mysql and Redis
+log:
+  prefix: true
+  level: debug
+target:
+  appPath: "./target"
+mock:
+  enableDirect: true
+  mockPort: 9090
+task:
+  targetServeAdder: "127.0.0.1:8011"
+  closeTearDown: false
+storage:
+  enabledocker: false
   mysql:
+    enabled: true
     port: "3306"
     host: "127.0.0.1"
     database: "test_mb"
@@ -91,12 +87,27 @@ storage: # Configure your mysql and Redis
     local: "Asia/Shanghai"
     charset: "utf8mb4"
   redis:
+    enabled: true
     port: "6379"
     host: "127.0.0.1"
     auth: "123456"
     db: 0
-caseFiles:
-  - "./tests/cases/*.case.json"
+case:
+  taskFileSuffix: .case.json
+  caseFiles: 
+      - "./tests/cases/**/*.case.json"
+  watcherCases: true
+  mockFiles:
+      - ./tests/http.mock.json
+  watcherMock: true
+proto:
+  protoimportpaths: []
+  sync:
+    enable: false
+    storagedir: ""
+    repository: []
+web:
+  port: 6060
 ```
 
 http mock file
@@ -105,8 +116,10 @@ http mock file
 [
   {
     "request": {
+      "protocol": "http",
       "method": "GET",
-      "url": "https://example.org/get",
+      "host": "example.org",
+      "path": "/get",
       "params": {
         "name": "John",
         "age": "55"
@@ -114,31 +127,35 @@ http mock file
     },
     "response": {
       "status": 200,
-      "headers": {
-        "Content-Type": "application/json"
+      "header": {
+        "Content-Type": ["application/json"]
       },
+      "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+      "trailer": {},
       "delay": {
-        "delay": 300,
-        "offset": 200
-      },
-      "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}"
+        "delay": 100,
+        "offset": 50
+      }
     }
   },
   {
     "request": {
+      "protocol": "http",
       "method": "GET",
-      "url": "https://example02.org/get"
+      "host": "https://example02.org",
+      "path": "/get"
     },
     "response": {
       "status": 200,
-      "headers": {
-        "Content-Type": "application/json"
+      "header": {
+        "Content-Type": ["application/json"]
       },
+      "body": "{\"name\":\"Alice\",\"color\":\"Blue\",\"age\":18}",
+      "trailer": {},
       "delay": {
         "delay": 300,
         "offset": 200
-      },
-      "body": "{\"data\":{\"name\":\"Alice\",\"color\":\"Blue\",\"age\":18}}"
+      }
     }
   }
 ]
@@ -148,22 +165,60 @@ http task cases
 
 ```json
 {
-  "serviceType": "http",
+  "protocol": "http",
   "serviceMethod": "GET",
-  "serviceURL": "http://localhost:8011/example",
-  "serviceDescription": "This is the first test service",
   "serviceName": "Test access to the Mock's external service",
+  "serviceDescription": "This is the first test service",
+  "servicePath": "http://localhost:8011/example",
+  "serviceProtoFile": "",
+  "setup": [
+    {
+      "typeName": "",
+      "commands": []
+    }
+  ],
+  "mocks": [
+    {
+      "request": {
+        "protocol": "http",
+        "method": "GET",
+        "host": "example.org",
+        "path": "/get",
+        "query": {
+          "name": ["John"],
+          "age": ["55"]
+        }
+      },
+      "response": {
+        "status": 200,
+        "header": {
+          "Content-Type": ["application/json"]
+        },
+        "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":88}",
+        "trailer": {},
+        "delay": {
+          "delay": 300,
+          "offset": 50
+        }
+      }
+    }
+  ],
+  "teardown": [
+    {
+      "typeName": "",
+      "commands": []
+    }
+  ],
   "cases": [
     {
-      "name": "first case",
-      "setup": {
-        "mysql": [],
-        "redis": [],
-        "http": []
-      },
+      "name": "first case-fail",
+      "description": "Test cases that will fail~",
+      "setup": [],
+      "mocks": [],
       "request": {
         "header": {},
-        "data": {}
+        "query": {},
+        "data": null
       },
       "assert": {
         "response": {
@@ -173,13 +228,161 @@ http task cases
             "age": 55
           }
         },
-        "mysql": [],
-        "redis": []
+        "otherAsserts": []
       },
-      "teardown": {
-        "mysql": [],
-        "redis": []
-      }
+      "teardown": []
+    },
+    {
+      "name": "first case-success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/get",
+            "query": {
+              "name": ["John"],
+              "age": ["55"]
+            }
+          },
+          "response": {
+            "status": 200,
+            "header": {
+              "Content-Type": ["application/json"]
+            },
+            "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+            "trailer": {},
+            "delay": {
+              "delay": 300,
+              "offset": 50
+            }
+          }
+        }
+      ],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "John",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    },
+    {
+      "name": "first case-regex-success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/get",
+            "query": {
+              "name": ["John"],
+              "age": ["55"]
+            }
+          },
+          "response": {
+            "status": 200,
+            "header": {
+              "Content-Type": ["application/json"]
+            },
+            "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+            "trailer": {},
+            "delay": {
+              "delay": 300,
+              "offset": 50
+            }
+          }
+        }
+      ],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "@regExp:^J.*",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": []
+      },
+      "teardown": []
+    },
+    {
+      "name": "first case-js-success",
+      "description": "",
+      "setup": [],
+      "mocks": [
+        {
+          "request": {
+            "protocol": "http",
+            "method": "GET",
+            "host": "example.org",
+            "path": "/get",
+            "query": {
+              "name": ["John"],
+              "age": ["55"]
+            }
+          },
+          "response": {
+            "status": 200,
+            "header": {
+              "Content-Type": ["application/json"]
+            },
+            "body": "{\"name\":\"John\",\"color\":\"Purples\",\"age\":55}",
+            "trailer": {},
+            "delay": {
+              "delay": 300,
+              "offset": 50
+            }
+          }
+        }
+      ],
+      "request": {
+        "header": {},
+        "query": {},
+        "data": null
+      },
+      "assert": {
+        "response": {
+          "data": {
+            "name": "@regExp:^J.*",
+            "color": "Purples",
+            "age": 55
+          }
+        },
+        "otherAsserts": [
+          {
+            "typeName": "js",
+            "actual": "assert.data.statusCode == 200",
+            "expected": true
+          },
+          {
+            "typeName": "js",
+            "actual": "assert.data.data.color == 'Purples'",
+            "expected": true
+          }
+        ]
+      },
+      "teardown": []
     }
   ]
 }
